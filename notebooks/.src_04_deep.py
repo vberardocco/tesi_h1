@@ -6613,3 +6613,421 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_variants_a.png", bbox_inches="t
 # **In sintesi**: il verdetto del §12 non dipende dalle grandezze della rete né dalla regolarizzazione che la
 # griglia non aveva esplorato. Più capacità fa memorizzare di più e non aiuta; l'unico piccolo guadagno viene da
 # una penalità L2 più forte, troppo piccolo per avvicinare la GPFA.
+
+# %% [markdown]
+# ### 14.3 · La lunghezza dei pezzi e il controller
+#
+# **I pezzi.** Al §9.2 abbiamo scelto pezzi da 600 ms, e tra le alternative c'erano pezzi più lunghi. Qui
+# ne proviamo due:
+#
+# - **400 ms**: il generatore deve srotolare da solo meno tempo, ma ogni pezzo vede meno contesto;
+# - **1 s**: la durata delle finestre del metro comune (§4.2). Più contesto, ma il generatore deve srotolare
+#   da solo un secondo intero, spesso a cavallo di due fasi.
+#
+# La sovrapposizione resta di 200 ms, con la stessa ricucitura (§9.2): con pezzi da 400 ms quasi ogni bin sta
+# in due pezzi, con pezzi da 1 s quasi sempre in uno solo. Il resto di LFADS resta come al §12, con due
+# adattamenti:
+#
+# - il peso del KL resta 0.3 volte quello dell'ELBO vero, quindi diventa 0.3 / (bin del pezzo × 160): l'errore
+#   di ricostruzione è una media su bin e canali, il KL una somma per pezzo (§10.4);
+# - 200 epoche, cioè lo stesso numero di passaggi sui dati: con pezzi da 400 ms un'epoca ha il doppio dei passi
+#   (3200 in tutto), con pezzi da 1 s la metà (800).
+#
+# La GPFA alla pari si stima **sugli stessi pezzi**, così il confronto resta alla pari.
+#
+# **Il controller.** Senza controller, tutto quello che succede in un pezzo deve essere già scritto nello stato
+# iniziale: poi il generatore va da solo. Il controller aggiunge degli **ingressi inferiti**: a ogni bin una
+# piccola rete, il controller, legge quello che un secondo encoder ha visto dei dati intorno a quel bin e passa
+# al generatore 4 numeri, una "spinta" che può seguire eventi che lo stato iniziale non poteva prevedere (per
+# esempio un cue). È la versione completa di LFADS (Pandarinath et al., 2018). Le impostazioni sono quelle della
+# configurazione di lfads-torch per MC_RTT, la registrazione continua del Neural Latents Benchmark, portate alle
+# nostre grandezze:
+#
+# | parte | qui | MC_RTT (lfads-torch) |
+# |---|---|---|
+# | encoder degli ingressi | 64 unità, GRU nei due sensi | 80 |
+# | controller | 64 unità | 80 |
+# | ingressi inferiti | 4 | 4 |
+# | ritardo degli ingressi | 1 bin | 1 |
+# | distribuzione a priori degli ingressi | autoregressiva: costante di tempo 10 bin (200 ms), varianza 0.1 | uguale |
+# | peso del KL degli ingressi | come quello della condizione iniziale, 0.3 / (30 × 160) | scelto da AutoLFADS |
+# | penalità L2 su encoder degli ingressi e controller | 0 | scelte da AutoLFADS, partendo da 0 |
+#
+# La penalità L2 sul controller resta a 0 perché la libreria divide la penalità totale per il numero di pesi
+# penalizzati: aggiungendo il controller si dimezzerebbe di fatto quella sul generatore, e la variante
+# cambierebbe due cose insieme. Pezzi da 600 ms, il resto come al §12.
+#
+# Il rischio è noto: più libertà vuol dire più spazio per memorizzare (§13.2, §14a). Per questo, oltre alle due
+# misure, guardiamo se il modello **usa** davvero gli ingressi: se il termine KL li spinge a zero, il controller
+# c'è ma è spento.
+#
+# **La regola** è quella del §14a: il verdetto del §12 cambia se una variante porta LFADS sopra la GPFA alla pari
+# (sugli stessi pezzi) con tutti e 3 i semi, su una delle due misure.
+#
+# **I controlli a mano**:
+#
+# - le funzioni nuove di taglio e ricucitura, con pezzi da 600 ms, devono dare esattamente i pezzi e la
+#   ricucitura del §9.2; con 400 ms e 1 s, ricucire i pezzi dei conteggi deve restituire i conteggi;
+# - la probabilità a priori degli ingressi, calcolata a mano, deve coincidere con quella della libreria.
+#
+# 90 allenamenti nuovi (3 varianti × 2 forme × 5 blocchi × 3 semi) e 10 stime della GPFA: circa 1 ora la prima
+# volta. Una prova di 10 epoche (4 alla volta) ha dato, per allenamento, 132 s con pezzi da 400 ms, 84 s con
+# pezzi da 1 s e 158 s con il controller, contro 95 s della principale.
+
+# %%
+OVL14 = SEG_OVL                                             # la sovrapposizione resta di 10 bin (200 ms)
+LENS14 = {"pezzi da 400 ms": 20, "pezzi da 1 s": 50}        # bin per pezzo delle due varianti
+
+def starts_L(t, L):                                         # come segment_starts (§9.2), per pezzi di L bin che si sovrappongono di 10
+    a0, a1 = TRIAL_SPAN[t]
+    st = list(range(a0, a1 - L + 1, L - OVL14))             # un pezzo ogni L − 10 bin...
+    if st[-1] != a1 - L:
+        st.append(a1 - L)                                   # ...più un ultimo pezzo che finisce esattamente con il trial
+    return np.array(st)
+
+def cut_L(X, t, L):                                         # come cut_segments: i pezzi da L bin del trial t di un segnale X
+    return np.stack([X[a:a + L] for a in starts_L(t, L)])
+
+def stitch_L(Y_seg, t, L):                                  # come stitch: media pesata, con le rampe di AutoLFADS sui 10 bin in comune
+    a0, a1 = TRIAL_SPAN[t]
+    W = np.ones((len(Y_seg), L))                            # 1 dove il pezzo è da solo
+    W[1:, :OVL14] = RAMP_IN                                 # rampa in salita all'inizio (tranne il primo pezzo del trial)
+    W[:-1, -OVL14:] = RAMP_OUT                              # rampa in discesa alla fine (tranne l'ultimo)
+    num, den = np.zeros((a1 - a0, Y_seg.shape[2])), np.zeros((a1 - a0, 1))
+    for a, y, w in zip(starts_L(t, L) - a0, Y_seg, W):
+        num[a:a + L] += w[:, None] * y                      # somma dei valori pesati...
+        den[a:a + L] += w[:, None]                          # ...e dei pesi
+    return num / den
+
+def stitch_all_L(per_trial, L):                             # come stitch_all: i 15 trial ricuciti e messi in fila
+    return np.concatenate([stitch_L(y_, t, L) for t, y_ in zip(TRIALS, per_trial)])
+
+rng_chk = np.random.default_rng(0)
+Y_chk = {t: rng_chk.normal(size=SEGS[t].shape[:2] + (3,)) for t in TRIALS}  # valori a caso, diversi in ogni pezzo
+print("Pezzi da 600 ms: gli stessi del §9.2:", all(np.array_equal(cut_L(COUNTS, t, SEG_LEN), SEGS[t]) for t in TRIALS),
+      f"| ricucitura di valori a caso, differenza massima da stitch: "
+      f"{max(np.abs(stitch_L(Y_chk[t], t, SEG_LEN) - stitch(Y_chk[t], t)).max() for t in TRIALS):.1e}")
+SEGS14 = {L: {t: cut_L(COUNTS, t, L) for t in TRIALS} for L in LENS14.values()}  # i pezzi dei conteggi, per ognuna delle due lunghezze
+SEGS14_HID = {L: {t: s_[..., ORDER_HID] for t, s_ in seg.items()} for L, seg in SEGS14.items()}  # prima i 120 visibili, poi i 40 nascosti
+for name, L in LENS14.items():
+    back = np.concatenate([stitch_L(SEGS14[L][t].astype(float), t, L) for t in TRIALS])
+    print(f"{name}: {sum(len(v) for v in SEGS14[L].values())} pezzi, da {min(len(v) for v in SEGS14[L].values())} a "
+          f"{max(len(v) for v in SEGS14[L].values())} per trial ({sum(len(SEGS14[L][t]) for t in train_trials(0))} nei 12 trial di training "
+          f"del blocco 0); ricucitura dei conteggi, differenza massima {np.abs(back - COUNTS).max():.1e}")
+
+# %%
+CO14 = dict(ci_enc_dim=64, con_dim=64, co_dim=4, co_tau=10.0, co_nvar=0.1,  # encoder degli ingressi, controller, ingressi; priori autoregressiva
+            kl_co_scale=LF_HP["kl_ic_scale"], l2_ci_enc_scale=0.0, l2_con_scale=0.0)  # KL degli ingressi come quello della condizione iniziale; niente L2
+
+def make_lfads_co(hp):
+    """Come make_lfads (§10.3), ma con il controller: un secondo encoder, il controller e 4 ingressi inferiti. Si chiama nel processo separato."""
+    import numpy as np                                      # numpy PRIMA di torch (§10.3)
+    import torch
+    from torch import nn
+    from lfads_torch.model import LFADS                     # il modello della libreria
+    from lfads_torch.modules import augmentations           # il coordinated dropout (qui a 0, come al §12)
+    from lfads_torch.modules.priors import AutoregressiveMultivariateNormal, MultivariateNormal  # priori degli ingressi e della condizione iniziale
+    from lfads_torch.modules.recons import Poisson          # il modello del rumore: Poisson
+    from lfads_torch.modules.readin_readout import FanInLinear  # l'uscita lineare dai fattori alle log-frequenze
+    cd = augmentations.CoordinatedDropout(cd_rate=hp["cd_rate"], cd_pass_rate=0.0, ic_enc_seq_len=0)
+    return LFADS(encod_data_dim=hp["n_in"], encod_seq_len=hp["seg_len"], recon_seq_len=hp["seg_len"],  # forma dei dati
+                 ext_input_dim=0, ic_enc_seq_len=0,         # nessun ingresso esterno; l'encoder legge tutto il pezzo
+                 ic_enc_dim=hp["enc_dim"], ci_enc_dim=hp["ci_enc_dim"], ci_lag=1, con_dim=hp["con_dim"], co_dim=hp["co_dim"],  # il controller è acceso
+                 ic_dim=hp["ic_dim"], gen_dim=hp["gen_dim"], fac_dim=hp["fac_dim"], dropout_rate=hp["dropout"],
+                 reconstruction=nn.ModuleList([Poisson()]), variational=True,
+                 co_prior=AutoregressiveMultivariateNormal(tau=hp["co_tau"], nvar=hp["co_nvar"], shape=hp["co_dim"]),  # priori degli ingressi
+                 ic_prior=MultivariateNormal(mean=0.0, variance=hp["ic_prior_var"], shape=hp["ic_dim"]),
+                 ic_post_var_min=hp["ic_post_var_min"], cell_clip=hp["cell_clip"],
+                 train_aug_stack=augmentations.AugmentationStack([cd], batch_order=[0], loss_order=[0]),
+                 infer_aug_stack=augmentations.AugmentationStack(),
+                 readin=nn.ModuleList([nn.Identity()]), readout=nn.ModuleList([FanInLinear(hp["fac_dim"], hp["n_out"])]),
+                 loss_scale=hp["loss_scale"], recon_reduce_mean=True,
+                 lr_scheduler=False, lr_init=hp["lr"], lr_stop=1e-5, lr_decay=0.95, lr_patience=6,
+                 lr_adam_beta1=0.9, lr_adam_beta2=0.999, lr_adam_epsilon=1e-8, weight_decay=0.0,
+                 l2_start_epoch=0, l2_increase_epoch=hp["ramp_epochs"], l2_ic_enc_scale=hp["l2_ic_enc_scale"],
+                 l2_ci_enc_scale=hp["l2_ci_enc_scale"], l2_gen_scale=hp["l2_gen_scale"], l2_con_scale=hp["l2_con_scale"],
+                 kl_start_epoch=0, kl_increase_epoch=hp["ramp_epochs"], kl_ic_scale=hp["kl_ic_scale"], kl_co_scale=hp["kl_co_scale"])
+
+def run_lfads_cached_co(jobs):                              # run_lfads_cached (§10.5) con il modello del controller
+    global make_lfads                                       # durante la chiamata il nome make_lfads indica make_lfads_co: così lfads_fit,
+    orig = make_lfads                                       # nel processo separato, costruisce il modello con il controller, e l'impronta
+    make_lfads = make_lfads_co                              # di ogni modello (lf_key) contiene il codice di make_lfads_co
+    try:
+        return run_lfads_cached(jobs)
+    finally:
+        make_lfads = orig                                   # in ogni caso si rimette la funzione originale
+
+def co_prior_check(tau, nvar, seed):                        # log-probabilità di alcune sequenze sotto la priori autoregressiva della libreria (processo separato)
+    import numpy as np                                      # numpy PRIMA di torch
+    import torch
+    from lfads_torch.modules.priors import AutoregressiveMultivariateNormal
+    torch.manual_seed(seed)
+    prior = AutoregressiveMultivariateNormal(tau=tau, nvar=nvar, shape=4)  # 4 ingressi, come in CO14
+    x = torch.randn(3, 30, 4)                               # 3 pezzi da 30 bin, 4 ingressi: valori a caso
+    with torch.no_grad():
+        return x.numpy().astype(np.float64), prior.log_prob(x).numpy().astype(np.float64)
+
+x_co, lp_lib = POOL_LF.submit(co_prior_check, CO14["co_tau"], CO14["co_nvar"], 0).result()
+alpha = np.exp(-1 / CO14["co_tau"])                         # quanto di ogni ingresso resta al bin successivo: e^(−1/τ)
+var0 = CO14["co_nvar"] / (1 - alpha ** 2)                   # varianza al primo bin: quella stazionaria del processo
+mu_co = np.concatenate([np.zeros_like(x_co[:, :1]), alpha * x_co[:, :-1]], axis=1)  # media di ogni bin: α × il bin precedente (0 al primo)
+var_co = np.concatenate([np.full_like(x_co[:, :1], var0), np.full_like(x_co[:, 1:], CO14["co_nvar"])], axis=1)  # varianza di ogni bin
+lp_hand = (-0.5 * np.log(2 * np.pi * var_co) - (x_co - mu_co) ** 2 / (2 * var_co)).sum(axis=(1, 2))  # somma su bin e ingressi, pezzo per pezzo
+print(f"Priori autoregressiva degli ingressi: log-probabilità a mano {np.round(lp_hand, 3)}, libreria {np.round(lp_lib, 3)}; "
+      f"differenza massima {np.abs(lp_hand - lp_lib).max():.1e}. Deviazione stazionaria della priori: {np.sqrt(var0):.2f}")
+
+# %%
+def job14b(var, form, k, sd):                               # un allenamento del §14b: variante, forma, blocco, seme; il resto come al §12
+    hp_, data_ = FORMS14[form]                              # configurazione e dati delle due forme (§14a)
+    if var == "controller":
+        return lf12_job(sd, train_trials(k), hp=dict(hp_, **CO14), **data_)  # pezzi da 600 ms, con il controller
+    L = LENS14[var]
+    hp_L = dict(hp_, seg_len=L, kl_ic_scale=hp_["kl_ic_scale"] * SEG_LEN / L)  # peso del KL: 0.3 / (L × 160)
+    if form == "tutti i canali":
+        return lf12_job(sd, train_trials(k), hp=hp_L, segs=SEGS14[L])
+    return lf12_job(sd, train_trials(k), hp=hp_L, segs=SEGS14_HID[L], rate_cols=HID_COLS)
+
+RUNS14B = [(v, f_, k, sd) for v in LENS14 for f_ in FORMS14 for k in range(5) for sd in SEEDS14]           # pezzi da 400 ms e da 1 s: 60
+RUNS14B_CO = [("controller", f_, k, sd) for f_ in FORMS14 for k in range(5) for sd in SEEDS14]           # controller: 30
+res14b = dict(zip(RUNS14B, run_lfads_cached([job14b(*r) for r in RUNS14B])))
+res14b |= dict(zip(RUNS14B_CO, run_lfads_cached_co([job14b(*r) for r in RUNS14B_CO])))
+GP14B = {L: dict(zip(range(5), gpfa_cached([np.concatenate([SEGS14[L][t] for t in train_trials(k)]) for k in range(5)])))
+         for L in LENS14.values()}                          # la GPFA alla pari sugli stessi pezzi da 400 ms e da 1 s
+
+def co_dim_of(w):                                           # quanti ingressi inferiti ha un modello, letto dai pesi (0 = niente controller)
+    return next((v.shape[0] // 2 for k_, v in w.items() if k_.endswith("co_linear.weight")), 0)
+
+display(pd.DataFrame({v: {"bin per pezzo (dalle uscite)": mm([res14b[(v, f_, k, sd)]["factors"][0].shape[1] for f_ in FORMS14 for k in range(5) for sd in SEEDS14]),
+                          "ingressi inferiti (dai pesi)": mm([co_dim_of(res14b[(v, f_, k, sd)]["weights"]) for f_ in FORMS14 for k in range(5) for sd in SEEDS14]),
+                          "passi": mm([res14b[(v, f_, k, sd)]["steps"] for f_ in FORMS14 for k in range(5) for sd in SEEDS14]),
+                          "versione tenuta (epoca)": mm([res14b[(v, f_, k, sd)]["best_epoch"] for f_ in FORMS14 for k in range(5) for sd in SEEDS14])}
+                      for v in list(LENS14) + ["controller"]}).T)
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **I controlli a mano tornano.** Con pezzi da 600 ms le funzioni nuove danno esattamente i pezzi e la ricucitura del
+#   §9.2 (differenza 0); con 400 ms e 1 s, ricucire i pezzi dei conteggi restituisce i conteggi (differenza 9·10⁻¹⁶,
+#   l'arrotondamento). La probabilità a priori degli ingressi calcolata a mano coincide con quella della libreria
+#   (differenza 7.5·10⁻⁵, la precisione dei numeri a 32 bit).
+# - **I pezzi**: 1215 da 400 ms (da 66 a 96 per trial) e 310 da 1 s (da 17 a 24), contro i 610 da 600 ms.
+# - **Le varianti sono quelle volute**: le uscite hanno 20, 50 e 30 bin per pezzo, e solo i modelli del controller hanno
+#   nei pesi i 4 ingressi inferiti. Passi: 3200 con pezzi da 400 ms, 800 con pezzi da 1 s, 1600 con il controller; la
+#   versione tenuta è in pratica l'ultima (tra l'epoca 192 e la 200).
+# - I 90 allenamenti e le 10 stime della GPFA hanno richiesto circa 1 ora e 20 minuti, più della stima: i pezzi da
+#   400 ms costano più del previsto.
+#
+# ### 14.4 · Le due misure, e se il controller è acceso
+#
+# Le stesse misure del §14.2, con la principale del §14a (semi 0-2) e la GPFA alla pari sugli stessi pezzi.
+# Per il controller in più: gli **ingressi inferiti** dei modelli con tutti i canali sui pezzi dei trial di
+# test, cioè la loro ampiezza (la radice della media dei quadrati delle medie a posteriori) e la loro incertezza
+# (la deviazione a posteriori), da confrontare con la deviazione stazionaria della priori. Ingressi con ampiezza
+# vicina a 0 e incertezza pari a quella della priori vorrebbero dire un controller spento.
+
+# %%
+GEOM14B = {"principale (§12)": SEG_LEN, "pezzi da 400 ms": 20, "pezzi da 1 s": 50, "controller": SEG_LEN}  # bin per pezzo di ogni variante
+RES14B = {**{r: res14a[r] for r in RUNS14A if r[0] == "principale (§12)"}, **res14b}  # la principale viene dal §14a
+
+def fac14b(v, k, sd):                                       # fattori ordinati della variante v (forma con tutti i canali), tutta la sessione
+    r = RES14B[(v, "tutti i canali", k, sd)]
+    return order_by_readout(stitch_all_L(r["factors"], GEOM14B[v]), r["weights"]["readout.0.weight"])
+
+M14B = {}                                                   # nome -> misure, una lista per seme (come M14)
+for v, L in GEOM14B.items():
+    ph = [acc14(lambda k, sd=sd: fac14b(v, k, sd)) for sd in SEEDS14]
+    full = [[stitch_all_L(RES14B[(v, "120 + 40", k, sd)]["rates"], L) for sd in SEEDS14] for k in range(5)]  # [blocco][seme] -> nascosti, tutta la sessione
+    sn = seen_new(full, Y_HID)
+    M14B[v] = {"tetto": [a for a, _ in ph], "primi 3": [b for _, b in ph],
+               "nascosti": [bits_per_spike(test_only([full[k][i] for k in range(5)]), Y_HID) for i in range(len(SEEDS14))],
+               "nuovi / visti": list(sn[:, :, 1].mean(1) / sn[:, :, 0].mean(1))}
+M14B["GPFA alla pari, pezzi da 600 ms"] = M14[f"GPFA alla pari, {K_PCA} fattori"]  # dal §14a
+for name, L in LENS14.items():
+    a_, b_ = acc14(lambda k, L=L: stitch_all_L([gpfa_infer_segments(SEGS14[L][t], GP14B[L][k]) for t in TRIALS], L))
+    full = [[np.concatenate([stitch_L(gpfa_hidden(SEGS14[L][t], GP14B[L][k])[0], t, L) for t in TRIALS])] for k in range(5)]
+    sn = seen_new(full, Y_HID)
+    M14B[f"GPFA alla pari, {name}"] = {"tetto": [a_], "primi 3": [b_],
+                                       "nascosti": [bits_per_spike(test_only([full[k][0] for k in range(5)]), Y_HID)],
+                                       "nuovi / visti": [sn[0, :, 1].mean() / sn[0, :, 0].mean()]}
+
+GP_SAME14B = {"principale (§12)": "GPFA alla pari, pezzi da 600 ms", "pezzi da 400 ms": "GPFA alla pari, pezzi da 400 ms",
+              "pezzi da 1 s": "GPFA alla pari, pezzi da 1 s", "controller": "GPFA alla pari, pezzi da 600 ms"}  # la GPFA sugli stessi pezzi
+print(f"Controllo: la principale dà gli stessi numeri del §14a (differenza massima "
+      f"{max(np.abs(np.subtract(M14B['principale (§12)'][m], M14['principale (§12)'][m])).max() for m in ('tetto', 'nascosti')):.1e})")
+
+display(pd.DataFrame({name: {"fase, tetto (%)": fmt(m["tetto"]), "fase, primi 3 (%)": fmt(m["primi 3"]),
+                             "nascosti, trial di test (bit per spike)": fmt4(m["nascosti"]), "nuovi / visti": fmt2(m["nuovi / visti"])}
+                      for name, m in M14B.items()}).T.rename_axis("media (minimo-massimo) tra i 3 semi; a caso 12.5%"))
+
+P14B = M14B["principale (§12)"]
+display(pd.DataFrame({v: {"tetto: differenza dalla principale (punti)": fmt1s(np.subtract(M14B[v]["tetto"], P14B["tetto"])),
+                          "nascosti: differenza dalla principale": fmt4(np.subtract(M14B[v]["nascosti"], P14B["nascosti"])),
+                          "GPFA alla pari": GP_SAME14B[v].replace("GPFA alla pari, ", ""),
+                          "semi sopra la GPFA: tetto": f"{int(np.sum(np.array(M14B[v]['tetto']) > M14B[GP_SAME14B[v]]['tetto'][0]))} su 3",
+                          "semi sopra la GPFA: nascosti": f"{int(np.sum(np.array(M14B[v]['nascosti']) > M14B[GP_SAME14B[v]]['nascosti'][0]))} su 3"}
+                      for v in GEOM14B}).T.rename_axis("seme per seme; [minimo, massimo] tra i 3 semi"))
+
+# %%
+def co_inputs(hp, model_path, X):                           # gli ingressi inferiti di un modello con il controller salvato su disco, sui pezzi X (processo separato)
+    import numpy as np                                      # numpy PRIMA di torch
+    import torch
+    from lfads_torch.tuples import SessionBatch
+    torch.set_num_threads(1)
+    model = make_lfads_co(hp)
+    model.load_state_dict(torch.load(model_path))           # i pesi della versione tenuta
+    model.eval()                                            # niente dropout
+    Xt = torch.tensor(X, dtype=torch.float32)
+    sb = SessionBatch(encod_data=Xt[..., :hp["n_in"]], recon_data=Xt, ext_input=torch.zeros(len(Xt), Xt.shape[1], 0),
+                      truth=torch.zeros(0), sv_mask=torch.ones_like(Xt))
+    with torch.no_grad():
+        out = model({0: sb}, sample_posteriors=False, output_means=False)[0]  # con la media a posteriori, come per i fattori
+    return out.co_means.numpy(), out.co_stds.numpy()
+
+CO_IN = {(k, sd): POOL_LF.submit(co_inputs, job14b("controller", "tutti i canali", k, sd)["hp"],
+                                 CACHE_LF / f"{res14b[('controller', 'tutti i canali', k, sd)]['key']}.pt",
+                                 np.concatenate([SEGS[t] for t in TEST_TRIALS[k]])) for k in range(5) for sd in SEEDS14}
+CO_IN = {key: f_.result() for key, f_ in CO_IN.items()}    # per ogni blocco e seme: (medie, deviazioni) degli ingressi, pezzi × 30 bin × 4
+amp = np.array([np.sqrt(np.mean(m_ ** 2)) for m_, _ in CO_IN.values()])  # ampiezza degli ingressi inferiti
+unc = np.array([np.mean(s_) for _, s_ in CO_IN.values()])  # incertezza media a posteriori
+amp_dim = np.array([np.sqrt(np.mean(m_ ** 2, axis=(0, 1))) for m_, _ in CO_IN.values()])  # ampiezza di ognuno dei 4 ingressi
+print(f"Ingressi inferiti sui trial di test (15 modelli): ampiezza {fmt2(amp)}, incertezza a posteriori {fmt2(unc)}; "
+      f"deviazione stazionaria della priori {np.sqrt(var0):.2f}")
+print(f"Ampiezza di ciascuno dei 4 ingressi, ordinati dal più grande (media dei 15 modelli): {np.round(np.sort(amp_dim, axis=1)[:, ::-1].mean(0), 2)}")
+
+# %%
+ROWS14B = list(GEOM14B)[::-1]                               # dall'alto in basso come nella tabella
+fig, ax = plt.subplots(1, 2, figsize=(15, 3.8), sharey=True)
+for a_, meas, xlab in ((ax[0], "tetto", "fase riconosciuta (%), tutti i fattori"), (ax[1], "nascosti", "bit per spike, 40 nascosti, trial di test")):
+    for y, v in enumerate(ROWS14B):
+        vals = np.array(M14B[v][meas])
+        a_.scatter(vals, np.full(len(vals), y), color="C3", s=18, alpha=0.6, zorder=3)  # i 3 semi
+        a_.scatter(vals.mean(), y, color="C3", s=70, marker="D", zorder=4, label="LFADS: media dei 3 semi (punti piccoli: i semi)" if y == 0 else None)
+        a_.scatter(M14B[GP_SAME14B[v]][meas][0], y, color="C0", s=70, marker="|", linewidths=3, zorder=4,
+                   label="GPFA alla pari sugli stessi pezzi" if y == 0 else None)
+    a_.axvline(np.mean(P14B[meas]), color="C3", ls=":", lw=1)  # la principale, per confronto
+    a_.set(xlabel=xlab, yticks=range(len(ROWS14B)), yticklabels=ROWS14B)
+    a_.grid(axis="y", alpha=0.3)
+ax[0].legend(fontsize=8, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.18))  # sotto il grafico, per non coprire i punti
+ax[0].set_title("Fase (linea tratteggiata: la principale)"); ax[1].set_title("Canali nascosti dei trial di test")
+fig.tight_layout(); fig.savefig(FIGS / "04_lfads_variants_b.png", bbox_inches="tight"); plt.show()
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Il controllo torna**: la principale dà gli stessi numeri del §14a.
+# - **Pezzi da 400 ms: in pratica come la principale.** Sulla fase −0.7 punti (in tutti e 3 i semi, da −1.1 a −0.4);
+#   sui nascosti +0.0036 (0.0423), alla pari con la GPFA sugli stessi pezzi (0.0420): 2 semi su 3 sopra, quindi la
+#   regola non è soddisfatta.
+# - **Pezzi da 1 s: peggio su tutte e due le misure**, −5.3 punti sulla fase e −0.0091 sui nascosti (0.0296): il
+#   generatore deve srotolare da solo un secondo intero, e non ci riesce. La GPFA invece non risente della lunghezza dei
+#   pezzi (dal 50.3 al 51.4% sulla fase, da 0.0420 a 0.0430 sui nascosti).
+# - **Il controller cambia le cose, in due direzioni opposte**:
+#   - sulla **fase** peggiora: −5.2 punti (41.8%), e 17.0% con i primi 3 fattori;
+#   - sui **canali nascosti** fa **0.0631** bit per spike (da 0.0628 a 0.0636 tra i semi): +0.0244 sulla principale,
+#     sopra la GPFA alla pari (0.0422) con tutti e 3 i semi, e sopra anche la GPFA con la regressione di Poisson
+#     (0.0474), il voto più alto finora. **Per la regola fissata prima di guardare, sui nascosti il verdetto del §12
+#     cambia.**
+# - **Il controller è acceso**: gli ingressi inferiti hanno un'ampiezza di 0.29 (0.27-0.31 tra i modelli) con
+#   un'incertezza a posteriori di 0.15, contro la deviazione 0.74 della priori. Il modello li usa tutti e 4 (ampiezze
+#   da 0.26 a 0.31) e sa bene quanto valgono.
+# - **Memorizza come la principale**: sui trial nuovi resta il 40% del voto dei trial visti (37-40% per tutte le
+#   varianti di LFADS, 66-67% per la GPFA).
+# - **In parole semplici**: senza controller il generatore deve indovinare dallo stato iniziale tutto quello che
+#   succede nei 600 ms del pezzo; con il controller può essere "spinto" bin per bin, seguendo quello che i canali
+#   visibili fanno istante per istante. Questo aiuta a prevedere i nascosti, ma rende i fattori meno utili per
+#   riconoscere la fase.
+# - **La figura**: per ogni variante i 3 semi di LFADS (punti piccoli) e la loro media (rombo), e la GPFA alla pari
+#   sugli stessi pezzi (trattino blu); la linea tratteggiata è la principale.
+# - **Che cosa non dice**: se il guadagno sui nascosti sia vero o un artefatto, e da dove venga. Lo controlliamo qui
+#   sotto.
+#
+# #### Il controller supera la GPFA sui canali nascosti: tre controlli
+#
+# Un guadagno così grande va controllato prima di crederci (regola di tutto il notebook: quando un numero è
+# sorprendentemente buono, si cerca prima l'errore). L'encoder degli ingressi legge solo i 120 visibili, come quello
+# dello stato iniziale: i nascosti non entrano mai nel modello quando calcola le previsioni. Tre controlli:
+#
+# 1. **I nascosti spostati nel tempo** (§13.4): gli stessi 15 allenamenti della forma 120 + 40, sui dati in cui ogni
+#    nascosto è spostato di un minuto o più. Se il guadagno viene dalla coordinazione tra i canali, sui trial nuovi il
+#    voto deve scendere sotto zero, come per gli altri modelli; se la catena (controller, ricucitura, voto) lo
+#    creasse da sola, resterebbe sopra zero.
+# 2. **Da dove viene il guadagno**: il voto per fascia di frequenza dei canali (§12.4), e quanta parte della variazione
+#    delle frequenze previste sta tra 16 e 20 Hz, il ritmo dei conteggi che LFADS senza controller non riproduce
+#    (§11.3, §12.3).
+# 3. **Lo smoothing + GLM con meno smoothing** (σ = 20 e 10 ms invece di 50): se il controller vince perché segue le
+#    fluttuazioni veloci comuni a visibili e nascosti, anche un riferimento che le conserva dovrebbe guadagnare.
+#
+# 15 allenamenti nuovi con il controller: circa 12 minuti.
+
+# %%
+def job14b_sh(k, sd):                                       # il controller, forma 120 + 40, sui dati con i nascosti spostati nel tempo (§13.4)
+    return lf12_job(sd, train_trials(k), hp=dict(LF_HID_HP, **CO14), segs=SEGS_SH_HID, rate_cols=HID_COLS)
+
+res14b_sh = dict(zip([(k, sd) for k in range(5) for sd in SEEDS14],
+                     run_lfads_cached_co([job14b_sh(k, sd) for k in range(5) for sd in SEEDS14])))
+full_sh_co = [[stitch_all(res14b_sh[(k, sd)]["rates"]) for sd in SEEDS14] for k in range(5)]  # [blocco][seme] -> nascosti spostati previsti
+sn_sh_co = seen_new(full_sh_co, Y_SH)
+b_sh_lf = [bits_per_spike(test_only([FULL_SH["LFADS (3 semi)"][k][i] for k in range(5)]), Y_SH) for i in range(len(SEEDS14))]
+print(f"(1) Nascosti spostati, trial nuovi: controller {fmt4([bits_per_spike(test_only([full_sh_co[k][i] for k in range(5)]), Y_SH) for i in range(len(SEEDS14))])}, "
+      f"senza controller (§13.4) {fmt4(b_sh_lf)}; trial visti: controller {fmt4(sn_sh_co[:, :, 0].mean(1))}, "
+      f"senza controller {fmt4(SN_SH['LFADS (3 semi)'][:, :, 0].mean(1))}")
+
+P_CO = [test_only([stitch_all(res14b[("controller", "120 + 40", k, sd)]["rates"]) for k in range(5)]) for sd in SEEDS14]  # sessione di soli trial di test
+P_LF = [test_only([stitch_all(res14a[("principale (§12)", "120 + 40", k, sd)]["rates"]) for k in range(5)]) for sd in SEEDS14]
+
+def share18_rates(P, L=50, step=25):                        # quota della variazione tra 16 e 20 Hz nelle frequenze previste (media sui canali), finestre da 1 s
+    win = np.hanning(L)                                     # la stessa finestra del §11.3
+    S = np.mean([np.abs(np.fft.rfft((P[a:a + L] - P[a:a + L].mean(0)) * win[:, None], axis=0)) ** 2 for a in range(0, len(P) - L, step)], axis=0)
+    f_ = np.fft.rfftfreq(L, io.BIN_S)                       # da 0 a 25 Hz, ogni 1 Hz
+    return float(np.mean(S[(f_ >= 16) & (f_ <= 20)].sum(0) / S[1:].sum(0)))
+
+SMV = {sg: io.smooth_rates(s.spikes, sigma_ms=sg)[:, ACTIVE][:, HELD_IN] for sg in (20, 10)}  # i 120 visibili smussati con σ più piccola
+
+def glm_sigma(sg, k):                                       # lo smoothing + GLM del §11a con un'altra σ, stimato sui 12 trial di training del blocco k
+    fit_ = np.isin(trial, train_trials(k))
+    F = StandardScaler().fit(SMV[sg][fit_]).transform(SMV[sg])
+    return np.column_stack([PoissonRegressor(alpha=0.1, max_iter=500).fit(F[fit_], COUNTS[fit_, h]).predict(F) for h in HIDDEN])
+
+P_GLM_S = {sg: test_only([glm_sigma(sg, k) for k in range(5)]) for sg in SMV}
+CHK14B = {"LFADS con il controller (3 semi)": P_CO, "LFADS, principale (3 semi)": P_LF, "GPFA alla pari": [PRED_GP],
+          "GPFA + regressione di Poisson": [PRED_GPGLM], "smoothing (σ = 50 ms) + GLM": [PRED_GLM],
+          "smoothing (σ = 20 ms) + GLM": [P_GLM_S[20]], "smoothing (σ = 10 ms) + GLM": [P_GLM_S[10]]}
+display(pd.DataFrame({name: {"tutti i 40": fmt4([bits_per_spike(p_, Y_HID) for p_ in P]),
+                             **{BAND_LAB[b]: fmt4([bits_per_spike(p_[:, BAND_OF == b], Y_HID[:, BAND_OF == b]) for p_ in P]) for b in range(4)},
+                             "variazione tra 16 e 20 Hz (%)": f"{np.mean([share18_rates(p_) for p_ in P]) * 100:.1f}"}
+                      for name, P in CHK14B.items()}).T.rename_axis("(2, 3) bit per spike dei nascosti, trial di test, per fascia; quota della variazione delle previsioni a 16-20 Hz"))
+print(f"Per confronto, nei conteggi veri dei 40 nascosti la quota tra 16 e 20 Hz è {share18_rates(Y_HID) * 100:.1f}% "
+      f"(comprende il rumore di Poisson, che è uguale a tutte le frequenze)")
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **(1) Il guadagno viene dalla coordinazione vera tra i canali.** Con i nascosti spostati nel tempo il controller
+#   scende sotto zero sui trial nuovi (−0.0181), esattamente come LFADS senza controller (−0.0179, §13.4); sui trial
+#   visti arriva a 0.0425, la stessa memorizzazione di prima (0.0398). La catena controller → ricucitura → voto non
+#   crea voti positivi da sola.
+# - **(2) Il guadagno sta nei canali sopra i 3.5 Hz e passa per il ritmo a 18 Hz.** Il controller è il migliore in tre
+#   fasce su quattro (0.1011, 0.0948 e 0.0443 bit per spike nelle fasce 2, 3 e 4), ma va sotto zero nella più lenta
+#   (−0.0147), dove vincono la GPFA con la regressione e lo smoothing + GLM (circa 0.015). Le sue previsioni hanno il
+#   32.0% della variazione tra 16 e 20 Hz, contro lo 0.1% di LFADS senza controller e della GPFA: seguono il ritmo a
+#   18 Hz dei conteggi (§11.3) che gli altri modelli, tutti più lisci, cancellano.
+# - **(3) Seguire le fluttuazioni veloci non basta.** Lo smoothing + GLM con meno smoothing non guadagna (0.0386 con
+#   σ = 20 ms, 0.0413 con σ = 10 ms, contro 0.0416 con σ = 50 ms), anche se con σ = 10 ms anche le sue previsioni
+#   hanno il 18.3% della variazione tra 16 e 20 Hz. Il controller riesce a usare il ritmo perché lo stima dall'insieme
+#   dei canali, nei pochi fattori del modello; una regressione canale per canale su 120 ingressi rumorosi no.
+# - **Che cosa non dice**: perché il controller peggiori la fase (un'ipotesi non verificata: gli ingressi assorbono
+#   variazioni che i fattori senza controller usavano per distinguere le fasi); se con più dati (§14d) il quadro del
+#   controller cambi; e lo spostamento dei nascosti è uno solo (seme 0).
+#
+# ### Riepilogo del §14b
+#
+# | variante | fase, tetto: differenza dalla principale | nascosti: differenza | sopra la GPFA sugli stessi pezzi? |
+# |---|---|---|---|
+# | principale (§12): pezzi da 600 ms, senza controller | 47.0% | 0.0387 | no |
+# | pezzi da 400 ms | −0.7 | +0.0036 | sui nascosti 2 semi su 3 (alla pari) |
+# | pezzi da 1 s | −5.3 | −0.0091 | no |
+# | controller | −5.2 | **+0.0244** | **sui nascosti sì, 3 semi su 3** (0.0631 contro 0.0422; sopra anche la GPFA con la regressione, 0.0474); sulla fase no |
+#
+# **In sintesi**: la lunghezza dei pezzi non cambia il verdetto (600 o 400 ms vanno bene, 1 s è peggio). Il controller
+# sì, ma solo sulla misura generativa: con gli ingressi inferiti LFADS diventa il miglior modello dei canali nascosti,
+# perché segue il ritmo a 18 Hz comune alla popolazione. Come descrizione delle fasi del task, invece, peggiora.
