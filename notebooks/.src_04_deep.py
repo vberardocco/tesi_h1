@@ -7217,3 +7217,238 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_nodynamics.png", bbox_inches="t
 #
 # **In sintesi**: in questi dati il guadagno viene dal modellare il tempo; la mappa non lineare, da sola o insieme alla
 # dinamica, non aggiunge niente. L'unica eccezione resta il controller, sui canali nascosti.
+
+# %% [markdown]
+# ### 14.7 · Più dati: le altre due sessioni dello stesso giorno
+#
+# **La domanda.** Al §13b la distanza tra LFADS e la GPFA sui canali nascosti si accorciava con più trial di
+# training (da 0.0114 bit per spike con 4 trial a 0.0035 con 12), senza chiudersi; oltre i 12 trial, con una sola
+# sessione, non potevamo andare. Qui aggiungiamo le altre due sessioni registrate lo stesso giorno (19250108T111022 e
+# 19250108T111455: 8 trial ciascuna, circa 2 minuti ciascuna). In ogni blocco i modelli imparano dai nostri 12 trial
+# di training **più 16 trial nuovi**: 28 in tutto, più del doppio dei dati.
+#
+# **Come.** Le tre sessioni vengono dalla stessa matrice di elettrodi, con gli stessi 176 canali: usiamo i nostri 160
+# canali attivi anche nelle altre due (lì sono attivi 159 e 160 di questi). Le sessioni nuove si tagliano in pezzi da
+# 600 ms dentro ogni loro trial, come la nostra (§9.2), e i pezzi si aggiungono a quelli di training. Tutto il resto
+# non cambia: i 3 trial di test di ogni blocco (sempre della nostra sessione), il metro comune (il classificatore
+# impara dai punti dei nostri 12 trial di training), 200 epoche (che con più dati vogliono dire più passi, circa
+# 3800 invece di 1600), 3 semi. Anche la GPFA alla pari, la FA e lo smoothing + GLM imparano dalle sessioni nuove.
+# Nelle due varianti "con la regressione di Poisson" (GPFA e LFADS) i modelli dei fattori usano i dati in più, mentre
+# la regressione dai fattori ai nascosti resta stimata sui nostri 12 trial, come al §12.4.
+#
+# **Le alternative scartate**:
+#
+# - un LFADS **multi-sessione** (un livello d'ingresso diverso per ogni sessione, come in AutoLFADS) serve quando i
+#   canali cambiano da una sessione all'altra; qui sono gli stessi, e lo controlliamo qui sotto;
+# - **tutte le 13 sessioni di calibrazione**: più dati, ma da giorni diversi, con i cambiamenti dei segnali da un
+#   giorno all'altro.
+#
+# **LFADS con il controller.** Dopo il §14b proviamo con più dati anche LFADS con il controller (aggiunta decisa dopo
+# aver visto il §14b, e lo dichiariamo): la domanda per lui è se più dati recuperino la fase, dove era sotto.
+#
+# **La regola** è quella del §14a: il verdetto del §12 cambia se, con gli stessi dati, LFADS supera la GPFA alla pari
+# con tutti e 3 i semi, su una delle due misure.
+#
+# **I controlli**: i canali sono davvero gli stessi (la frequenza media di ogni canale nelle sessioni nuove contro la
+# nostra); ogni pezzo nuovo sta dentro un trial; le funzioni nuove per FA e GLM, senza le sessioni nuove, ridanno
+# esattamente quelle del §12.
+#
+# 60 allenamenti nuovi (con e senza controller, 2 forme × 5 blocchi × 3 semi) e 5 stime della GPFA, su 2.4 volte i
+# dati: circa 1 ora e 30 la prima volta.
+
+# %%
+EXTRA_SID = ("19250108T111022", "19250108T111455")         # le altre due sessioni dello stesso giorno
+EXTRA = {sid: io.load_session(SESS.parent / SESS.name.replace("19250108T110520", sid)) for sid in EXTRA_SID}
+X_EX = {sid: s_.spikes[:, ACTIVE].astype(np.float32) for sid, s_ in EXTRA.items()}  # i conteggi dei nostri 160 canali attivi
+pieces_ex, inside_ex = [], []
+for sid, s_ in EXTRA.items():
+    for t in np.unique(s_.trial_num):                       # ogni trial della sessione, come nella nostra (§9.2)
+        a0, a1 = int(np.flatnonzero(s_.trial_num == t)[0]), int(np.flatnonzero(s_.trial_num == t)[-1]) + 1
+        st = segment_starts(a0, a1)                         # un pezzo ogni 20 bin, l'ultimo allineato alla fine del trial
+        pieces_ex.append(np.stack([X_EX[sid][a:a + SEG_LEN] for a in st]))
+        inside_ex.append(all(np.all(s_.trial_num[a:a + SEG_LEN] == t) for a in st))
+SEGS_EX = np.concatenate(pieces_ex)                         # i pezzi delle due sessioni nuove
+SEGS_EX_HID = SEGS_EX[..., ORDER_HID]                       # e con prima i 120 visibili, poi i 40 nascosti
+rate_ours = COUNTS.mean(0) / io.BIN_S                       # frequenza media di ogni canale (Hz), nella nostra sessione
+for sid, x_ in X_EX.items():
+    r_ = x_.mean(0) / io.BIN_S
+    print(f"{sid}: {len(np.unique(EXTRA[sid].trial_num))} trial, {x_.shape[0]} bin; frequenza media dei canali: correlazione con la "
+          f"nostra sessione {np.corrcoef(r_, rate_ours)[0, 1]:.3f} (con l'ordine dei canali rimescolato: "
+          f"{np.corrcoef(np.random.default_rng(0).permutation(r_), rate_ours)[0, 1]:.3f}); media {r_.mean():.2f} Hz contro {rate_ours.mean():.2f}")
+print(f"Pezzi nuovi: {len(SEGS_EX)} (nei 12 trial di training di un blocco ce ne sono circa {n_seg(train_trials(0))}); "
+      f"ogni pezzo dentro il suo trial: {all(inside_ex)}")
+
+# %%
+def job14d(form, k, sd):                                    # come al §12, con i pezzi delle sessioni nuove aggiunti ai pezzi di training
+    hp_, data_ = FORMS14[form]
+    j_ = lf12_job(sd, train_trials(k), hp=hp_, **data_)
+    j_["train"] = j_["val"] = np.concatenate([j_["train"], SEGS_EX if form == "tutti i canali" else SEGS_EX_HID])
+    return j_
+
+def job14d_co(form, k, sd):                                 # lo stesso, con il controller del §14b
+    j_ = job14d(form, k, sd)
+    j_["hp"] = dict(j_["hp"], **CO14)
+    return j_
+
+RUNS14D = [(f_, k, sd) for f_ in FORMS14 for k in range(5) for sd in SEEDS14]
+res14d = dict(zip(RUNS14D, run_lfads_cached([job14d(*r) for r in RUNS14D])))
+res14d_co = dict(zip(RUNS14D, run_lfads_cached_co([job14d_co(*r) for r in RUNS14D])))
+GP14D = dict(zip(range(5), gpfa_cached([np.concatenate([SEGS[t] for t in train_trials(k)] + [SEGS_EX]) for k in range(5)])))  # GPFA alla pari, stessi dati
+display(pd.DataFrame({f"{lab}, {f_}": {"pezzi di training": mm([len(job14d(f_, k, 0)["train"]) for k in range(5)]),
+                                        "ingressi inferiti (dai pesi)": mm([co_dim_of(r_[(f_, k, sd)]["weights"]) for k in range(5) for sd in SEEDS14]),
+                                        "passi": mm([r_[(f_, k, sd)]["steps"] for k in range(5) for sd in SEEDS14]),
+                                        "versione tenuta (epoca)": mm([r_[(f_, k, sd)]["best_epoch"] for k in range(5) for sd in SEEDS14])}
+                      for lab, r_ in (("senza controller", res14d), ("con il controller", res14d_co)) for f_ in FORMS14}).T)
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **I canali sono gli stessi nelle tre sessioni**: la frequenza media di ogni canale nelle sessioni nuove correla 0.986
+#   e 0.983 con la nostra (circa 0 se si rimescola l'ordine dei canali), e la media è quasi uguale (14.1 e 14.0 Hz
+#   contro 14.2).
+# - **I dati in più**: 662 pezzi nuovi (16 trial), che si aggiungono ai circa 488 dei 12 trial di training: 1145-1153
+#   pezzi, 3600-3800 passi in 200 epoche. Ogni pezzo nuovo sta dentro il suo trial.
+# - I modelli con il controller hanno i 4 ingressi inferiti, quelli senza no; la versione tenuta è in pratica l'ultima
+#   (tra l'epoca 182 e la 200).
+# - I 60 allenamenti e le 5 GPFA hanno richiesto circa 2 ore.
+#
+# ### 14.8 · Le due misure, con più dati
+#
+# Per ogni modello, il voto con i nostri 12 trial (dal §12, dal §13, dal §14b e dal §14c; per LFADS i semi 0-2) e
+# quello con i 28 trial. La figura riprende le curve del §13b ("quanti trial servono") e ci aggiunge il punto con le sessioni
+# nuove.
+
+# %%
+SM_VIS_EX = [io.smooth_rates(s_.spikes, sigma_ms=50)[:, ACTIVE][:, HELD_IN] for s_ in EXTRA.values()]  # i 120 visibili smussati, sessioni nuove
+
+def fa_extra(k, extra=True):                                # FA con 25 fattori sui 12 trial di training (e sulle sessioni nuove): fattori ordinati e nascosti
+    Y = np.sqrt(COUNTS.astype(float))
+    Y_fit = np.concatenate([Y[np.isin(trial, train_trials(k))]] + ([np.sqrt(x_.astype(float)) for x_ in X_EX.values()] if extra else []))
+    fa_ = FactorAnalysis(n_components=K_PCA, svd_method="lapack", random_state=0).fit(Y_fit)
+    L, psi, m = fa_.components_.T, fa_.noise_variance_, fa_.mean_  # come fa_hidden (§12.4)
+    Lv, Lh = L[HELD_IN], L[HIDDEN]
+    S = np.linalg.inv(np.eye(K_PCA) + Lv.T @ (Lv / psi[HELD_IN, None]))
+    X = ((Y[:, HELD_IN] - m[HELD_IN]) / psi[HELD_IN]) @ Lv @ S  # fattori di ogni bin dai soli visibili
+    return order_by_readout(fa_.transform(Y), L), (X @ Lh.T + m[HIDDEN]) ** 2 + psi[HIDDEN] + np.einsum("hi,ij,hj->h", Lh, S, Lh)
+
+def glm_extra(k, extra=True):                               # smoothing + GLM (§11a) stimato sui 12 trial di training (e sulle sessioni nuove)
+    fit_ = np.isin(trial, train_trials(k))
+    F_fit = np.concatenate([SM_VIS[fit_]] + (SM_VIS_EX if extra else []))
+    C_fit = np.concatenate([COUNTS[fit_]] + (list(X_EX.values()) if extra else []))
+    sc = StandardScaler().fit(F_fit)
+    return np.column_stack([PoissonRegressor(alpha=0.1, max_iter=500).fit(sc.transform(F_fit), C_fit[:, h]).predict(sc.transform(SM_VIS))
+                            for h in HIDDEN])
+
+def glm_on(lat, k):                                         # regressione di Poisson da fattori qualsiasi (tutta la sessione) ai nascosti, sui 12 trial di training del blocco k
+    fit_ = np.isin(trial, train_trials(k))
+    F = StandardScaler().fit(lat[fit_]).transform(lat)
+    return np.column_stack([PoissonRegressor(alpha=0.1, max_iter=500).fit(F[fit_], COUNTS[fit_, h]).predict(F) for h in HIDDEN])
+
+f_chk, h_chk = fa_extra(0, extra=False)
+print(f"Controllo: senza le sessioni nuove, fa_extra = fa_factors e fa_hidden (differenze massime {np.abs(f_chk - F_FA12[0]).max():.1e} e "
+      f"{np.abs(h_chk - fa_hidden(train_trials(0))).max():.1e}); glm_extra = smooth_glm_rates "
+      f"({np.abs(glm_extra(0, extra=False) - smooth_glm_rates(train_trials(0), 0.1)).max():.1e})")
+
+FA14D = {k: fa_extra(k) for k in range(5)}                  # blocco -> (fattori, nascosti), con le sessioni nuove
+F_GP14D = {k: stitch_all([gpfa_infer_segments(SEGS[t], GP14D[k]) for t in TRIALS]) for k in range(5)}
+FULL14D = {"smoothing + GLM": [[glm_extra(k)] for k in range(5)],
+           "FA": [[FA14D[k][1]] for k in range(5)],
+           "GPFA alla pari": [[np.concatenate([stitch(gpfa_hidden(SEGS[t], GP14D[k])[0], t) for t in TRIALS])] for k in range(5)],
+           "GPFA + regressione di Poisson": [[gpfa_glm(k, gp=GP14D)] for k in range(5)],
+           "LFADS (3 semi)": [[stitch_all(res14d[("120 + 40", k, sd)]["rates"]) for sd in SEEDS14] for k in range(5)],
+           "LFADS con il controller (3 semi)": [[stitch_all(res14d_co[("120 + 40", k, sd)]["rates"]) for sd in SEEDS14] for k in range(5)],
+           "LFADS + regressione di Poisson (3 semi)": [[glm_on(stitch_all(res14d[("120 + 40", k, sd)]["factors"]), k) for sd in SEEDS14] for k in range(5)]}
+B14D = {name: [bits_per_spike(test_only([full[k][i] for k in range(5)]), Y_HID) for i in range(len(full[0]))] for name, full in FULL14D.items()}
+SN14D = {name: seen_new(full, Y_HID) for name, full in FULL14D.items()}
+B12 = {"smoothing + GLM": BPS12[("smoothing + GLM (riferimento)", "tutta la sessione")], "FA": BPS12[("FA", "tutta la sessione")],
+       "GPFA alla pari": BPS12[("GPFA alla pari", "tutta la sessione")],
+       "GPFA + regressione di Poisson": BPS12[("variante: GPFA + regressione di Poisson", "tutta la sessione")],
+       "LFADS (3 semi)": M14["principale (§12)"]["nascosti"], "LFADS con il controller (3 semi)": M14B["controller"]["nascosti"],
+       "LFADS + regressione di Poisson (3 semi)": b_lfglm[:len(SEEDS14)]}  # 12 trial
+display(pd.DataFrame({name: {"12 trial": fmt4(B12[name]), "12 + 16 trial": fmt4(B14D[name]),
+                             "guadagno": f"{np.mean(B14D[name]) - np.mean(B12[name]):+.4f}",
+                             "nuovi / visti, 12 + 16 trial": fmt2(SN14D[name][:, :, 1].mean(1) / SN14D[name][:, :, 0].mean(1))}
+                      for name in FULL14D}).T.rename_axis("bit per spike, 40 nascosti, trial di test; LFADS: media [minimo, massimo] tra i 3 semi"))
+
+ACC14D = {"FA": [acc14(lambda k: FA14D[k][0])],
+          "GPFA alla pari": [acc14(lambda k: F_GP14D[k])],
+          "LFADS (3 semi)": [acc14(lambda k, sd=sd: order_by_readout(stitch_all(res14d[("tutti i canali", k, sd)]["factors"]),
+                                                                      res14d[("tutti i canali", k, sd)]["weights"]["readout.0.weight"])) for sd in SEEDS14],
+          "LFADS con il controller (3 semi)": [acc14(lambda k, sd=sd: order_by_readout(stitch_all(res14d_co[("tutti i canali", k, sd)]["factors"]),
+                                                                                        res14d_co[("tutti i canali", k, sd)]["weights"]["readout.0.weight"]))
+                                               for sd in SEEDS14]}
+A12 = {"FA": (ACC12[("FA", "tetto: tutti i 25 fattori")], ACC12[("FA", "primi 3 fattori")]),
+       "GPFA alla pari": (M14[f"GPFA alla pari, {K_PCA} fattori"]["tetto"], M14[f"GPFA alla pari, {K_PCA} fattori"]["primi 3"]),
+       "LFADS (3 semi)": (M14["principale (§12)"]["tetto"], M14["principale (§12)"]["primi 3"]),
+       "LFADS con il controller (3 semi)": (M14B["controller"]["tetto"], M14B["controller"]["primi 3"])}
+display(pd.DataFrame({name: {"tetto, 12 trial": fmt(A12[name][0]), "tetto, 12 + 16 trial": fmt([a for a, _ in v]),
+                             "primi 3, 12 trial": fmt(A12[name][1]), "primi 3, 12 + 16 trial": fmt([b for _, b in v])}
+                      for name, v in ACC14D.items()}).T.rename_axis("fase riconosciuta (%), a caso 12.5"))
+for lab in ("LFADS (3 semi)", "LFADS con il controller (3 semi)"):
+    for meas, gp_v, lf_v in (("fase, tetto (punti)", ACC14D["GPFA alla pari"][0][0], [a for a, _ in ACC14D[lab]]),
+                             ("nascosti (bit per spike)", B14D["GPFA alla pari"][0], B14D[lab])):
+        print(f"Con 12 + 16 trial, GPFA alla pari meno {lab}, {meas}: {(fmt1s if 'fase' in meas else fmt4)(gp_v - np.array(lf_v))}; semi sopra la GPFA: "
+              f"{int(np.sum(np.array(lf_v) > gp_v))} su {len(lf_v)}")
+
+# %%
+fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+curves14d = ((ax[0], ["FA", "GPFA alla pari", "LFADS (3 semi)"], lambda name, n: ACC13[(name, n, "tetto: tutti i 25 fattori")],
+              lambda name: [a for a, _ in ACC14D[name]], "fase riconosciuta (%), tetto (a caso 12.5)", "Riconoscimento della fase, trial di test"),
+             (ax[1], ["smoothing + GLM (riferimento)", "FA", "GPFA alla pari", "GPFA + regressione di Poisson", "LFADS (3 semi)"],
+              lambda name, n: BPS13[(name, n)], lambda name: B14D[name.replace(" (riferimento)", "")], "bit per spike, 40 nascosti",
+              "Canali nascosti dei trial di test"))
+for a_, names, get13, get14, ylab, title in curves14d:
+    for name in names:
+        v = np.array([get13(name, n) for n in SIZES13])     # la curva del §13b: 4, 7, 10, 12 trial
+        a_.plot(SIZES13, v.mean(1), color=COL13[name], marker="o", lw=2, label=name)
+        if v.shape[1] > 1:
+            a_.fill_between(SIZES13, v.min(1), v.max(1), color=COL13[name], alpha=0.2)  # minimo-massimo tra i semi
+        w_ = np.array(get14(name))                          # il punto nuovo: 12 + 16 trial
+        a_.plot([12, 28], [v.mean(1)[-1], w_.mean()], color=COL13[name], lw=1, ls=":")  # tratteggio: si passa alle sessioni nuove
+        a_.errorbar(28, w_.mean(), yerr=[[w_.mean() - w_.min()], [w_.max() - w_.mean()]], color=COL13[name], marker="s", mfc="white",
+                    ls="none", capsize=3)
+    a_.set(xticks=list(SIZES13) + [28], xlabel="trial di training (28 = i nostri 12 + i 16 delle altre due sessioni; quadrati vuoti)",
+           ylabel=ylab, title=title)
+for a_, v12, v28 in ((ax[0], M14B["controller"]["tetto"], [a for a, _ in ACC14D["LFADS con il controller (3 semi)"]]),
+                     (ax[1], M14B["controller"]["nascosti"], B14D["LFADS con il controller (3 semi)"])):  # il controller: solo 12 e 28 trial
+    a_.plot([12, 28], [np.mean(v12), np.mean(v28)], color="C4", lw=1, ls=":", marker="D", ms=6, label="LFADS con il controller (§14b)")
+ax[1].axhline(0, color="k", lw=0.8)
+ax[0].legend(fontsize=8); ax[1].legend(fontsize=8, ncol=2)
+fig.tight_layout(); fig.savefig(FIGS / "04_lfads_moredata.png", bbox_inches="tight"); plt.show()
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Il controllo torna**: senza le sessioni nuove, le funzioni nuove per FA e GLM ridanno esattamente quelle del §12.
+# - **Con più del doppio dei dati, LFADS senza controller raggiunge la GPFA.**
+#   - **Fase**: 51.7% (da 50.7 a 52.4 tra i semi) contro 51.1% della GPFA alla pari; LFADS guadagna 4.7 punti, la
+#     GPFA nessuno (51.4% con 12 trial). 2 semi su 3 sopra la GPFA: per la regola (3 su 3) è un pareggio, non un
+#     sorpasso.
+#   - **Canali nascosti**: 0.0460 contro 0.0449, con tutti e 3 i semi sopra: **per la regola, sui nascosti il
+#     verdetto cambia anche senza controller**. LFADS guadagna 0.0073, la GPFA 0.0027.
+# - **Con il controller il vantaggio sui nascosti cresce**: 0.0742 (+0.0111), il voto più alto di tutto il notebook.
+#   Sulla fase sale a 45.8%, ma resta 5.3 punti sotto la GPFA.
+# - **Chi guadagna di più dai dati è chi ha più libertà**: lo smoothing + GLM (+0.0079, a 0.0495) e LFADS; la FA non
+#   guadagna nulla (+0.0002), la GPFA poco. Con 28 trial lo smoothing + GLM e la GPFA con la regressione di Poisson
+#   (0.0498) restano comunque sopra LFADS senza controller; solo LFADS con il controller li supera.
+# - **La memorizzazione scende per tutti**: sui trial nuovi resta il 50-54% del voto dei trial visti per LFADS (era il
+#   40%), il 79% per la GPFA.
+# - **La figura**: le curve del §13b ("quanti trial servono") con il punto a 28 trial (quadrati vuoti; il tratteggio
+#   ricorda che i 16 trial in più vengono da altre sessioni), e LFADS con il controller (rombi viola) a 12 e 28 trial.
+#   Le curve di LFADS continuano a salire, quella della GPFA sulla fase è piatta.
+# - **Che cosa non dice**: i trial in più vengono da sessioni registrate pochi minuti dopo, non dalla stessa (il
+#   punto a 28 trial non è sulla stessa curva del §13b in senso stretto); un solo modo di aggiungere i dati (niente
+#   multi-sessione); che cosa succederebbe con ancora più dati.
+#
+# ### Riepilogo del §14d
+#
+# | domanda | risposta | dove |
+# |---|---|---|
+# | con 28 trial invece di 12, LFADS raggiunge la GPFA sulla fase? | **la raggiunge**: 51.7% contro 51.1%, ma con 2 semi su 3 (pareggio per la regola) | §14.8 |
+# | e sui canali nascosti? | **la supera** con tutti e 3 i semi: 0.0460 contro 0.0449 | §14.8 |
+# | e con il controller? | sui nascosti ancora di più (0.0742); sulla fase resta sotto (45.8%) | §14.8 |
+# | chi guadagna dai dati? | LFADS e lo smoothing + GLM; la GPFA quasi niente, la FA niente | §14.8 |
+#
+# **In sintesi**: la distanza del §12 era in buona parte una questione di dati. Con 12 trial LFADS memorizza e resta
+# sotto; con 28 raggiunge la GPFA sulla fase e la supera sui canali nascosti, mentre la GPFA, che con pochi dati era
+# già al suo massimo, non migliora.
