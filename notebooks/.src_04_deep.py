@@ -6397,3 +6397,219 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_trials.png", bbox_inches="tight
 # **Che cosa non abbiamo verificato**: più di 12 trial di training (le altre due sessioni, §14); un solo
 # ordine dei trial per blocco; i parametri di LFADS, la penalità del GLM e il numero di fattori della GPFA non
 # sono stati scelti di nuovo per ogni quantità di dati.
+
+# %% [markdown]
+# ## 14 · Sensibilità e alternative
+#
+# Il §12 ha dato una risposta negativa e il §13 ha controllato che non sia un artefatto. Resta una domanda: la
+# risposta dipende dalle **scelte** fatte per LFADS? La configurazione viene da una piccola griglia sui trial
+# di validazione del blocco 0 (§11b); le grandezze della rete, la lunghezza dei pezzi e l'assenza del
+# controller sono state fissate a mano. Qui cambiamo **una cosa alla volta**, lasciando tutto il resto come al
+# §12, e rifacciamo le due misure.
+#
+# - **§14a (questa parte)**: le grandezze (fattori, generatore) e la regolarizzazione che la griglia non ha
+#   esplorato (peso del KL sotto × 0.3, penalità L2 sul generatore);
+# - **§14b**: la lunghezza dei pezzi e il controller;
+# - **§14c**: LFADS senza dinamica (la "FA non lineare") e la regressione di Poisson sui fattori di LFADS;
+# - **§14d**: più dati, con le altre due sessioni dello stesso giorno.
+#
+# **Lo schema di ogni variante** è quello del §12: 12 trial di training per blocco, 5 blocchi, 200 epoche,
+# le due forme (tutti i canali per la fase, 120 + 40 per i nascosti), con i **semi 0-2**. Il termine di
+# confronto è la configurazione del §12 con gli stessi semi (i modelli sono già su disco): ogni variante si
+# confronta con la principale **seme per seme**.
+#
+# **Le misure**: la fase con il metro comune (tutti i fattori, cioè il tetto, e i primi 3 ordinati); i bit
+# per spike dei 40 nascosti sui trial di test (§12.4); quanto del voto sui nascosti resta passando dai trial
+# visti a quelli nuovi (§13.2), perché la memorizzazione è il sospetto principale.
+#
+# **La regola, fissata prima di guardare**: il verdetto del §12 cambia se una variante porta LFADS **sopra la
+# GPFA alla pari con lo stesso numero di fattori**, con tutti e 3 i semi, su una delle due misure (tetto della
+# fase o nascosti). Per le varianti con 10 e 40 fattori stimiamo anche la GPFA alla pari con 10 e 40 fattori.
+
+# %% [markdown]
+# ### 14.1 · Le grandezze e la regolarizzazione
+#
+# | variante | che cosa cambia (al §12) | perché provarla |
+# |---|---|---|
+# | fattori 10 | 10 fattori (25) | meno dimensioni in cui descrivere l'attività: meno spazio per memorizzare |
+# | fattori 40 | 40 fattori (25) | più spazio, nel caso 25 fossero pochi per un modello non lineare |
+# | generatore 32 | 32 unità nel generatore (64) | una rete più piccola, con meno pesi da imparare da pochi dati |
+# | generatore 128 | 128 unità (64) | una rete più grande: dinamiche più ricche, se i dati le contengono |
+# | peso del KL × 0.1 | 0.1 / (30 × 160) (0.3 / (30 × 160)) | il valore scelto stava sul bordo della griglia (§11b) |
+# | L2 sul generatore × 10 | 10⁻¹ (10⁻²) | pesi ricorrenti più piccoli: una dinamica più semplice, quindi meno memorizzazione |
+#
+# Il dropout non lo cambiamo: nella griglia del §11b il suo massimo cadeva all'interno (0.05 meglio di 0,
+# 0.02 e 0.25). Encoder e condizione iniziale restano a 64.
+#
+# 180 allenamenti nuovi (6 varianti × 2 forme × 5 blocchi × 3 semi; i 30 della principale sono del §12) e 10
+# stime della GPFA (10 e 40 fattori): circa 1 ora e 35 minuti la prima volta. Una prova di 10 epoche (4
+# alla volta) ha dato per il generatore da 128 circa il 10% di tempo in più, e per le altre varianti lo stesso
+# tempo della principale.
+
+# %%
+SEEDS14 = range(3)                                          # i semi 0-2, gli stessi del §13b
+VARIANTS14A = {"principale (§12)": {},                       # che cosa cambia rispetto alla configurazione del §12
+               "fattori 10": dict(fac_dim=10),
+               "fattori 40": dict(fac_dim=40),
+               "generatore 32": dict(gen_dim=32),
+               "generatore 128": dict(gen_dim=128),
+               "peso del KL × 0.1": dict(kl_ic_scale=LF_HP["kl_ic_scale"] / 3),  # da 0.3 a 0.1 volte l'ELBO vero
+               "L2 sul generatore × 10": dict(l2_gen_scale=LF_HP["l2_gen_scale"] * 10)}
+FORMS14 = {"tutti i canali": (LF_HP, {}),                   # (configurazione di partenza, dati) delle due forme del §12
+           "120 + 40": (LF_HID_HP, dict(segs=SEGS_HID, rate_cols=HID_COLS))}
+
+def job14(var, form, k, sd):                                # un allenamento: variante, forma, blocco, seme; il resto come al §12
+    hp_, data_ = FORMS14[form]
+    return lf12_job(sd, train_trials(k), hp=dict(hp_, **VARIANTS14A[var]), **data_)
+
+RUNS14A = [(v, f_, k, sd) for v in VARIANTS14A for f_ in FORMS14 for k in range(5) for sd in SEEDS14]
+res14a = dict(zip(RUNS14A, run_lfads_cached([job14(*r) for r in RUNS14A])))
+
+GP14 = {d_: dict(zip(range(5), gpfa_cached([np.concatenate([SEGS[t] for t in train_trials(k)]) for k in range(5)], x_dim=d_)))
+        for d_ in (10, 40)}                                 # la GPFA alla pari con 10 e 40 fattori
+GP14[K_PCA] = {k: GP12[k] for k in range(5)}                # con 25: quella del §12
+
+def shapes(w):                                              # le grandezze di un modello lette dai suoi pesi: fattori, generatore
+    return w["readout.0.weight"].shape[1], w["decoder.rnn.cell.gen_cell.weight_hh"].shape[1]
+
+display(pd.DataFrame({v: {"fattori, generatore (dai pesi)": ", ".join(sorted({"{}, {}".format(*shapes(res14a[(v, f_, k, sd)]["weights"]))
+                                                                             for f_ in FORMS14 for k in range(5) for sd in SEEDS14})),
+                          "versione tenuta (epoca)": mm([res14a[(v, f_, k, sd)]["best_epoch"] for f_ in FORMS14 for k in range(5) for sd in SEEDS14])}
+                      for v in VARIANTS14A}).T)
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Le varianti sono quelle volute**: i pesi salvati hanno 10 e 40 fattori, un generatore da 32 e da 128 unità;
+#   il peso del KL e la penalità L2 non si vedono nei pesi, ma fanno parte della configurazione e quindi
+#   dell'impronta di ogni modello (§10.5).
+# - **La versione tenuta è in pratica l'ultima** in tutti i 210 modelli (tra l'epoca 193 e la 200), come al §12.
+# - I 30 modelli della principale e le GPFA a 25 fattori sono stati riletti dal disco. La durata di questa
+#   esecuzione non è indicativa: il computer eseguiva nello stesso tempo altri notebook ed è rimasto in stop per
+#   quasi due ore (l'esecuzione è poi ripresa da sola). Senza altri calcoli vale la stima scritta sopra.
+#
+# ### 14.2 · Le due misure, variante per variante
+
+# %%
+F_LF14 = {run: order_by_readout(stitch_all(r["factors"]), r["weights"]["readout.0.weight"])  # fattori ordinati, tutta la sessione
+          for run, r in res14a.items() if run[1] == "tutti i canali"}
+F_GP14 = {d_: {k: stitch_all([gpfa_infer_segments(SEGS[t], GP14[d_][k]) for t in TRIALS]) for k in range(5)} for d_ in (10, 40)}
+F_GP14[K_PCA] = {k: F_GP12[k] for k in range(5)}
+
+def acc14(get):                                             # fase riconosciuta: (tetto, primi 3) per una funzione blocco -> fattori
+    return decode_map(fold_inp(get), emb_none), decode_map(fold_inp(lambda k: get(k)[:, :3]), emb_none)
+
+def full_lf14(var):                                         # [blocco][seme] -> conte attese dei 40 nascosti in tutta la sessione (forma 120 + 40)
+    return [[stitch_all(res14a[(var, "120 + 40", k, sd)]["rates"]) for sd in SEEDS14] for k in range(5)]
+
+def full_gp14(d_):                                          # lo stesso per la GPFA alla pari con d_ fattori (un solo modello per blocco)
+    if d_ == K_PCA:
+        return FULL13["GPFA alla pari"]                     # con 25 fattori: già calcolata al §13.2
+    return [[np.concatenate([stitch(gpfa_hidden(SEGS[t], GP14[d_][k])[0], t) for t in TRIALS])] for k in range(5)]
+
+def fmt2(v):                                                # "media [minimo, massimo]" con 2 decimali
+    v = np.atleast_1d(v)
+    return f"{v.mean():.2f}" if len(v) == 1 else f"{v.mean():.2f} [{v.min():.2f}, {v.max():.2f}]"
+
+M14 = {}                                                    # nome -> dict di misure, ognuna una lista (un valore per seme)
+for v in VARIANTS14A:
+    ph = [acc14(lambda k, sd=sd: F_LF14[(v, "tutti i canali", k, sd)]) for sd in SEEDS14]
+    full = full_lf14(v)
+    sn = seen_new(full, Y_HID)                              # (semi, 5 blocchi, 2): bit per spike su trial visti e nuovi (§13.2)
+    M14[v] = {"tetto": [a for a, _ in ph], "primi 3": [b for _, b in ph],
+              "nascosti": [bits_per_spike(test_only([full[k][i] for k in range(5)]), Y_HID) for i in range(len(SEEDS14))],
+              "nuovi / visti": list(sn[:, :, 1].mean(1) / sn[:, :, 0].mean(1))}
+for d_ in (10, K_PCA, 40):
+    a_, b_ = acc14(lambda k, d_=d_: F_GP14[d_][k])
+    full = full_gp14(d_)
+    sn = seen_new(full, Y_HID)
+    M14[f"GPFA alla pari, {d_} fattori"] = {"tetto": [a_], "primi 3": [b_],
+                                            "nascosti": [bits_per_spike(test_only([full[k][0] for k in range(5)]), Y_HID)],
+                                            "nuovi / visti": [sn[0, :, 1].mean() / sn[0, :, 0].mean()]}
+
+GP_SAME = {v: f"GPFA alla pari, {VARIANTS14A[v].get('fac_dim', K_PCA)} fattori" for v in VARIANTS14A}  # la GPFA con gli stessi fattori
+chk14 = max(abs(np.mean(M14["principale (§12)"]["tetto"]) - np.mean(ACC13[("LFADS (3 semi)", 12, "tetto: tutti i 25 fattori")])),
+            abs(np.mean(M14["principale (§12)"]["nascosti"]) - np.mean(BPS13[("LFADS (3 semi)", 12)])),
+            abs(M14[f"GPFA alla pari, {K_PCA} fattori"]["nascosti"][0] - BPS12[("GPFA alla pari", "tutta la sessione")][0]))
+print(f"Controllo: la principale e la GPFA a 25 fattori danno gli stessi numeri del §13b e del §12.4 (differenza massima {chk14:.1e})")
+
+display(pd.DataFrame({name: {"fase, tetto (%)": fmt(m["tetto"]), "fase, primi 3 (%)": fmt(m["primi 3"]),
+                             "nascosti, trial di test (bit per spike)": fmt4(m["nascosti"]), "nuovi / visti": fmt2(m["nuovi / visti"])}
+                      for name, m in M14.items()}).T.rename_axis("media (minimo-massimo) tra i 3 semi; a caso 12.5%"))
+
+P14 = M14["principale (§12)"]
+display(pd.DataFrame({v: {"tetto: differenza dalla principale (punti)": fmt1s(np.subtract(M14[v]["tetto"], P14["tetto"])),
+                          "nascosti: differenza dalla principale": fmt4(np.subtract(M14[v]["nascosti"], P14["nascosti"])),
+                          "GPFA con gli stessi fattori": GP_SAME[v].replace("GPFA alla pari, ", ""),
+                          "semi sopra la GPFA: tetto": f"{int(np.sum(np.array(M14[v]['tetto']) > M14[GP_SAME[v]]['tetto'][0]))} su 3",
+                          "semi sopra la GPFA: nascosti": f"{int(np.sum(np.array(M14[v]['nascosti']) > M14[GP_SAME[v]]['nascosti'][0]))} su 3"}
+                      for v in VARIANTS14A}).T.rename_axis("seme per seme; [minimo, massimo] tra i 3 semi"))
+
+# %%
+ROWS14 = list(VARIANTS14A)[::-1]                            # dall'alto in basso come nella tabella
+fig, ax = plt.subplots(1, 2, figsize=(15, 4.8), sharey=True)
+for a_, meas, xlab in ((ax[0], "tetto", "fase riconosciuta (%), tutti i fattori"), (ax[1], "nascosti", "bit per spike, 40 nascosti, trial di test")):
+    for y, v in enumerate(ROWS14):
+        vals = np.array(M14[v][meas])
+        a_.scatter(vals, np.full(len(vals), y), color="C3", s=18, alpha=0.6, zorder=3)  # i 3 semi
+        a_.scatter(vals.mean(), y, color="C3", s=70, marker="D", zorder=4, label="LFADS: media dei 3 semi (punti piccoli: i semi)" if y == 0 else None)
+        g_ = M14[GP_SAME[v]][meas][0]
+        a_.scatter(g_, y, color="C0", s=70, marker="|", linewidths=3, zorder=4, label="GPFA alla pari con gli stessi fattori" if y == 0 else None)
+    a_.axvline(np.mean(P14[meas]), color="C3", ls=":", lw=1)  # la principale, per confronto
+    a_.set(xlabel=xlab, yticks=range(len(ROWS14)), yticklabels=ROWS14)
+    a_.grid(axis="y", alpha=0.3)
+ax[0].legend(fontsize=8, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.13))  # sotto il grafico, per non coprire i punti
+ax[0].set_title("Fase (linea tratteggiata: la principale)"); ax[1].set_title("Canali nascosti dei trial di test")
+fig.tight_layout(); fig.savefig(FIGS / "04_lfads_variants_a.png", bbox_inches="tight"); plt.show()
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Il controllo torna**: la principale e la GPFA a 25 fattori danno esattamente i numeri del §13b e del §12.4.
+# - **Nessuna variante cambia il verdetto**, secondo la regola fissata prima di guardare: nessuna porta LFADS
+#   sopra la GPFA alla pari con gli stessi fattori con tutti e 3 i semi, né sulla fase né sui nascosti. Il caso
+#   più vicino è quello con 10 fattori sui nascosti: un seme su tre supera la GPFA a 10 fattori di circa 0.0001
+#   bit per spike, ma la media resta sotto (0.0321 contro 0.0329).
+# - **Tre varianti peggiorano LFADS in tutti e 3 i semi**, seme per seme rispetto alla principale:
+#   - **10 fattori**: −5.7 punti sulla fase e −0.0066 bit per spike sui nascosti. Sono troppo poche
+#     dimensioni; ma anche la GPFA ne soffre (44.7% e 0.0329 con 10 fattori), e così le due si avvicinano;
+#   - **generatore da 128**: −1.7 punti e −0.0071. È la variante che memorizza di più: sui trial nuovi resta
+#     solo il 25% del voto dei trial visti (40% la principale);
+#   - **peso del KL × 0.1**: −1.6 punti e −0.0033, e memorizza di più (33%). Il valore scelto al §11b stava sul
+#     bordo della griglia: andando oltre, verso meno regolarizzazione, si sta peggio, non meglio.
+# - **Due varianti cambiano poco**: 40 fattori (+0.1 punti, −0.0007, memorizza di più: 35%) e generatore da 32
+#   (−1.1 punti, −0.0005: memorizza di meno, 48%, ma sui trial nuovi non guadagna).
+# - **L'unica che va un po' meglio è la L2 sul generatore × 10**: +0.5 punti sulla fase in tutti e 3 i semi
+#   (da +0.2 a +0.8) e +0.0006 sui nascosti (da circa 0 a +0.0013), con un po' meno memorizzazione (42%). Il
+#   guadagno però è piccolo rispetto alla distanza dalla GPFA, che resta di 4.0 punti e 0.0029 bit per spike.
+#   È il valore più alto che abbiamo provato: valori ancora più alti non li conosciamo.
+# - **Memorizzare di più non aiuta mai**: le varianti con più capacità o meno regolarizzazione (generatore da
+#   128, KL × 0.1, 40 fattori) trattengono sui trial nuovi il 25-35% del voto dei trial visti, e vanno peggio o
+#   uguale sui nascosti; quelle con meno capacità (generatore da 32, 10 fattori) memorizzano meno (47-48%) ma
+#   non vanno meglio. La GPFA trattiene il 62-72%.
+# - **Il confronto è giusto anche per la GPFA**: con 40 fattori fa 51.1% e 0.0435 (sui nascosti un po' meglio
+#   che con 25), con 10 fattori peggio (44.7% e 0.0329). I 25 fattori del §12 non la favoriscono, e LFADS con
+#   40 fattori va come con 25.
+# - **I primi 3 fattori ordinati di LFADS restano tra il 19 e il 21%** in tutte le varianti, contro il 31-34%
+#   della GPFA: nessuna variante risolve questo punto (§12.2, §13.1).
+# - **La figura**: per ogni variante i 3 semi di LFADS (punti piccoli) e la loro media (rombo), e la GPFA alla
+#   pari con gli stessi fattori (trattino blu); la linea tratteggiata è la principale.
+# - **Che cosa non dice**: abbiamo cambiato una manopola alla volta, quindi le combinazioni (per esempio meno
+#   fattori e più L2 insieme) non sono provate; valori della L2 sopra × 10 nemmeno; la configurazione di
+#   partenza viene dal blocco 0 (§11b); 3 semi per variante.
+#
+# ### Riepilogo del §14a
+#
+# | variante | fase, tetto: differenza dalla principale (punti) | nascosti: differenza (bit per spike) | sui trial nuovi resta (nuovi / visti) | sopra la GPFA con gli stessi fattori? |
+# |---|---|---|---|---|
+# | principale (§12) | 47.0% | 0.0387 | 0.40 | no |
+# | fattori 10 | −5.7 | −0.0066 | 0.47 | no (sui nascosti 1 seme su 3, di circa 0.0001) |
+# | fattori 40 | +0.1 | −0.0007 | 0.35 | no |
+# | generatore 32 | −1.1 | −0.0005 | 0.48 | no |
+# | generatore 128 | −1.7 | −0.0071 | 0.25 | no |
+# | peso del KL × 0.1 | −1.6 | −0.0033 | 0.33 | no |
+# | L2 sul generatore × 10 | +0.5 | +0.0006 | 0.42 | no |
+#
+# **In sintesi**: il verdetto del §12 non dipende dalle grandezze della rete né dalla regolarizzazione che la
+# griglia non aveva esplorato. Più capacità fa memorizzare di più e non aiuta; l'unico piccolo guadagno viene da
+# una penalità L2 più forte, troppo piccolo per avvicinare la GPFA.
