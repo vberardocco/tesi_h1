@@ -7031,3 +7031,189 @@ print(f"Per confronto, nei conteggi veri dei 40 nascosti la quota tra 16 e 20 Hz
 # **In sintesi**: la lunghezza dei pezzi non cambia il verdetto (600 o 400 ms vanno bene, 1 s è peggio). Il controller
 # sì, ma solo sulla misura generativa: con gli ingressi inferiti LFADS diventa il miglior modello dei canali nascosti,
 # perché segue il ritmo a 18 Hz comune alla popolazione. Come descrizione delle fasi del task, invece, peggiora.
+
+# %% [markdown]
+# ### 14.5 · LFADS senza dinamica: un VAE che guarda un bin alla volta
+#
+# **La domanda.** LFADS aggiunge alla GPFA due cose insieme: una mappa **non lineare** dai fattori alle frequenze
+# (con rumore di Poisson) e una **dinamica** (il generatore). Per capire quale delle due conta, serve la casella
+# che manca in questa tabella:
+#
+# | | senza il tempo: un bin alla volta | con il tempo |
+# |---|---|---|
+# | **lineare** | FA | GPFA (fattori che cambiano gradualmente) |
+# | **non lineare** | **VAE per bin** (qui) | LFADS (una dinamica) |
+#
+# **Come.** Lo stesso LFADS del §12 con pezzi lunghi **un bin**: l'encoder legge un bin solo e ne ricava lo stato
+# iniziale, il generatore fa un solo passo, e da lì escono i fattori e le frequenze di quel bin. Ogni bin è trattato
+# da solo, come nella FA, ma la mappa dai fattori alle frequenze passa per una rete e il rumore è di Poisson: è la
+# "FA non lineare". Il resto come al §12: peso del KL 0.3 / (1 × 160), 200 epoche, gruppi da 64 bin (154 passi per
+# epoca), le due forme, 3 semi, 5 blocchi: 30 allenamenti, circa 35 minuti la prima volta (una prova di 4 epoche
+# ha dato circa 4-5 minuti per allenamento).
+#
+# **Il controllo**: senza tempo, l'ordine dei bin non conta. Diamo al modello già allenato anche un trial di test
+# con i bin rimescolati: rimettendo i risultati in ordine, i fattori di ogni bin devono essere gli stessi.
+#
+# **Che cosa ci aspettiamo**: se la non linearità aiuta, il VAE per bin batte la FA; se la dinamica di LFADS aiuta,
+# LFADS batte il VAE per bin. Il confronto più utile per la domanda della tesi è il secondo.
+
+# %%
+SEGS1 = {t: COUNTS[TRIAL_SPAN[t][0]:TRIAL_SPAN[t][1], None, :] for t in TRIALS}  # "pezzi" di un bin solo: (bin del trial, 1, 160)
+SEGS1_HID = {t: s_[..., ORDER_HID] for t, s_ in SEGS1.items()}  # prima i 120 visibili, poi i 40 nascosti
+T_SHUF = int(TEST_TRIALS[0][0])                             # per il controllo: un trial di test del blocco 0...
+PERM = np.random.default_rng(0).permutation(len(SEGS1[T_SHUF]))  # ...con i suoi bin in ordine casuale
+
+def job14c(form, k, sd):                                    # un allenamento del VAE per bin: forma, blocco, seme; il resto come al §12
+    hp_, _ = FORMS14[form]
+    hp1 = dict(hp_, seg_len=1, kl_ic_scale=hp_["kl_ic_scale"] * SEG_LEN)  # pezzi di un bin; peso del KL 0.3 / (1 × 160)
+    if form == "tutti i canali":
+        j_ = lf12_job(sd, train_trials(k), hp=hp1, segs=SEGS1)
+    else:
+        j_ = lf12_job(sd, train_trials(k), hp=hp1, segs=SEGS1_HID, rate_cols=HID_COLS)
+    j_["apply"] = j_["apply"] + [j_["apply"][list(TRIALS).index(T_SHUF)][PERM]]  # in più: il trial del controllo, rimescolato
+    return j_
+
+RUNS14C = [(f_, k, sd) for f_ in FORMS14 for k in range(5) for sd in SEEDS14]
+res14c = dict(zip(RUNS14C, run_lfads_cached([job14c(*r) for r in RUNS14C])))
+i_sh = list(TRIALS).index(T_SHUF)
+d_sh = max(np.abs(r["factors"][len(TRIALS)][np.argsort(PERM)] - r["factors"][i_sh]).max() for r in res14c.values())  # rimessi in ordine
+print(f"Controllo: con i bin del trial {T_SHUF} rimescolati, differenza massima dei fattori (rimessi in ordine) {d_sh:.1e} "
+      f"(i fattori arrivano a {max(np.abs(r['factors'][i_sh]).max() for r in res14c.values()):.1f})")
+display(pd.DataFrame({f_: {"passi": mm([res14c[(f_, k, sd)]["steps"] for k in range(5) for sd in SEEDS14]),
+                           "versione tenuta (epoca)": mm([res14c[(f_, k, sd)]["best_epoch"] for k in range(5) for sd in SEEDS14])}
+                      for f_ in FORMS14}).T)
+
+# %%
+def fac14c(k, sd):                                          # fattori ordinati del VAE per bin (forma con tutti i canali), tutta la sessione
+    r = res14c[("tutti i canali", k, sd)]
+    return order_by_readout(np.concatenate([f_[:, 0, :] for f_ in r["factors"][:len(TRIALS)]]), r["weights"]["readout.0.weight"])
+
+ph14c = [acc14(lambda k, sd=sd: fac14c(k, sd)) for sd in SEEDS14]
+full14c = [[np.concatenate([x_[:, 0, :] for x_ in res14c[("120 + 40", k, sd)]["rates"][:len(TRIALS)]]) for sd in SEEDS14] for k in range(5)]
+sn14c = seen_new(full14c, Y_HID)
+M14C = {"FA": {"tetto": ACC12[("FA", "tetto: tutti i 25 fattori")], "primi 3": ACC12[("FA", "primi 3 fattori")],  # dal §12 e dal §13.2
+               "nascosti": BPS12[("FA", "tutta la sessione")], "nuovi / visti": list(SN13["FA"][:, :, 1].mean(1) / SN13["FA"][:, :, 0].mean(1))},
+        "VAE per bin (3 semi)": {"tetto": [a for a, _ in ph14c], "primi 3": [b for _, b in ph14c],
+                                 "nascosti": [bits_per_spike(test_only([full14c[k][i] for k in range(5)]), Y_HID) for i in range(len(SEEDS14))],
+                                 "nuovi / visti": list(sn14c[:, :, 1].mean(1) / sn14c[:, :, 0].mean(1))},
+        "GPFA alla pari": M14[f"GPFA alla pari, {K_PCA} fattori"],
+        "LFADS (principale, semi 0-2)": M14["principale (§12)"],
+        "LFADS con il controller (§14b)": M14B["controller"]}
+display(pd.DataFrame({name: {"fase, tetto (%)": fmt(m["tetto"]), "fase, primi 3 (%)": fmt(m["primi 3"]),
+                             "nascosti, trial di test (bit per spike)": fmt4(m["nascosti"]), "nuovi / visti": fmt2(m["nuovi / visti"])}
+                      for name, m in M14C.items()}).T.rename_axis("media (minimo-massimo) tra i semi; a caso 12.5%"))
+for meas, f_ in (("tetto", lambda v: f"{np.mean(v):.1f}%"), ("nascosti", lambda v: f"{np.mean(v):.4f}")):
+    display(pd.DataFrame({"senza il tempo": {"lineare": "FA " + f_(M14C["FA"][meas]), "non lineare": "VAE per bin " + f_(M14C["VAE per bin (3 semi)"][meas])},
+                          "con il tempo": {"lineare": "GPFA " + f_(M14C["GPFA alla pari"][meas]),
+                                           "non lineare": "LFADS " + f_(M14C["LFADS (principale, semi 0-2)"][meas])}})
+            .rename_axis("fase, tetto" if meas == "tetto" else "nascosti, bit per spike"))
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Il controllo torna**: con i bin del trial 3 rimescolati, i fattori di ogni bin sono identici (differenza 0). Il
+#   VAE per bin non usa il tempo, come volevamo.
+# - **Gli allenamenti**: circa 30 400-31 000 passi (154 per epoca); la versione tenuta cade tra l'epoca 138 e la 200,
+#   non sempre all'ultima, perché qui anche l'errore sui bin di training oscilla un po' a fine allenamento.
+# - **La tabella 2 × 2 dice che conta il tempo, non la non linearità.**
+#   - **Fase**: senza il tempo FA 25.8% e VAE per bin 17.1%; con il tempo GPFA 51.4% e LFADS 47.0%. Aggiungere il
+#     tempo vale circa 25-30 punti; aggiungere la non linearità non vale nulla, anzi toglie (−8.7 senza il tempo,
+#     −4.4 con il tempo).
+#   - **Canali nascosti**: FA 0.0358 e VAE per bin 0.0348, alla pari; GPFA 0.0422 e LFADS 0.0387. Anche qui il
+#     passo avanti viene dal tempo, e la rete non lineare non lo migliora.
+# - **Il VAE per bin memorizza meno di LFADS** (sui trial nuovi resta il 54% del voto dei trial visti, contro il 40%)
+#   ma più della FA (68%).
+# - **Il controller (§14b) è l'unica eccezione**, e solo sui nascosti (0.0631).
+# - **Che cosa non dice**: la rete del VAE è quella di LFADS con un solo passo (un encoder e un generatore a 64 unità),
+#   non una rete scelta apposta per un bin alla volta; 3 semi.
+#
+# ### 14.6 · La regressione di Poisson sui fattori di LFADS
+#
+# Al §12.4 la variante migliore sui canali nascosti era la GPFA con una **regressione di Poisson** dai suoi fattori
+# ai nascosti (0.0474), al posto della sua uscita (lineare sulla radice dei conteggi). È giusto dare a LFADS la
+# stessa possibilità: dai 25 fattori della forma 120 + 40, che l'encoder ricava dai soli visibili, una regressione
+# di Poisson per ogni nascosto, stimata sui 12 trial di training con la stessa penalità (0.1). Nessun allenamento
+# nuovo: i modelli sono quelli del §12.4, con i loro 5 semi.
+#
+# Al §14b il controller ha già portato LFADS sopra la GPFA sui nascosti. Qui la domanda è un'altra: a LFADS **senza**
+# controller basta un'uscita migliore? **La regola, fissata prima di guardare**: sì, se LFADS con la regressione
+# supera la GPFA con la regressione con tutti e 5 i semi.
+
+# %%
+def lfads_glm(k, sd):                                       # regressione di Poisson dai 25 fattori di LFADS (forma 120 + 40) ai 40 nascosti, nel blocco k
+    lat = stitch_all(res12b[(k, sd)]["factors"])            # i fattori di tutta la sessione, ricavati dai soli 120 visibili
+    fit_ = np.isin(trial, train_trials(k))                  # la regressione si stima sui 12 trial di training
+    F = StandardScaler().fit(lat[fit_]).transform(lat)
+    return np.column_stack([PoissonRegressor(alpha=0.1, max_iter=500).fit(F[fit_], COUNTS[fit_, h]).predict(F) for h in HIDDEN])
+
+FULL14C = [[lfads_glm(k, sd) for sd in SEEDS_LF] for k in range(5)]  # [blocco][seme] -> previsione dei nascosti in tutta la sessione
+lat_chk = stitch_all(res12b[(0, 0)]["factors"]); fit_chk = np.isin(trial, train_trials(0))
+sc_chk = StandardScaler().fit(lat_chk[fit_chk]); reg_chk = PoissonRegressor(alpha=0.1, max_iter=500).fit(sc_chk.transform(lat_chk[fit_chk]), COUNTS[fit_chk, HIDDEN[0]])
+hand = np.exp(sc_chk.transform(lat_chk) @ reg_chk.coef_ + reg_chk.intercept_)  # la previsione a mano: e^(fattori standardizzati · β + b)
+print(f"Controllo a mano (blocco 0, seme 0, primo nascosto): differenza massima da scikit-learn {np.abs(hand - FULL14C[0][0][:, 0]).max():.1e}")
+
+b_lfglm = [bits_per_spike(test_only([FULL14C[k][i] for k in range(5)]), Y_HID) for i in range(len(SEEDS_LF))]
+sn_lfglm = seen_new(FULL14C, Y_HID)
+b_gpglm = BPS12[("variante: GPFA + regressione di Poisson", "tutta la sessione")][0]
+def ratio(sn_):                                             # nuovi / visti, seme per seme, da un array (semi, 5 blocchi, 2) di seen_new
+    return list(sn_[:, :, 1].mean(1) / sn_[:, :, 0].mean(1))
+
+rows14c = {"smoothing + GLM (riferimento, §12.4)": (BPS12[("smoothing + GLM (riferimento)", "tutta la sessione")], ratio(SN13["smoothing + GLM (riferimento)"])),
+           "LFADS, la sua uscita (§12.4, 5 semi)": (BPS12[("LFADS (5 semi)", "tutta la sessione")], ratio(SN13["LFADS (5 semi)"])),
+           "LFADS + regressione di Poisson (5 semi)": (b_lfglm, ratio(sn_lfglm)),
+           "LFADS con il controller, la sua uscita (§14b, 3 semi)": (M14B["controller"]["nascosti"], M14B["controller"]["nuovi / visti"]),
+           "GPFA alla pari, la sua uscita (§12.4)": (BPS12[("GPFA alla pari", "tutta la sessione")], ratio(SN13["GPFA alla pari"])),
+           "GPFA + regressione di Poisson (§12.4)": ([b_gpglm], ratio(SN13["GPFA + regressione di Poisson"]))}
+display(pd.DataFrame({name: {"nascosti, trial di test (bit per spike)": fmt4(b_), "nuovi / visti": fmt2(r_)}
+                      for name, (b_, r_) in rows14c.items()}).T.rename_axis("40 nascosti; per LFADS media [minimo, massimo] tra i semi"))
+above14c = np.array([[bits_per_spike(FULL14C[k][i][np.isin(trial, TEST_TRIALS[k])], Y_HID[np.isin(trial, TEST_TRIALS[k])]) >
+                      BPS12[("variante: GPFA + regressione di Poisson", f"blocco {k}")][0] for k in range(5)] for i in range(len(SEEDS_LF))])
+print(f"LFADS + regressione sopra la GPFA + regressione: {int((np.array(b_lfglm) > b_gpglm).sum())} semi su {len(SEEDS_LF)} (tutta la sessione), "
+      f"{int(above14c.sum())} casi su {above14c.size} (blocco × seme); distanza media {b_gpglm - np.mean(b_lfglm):.4f} bit per spike")
+
+# %%
+fig, ax = plt.subplots(1, 2, figsize=(15, 4.6), gridspec_kw={"width_ratios": (1, 1.4)})
+names_ph = ["FA", "VAE per bin (3 semi)", "GPFA alla pari", "LFADS (principale, semi 0-2)"]
+cols_ph = ["C1", "C5", "C0", "C3"]
+for i, (name, c_) in enumerate(zip(names_ph, cols_ph)):    # a sinistra: la tabella 2 × 2, sulla fase
+    v = np.atleast_1d(M14C[name]["tetto"])
+    ax[0].bar(i, v.mean(), color=c_, width=0.6)
+    if len(v) > 1:
+        ax[0].plot([i, i], [v.min(), v.max()], color="k", lw=1)  # minimo-massimo tra i semi
+ax[0].set(xticks=range(4), xticklabels=["FA\nlineare,\nsenza tempo", "VAE per bin\nnon lineare,\nsenza tempo", "GPFA\nlineare,\ncon il tempo",
+                                        "LFADS\nnon lineare,\ncon il tempo"], ylabel="fase riconosciuta (%), tutti i fattori",
+          title="Riconoscimento della fase (a caso 12.5%)")
+for i, (name, (b_, _)) in enumerate(list(rows14c.items()) + [("VAE per bin (3 semi)", (M14C["VAE per bin (3 semi)"]["nascosti"], None)),
+                                                             ("FA", (M14C["FA"]["nascosti"], None))]):  # a destra: i nascosti
+    v = np.atleast_1d(b_)
+    c_ = "C2" if "regressione" in name else ("0.45" if "smoothing" in name else ("C4" if "controller" in name else ("C3" if "LFADS" in name else ("C0" if "GPFA" in name else ("C5" if "VAE" in name else "C1")))))
+    ax[1].barh(i, v.mean(), color=c_, height=0.6)
+    if len(v) > 1:
+        ax[1].plot([v.min(), v.max()], [i, i], color="k", lw=1)
+ax[1].set(yticks=range(len(rows14c) + 2), yticklabels=[n_.replace(", la sua uscita", "").replace(" (", "\n(") for n_ in list(rows14c) + ["VAE per bin (3 semi)", "FA (§12.4)"]],
+          xlabel="bit per spike, 40 nascosti, trial di test", title="Canali nascosti (verde: con la regressione di Poisson)")
+ax[1].invert_yaxis()
+fig.tight_layout(); fig.savefig(FIGS / "04_lfads_nodynamics.png", bbox_inches="tight"); plt.show()
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Il controllo a mano torna**: la previsione della regressione coincide con quella di scikit-learn (differenza 0).
+# - **Un'uscita migliore aiuta poco LFADS senza controller**: con la regressione di Poisson sui suoi fattori sale da
+#   0.0388 a 0.0404, ma resta sotto la GPFA con la stessa regressione (0.0474) in tutti i 5 semi e in tutti i 25 casi
+#   (blocco × seme), di 0.0070 bit per spike in media. Per la regola fissata prima, il verdetto non cambia: a LFADS
+#   senza controller non manca l'uscita, mancano i fattori.
+# - **La regressione fa memorizzare un po' meno** (sui trial nuovi resta il 44% del voto dei visti, contro il 40%).
+# - **La figura**: a sinistra la tabella 2 × 2 sulla fase; a destra tutti i modelli sui nascosti (in verde quelli con la
+#   regressione di Poisson).
+#
+# ### Riepilogo del §14c
+#
+# | domanda | risposta | dove |
+# |---|---|---|
+# | la non linearità senza il tempo (VAE per bin) batte la FA? | **no**: fase 17.1% contro 25.8%, nascosti 0.0348 contro 0.0358 | §14.5 |
+# | che cosa aggiunge la dinamica di LFADS? | il tempo: da 17.1% a 47.0% sulla fase, da 0.0348 a 0.0387 sui nascosti; ma la GPFA, lineare, fa di più | §14.5 |
+# | una regressione di Poisson sui fattori porta LFADS (senza controller) alla GPFA? | **no**: 0.0404 contro 0.0474, in nessuno dei 25 casi | §14.6 |
+#
+# **In sintesi**: in questi dati il guadagno viene dal modellare il tempo; la mappa non lineare, da sola o insieme alla
+# dinamica, non aggiunge niente. L'unica eccezione resta il controller, sui canali nascosti.
