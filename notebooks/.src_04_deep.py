@@ -1,5 +1,5 @@
 # %% [markdown]
-# # 04 · Metodi "deep": CEBRA (e poi LFADS) · FALCON H1
+# # 04 · Metodi "deep": CEBRA e LFADS · FALCON H1
 #
 # **Obiettivo.** Nei notebook 02 e 03 ogni metodo seguiva una ricetta fissa per passare dai dati
 # alle coordinate: proiezioni lineari (PCA, FA, GPFA) o costruzioni sul grafo dei vicini (Isomap,
@@ -7,7 +7,7 @@
 # parametri regolati sui dati (review, §4.2).
 #
 # - **Parte A, CEBRA** (Schneider, Lee & Mathis 2023), questo notebook.
-# - **Parte B, LFADS**: da fare, più avanti.
+# - **Parte B, LFADS** (Pandarinath et al. 2018), §9-§15, dopo la parte A.
 #
 # **CEBRA in una frase.** Una rete impara a mettere **vicini** nella mappa gli istanti che "vanno
 # insieme" e **lontani** quelli presi a caso. Che cosa vuol dire "vanno insieme" lo decidiamo noi:
@@ -46,7 +46,7 @@
 # Il notebook si costruisce **un passo alla volta**: §1 dati e metro comune · §2 l'idea su un
 # esempio sintetico · §3 CEBRA-Time, un allenamento · §4 valutazione con il metro comune ·
 # §5 controlli · §6 CEBRA-Behavior · §7 sensibilità e alternative · §8 riepilogo.
-# **Stato attuale: parte A (CEBRA) completa, §0-§8.**
+# **Stato attuale: completo. Parte A (CEBRA), §0-§8; parte B (LFADS), §9-§15.**
 #
 # Stessa sessione di tutti i notebook (`held-in-calib`, `19250108T110520`).
 #
@@ -2929,7 +2929,7 @@ fig.tight_layout(); fig.savefig(FIGS / "04_summary.png", bbox_inches="tight"); p
 #
 # I passi: §9 i dati · §10 l'idea su un esempio sintetico · §11 un primo allenamento · §12 metro comune
 # e confronto con la GPFA · §13 controlli · §14 sensibilità e alternative · §15 riepilogo e tabella
-# finale. **Stato attuale: §9, §10, §11, §12 e §13.**
+# finale. **Stato attuale: completa, §9-§15.**
 #
 # **Come eseguire il notebook.** La sera del 27 ottobre, rieseguendo tutto il notebook, il kernel si è
 # chiuso da solo tre volte di seguito durante il §7c della parte A, sempre nello stesso punto: memoria
@@ -7452,3 +7452,205 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_moredata.png", bbox_inches="tig
 # **In sintesi**: la distanza del §12 era in buona parte una questione di dati. Con 12 trial LFADS memorizza e resta
 # sotto; con 28 raggiunge la GPFA sulla fase e la supera sui canali nascosti, mentre la GPFA, che con pochi dati era
 # già al suo massimo, non migliora.
+
+# %% [markdown]
+# ## 15 · Riepilogo di LFADS, tabella finale e conclusioni
+#
+# ### 15.1 · Il percorso, in breve
+#
+# La parte B ha messo LFADS alla prova sugli stessi dati e con le stesse misure di tutti gli altri metodi. I dettagli,
+# le scelte e le alternative sono nei riepiloghi alla fine di ogni sezione; qui il filo.
+#
+# | passo | che cosa | il risultato principale | riepilogo |
+# |---|---|---|---|
+# | §9 · i dati | conteggi grezzi a 20 ms; pezzi da 600 ms dentro ogni trial, ricuciti; 40 canali nascosti | la ricucitura restituisce i conteggi; nessun pezzo attraversa due trial | §9 |
+# | §10 · l'idea | LFADS scritto a mano su un sistema di Lorenz, contro la libreria `lfads-torch` | coincide con la libreria (10⁻⁷); ritrova lo stato nascosto meglio della GPFA (R² 0.90-0.96 contro 0.85-0.90) | §10 |
+# | §11 · primo allenamento e griglia | 17 configurazioni, scelte sui soli trial di validazione | dropout 0.05, KL × 0.3, niente coordinated dropout, 200 epoche; memorizza molto, la regolarizzazione forte lo spegne | §11 |
+# | §12 · il confronto alla pari | metro comune, traiettorie, canali nascosti; GPFA sugli stessi pezzi | con 12 trial sotto la GPFA sulla fase (46.5% contro 51.4%) e sui nascosti (0.0388 contro 0.0422) | §12a, §12b |
+# | §13 · i controlli | semi, memorizzazione, gemello di Poisson, nascosti spostati, quanti trial servono | il risultato non è un artefatto; LFADS memorizza; con più trial la distanza si accorcia | §13a, §13b |
+# | §14 · sensibilità e alternative | grandezze, regolarizzazione, pezzi, controller, senza dinamica, più dati | nessuna variante della rete cambia il verdetto; lo cambiano il controller (sui nascosti) e più dati | §14a-§14d |
+#
+# **La domanda della parte B**: *su questi dati, la non linearità e la dinamica di LFADS migliorano le traiettorie
+# single-trial rispetto alla GPFA?*
+
+# %% [markdown]
+# ### 15.2 · La tabella finale: tutti i metodi, le stesse misure
+#
+# Costruita dal codice con i numeri di questo notebook: la tabella del §8 (parte A) con, in più, i modelli della
+# parte B. Tre misure:
+#
+# - **la fase riconosciuta su trial mai visti** (il metro comune: 1106 punti, 5 blocchi, classificatore a 10 vicini,
+#   a caso 12.5%), con 2, 3 e 7 coordinate libere e con tutte le dimensioni del modello (il tetto). Per FA, GPFA,
+#   LFADS e il VAE per bin le coordinate sono i primi fattori ordinati per importanza; per CEBRA, sulla sfera, le
+#   coordinate libere sono una in meno delle dimensioni;
+# - **i canali nascosti dei trial di test** (bit per spike, §12.4): solo per i modelli che ricostruiscono l'attività;
+# - **le traiettorie** (§4.2): seghettatura, consistenza tra le ripetizioni della stessa fase e stabilità tra semi.
+#
+# Dove c'è un intervallo: media (minimo-massimo) tra i semi.
+
+# %%
+FIN = final_dec.copy()                                      # la tabella del §8: 2, 3 e 7 coordinate libere
+FIN["tutte le dimensioni"] = ""
+FIN.loc["PCA", "tutte le dimensioni"] = f"{ACC['tetto, 25 dimensioni']:.1f}"  # il tetto del 03: il classificatore sui 25 PC
+FIN.loc["GPFA (primi fattori)", "tutte le dimensioni"] = fmt(ACC12[("GPFA come nel §7b", "tetto: tutti i 25 fattori")])
+
+def fin_row(lab, a2=None, a3=None, a7=None, tetto=None):    # una riga nuova, nello stesso formato della tabella del §8
+    return {"etichette": lab, "2 coordinate libere": fmt(a2) if a2 is not None else "", "3 coordinate libere": fmt(a3) if a3 is not None else "",
+            "7 coordinate libere": fmt(a7) if a7 is not None else "", "tutte le dimensioni": fmt(tetto) if tetto is not None else ""}
+
+for name, key in (("FA (primi fattori ordinati)", "FA"), ("GPFA alla pari (primi fattori ordinati)", "GPFA alla pari"),
+                  ("LFADS (primi fattori ordinati, 5 semi)", "LFADS")):
+    FIN.loc[name] = fin_row("no", ACC12[(key, "primi 2 fattori")], ACC12[(key, "primi 3 fattori")], ACC12[(key, "primi 7 fattori")],
+                            ACC12[(key, "tetto: tutti i 25 fattori")])
+FIN.loc["VAE per bin (primi fattori ordinati, 3 semi)"] = fin_row("no", a3=M14C["VAE per bin (3 semi)"]["primi 3"],
+                                                                  tetto=M14C["VAE per bin (3 semi)"]["tetto"])
+FIN.loc["LFADS con il controller (primi fattori ordinati, 3 semi)"] = fin_row("no", a3=M14B["controller"]["primi 3"], tetto=M14B["controller"]["tetto"])
+for name, key in (("UMAP sui fattori della GPFA alla pari", "GPFA alla pari"), ("UMAP sui fattori di LFADS (5 semi)", "LFADS")):
+    FIN.loc[name] = fin_row("no", a3=ACC12[(key, "UMAP, d = 3")])
+ORDER15 = ["PCA", "Isomap", "UMAP", "CEBRA-Time (3, 4 e 8 dimensioni)", "FA (primi fattori ordinati)", "GPFA (primi fattori)",
+           "GPFA alla pari (primi fattori ordinati)", "LFADS (primi fattori ordinati, 5 semi)", "LFADS con il controller (primi fattori ordinati, 3 semi)",
+           "VAE per bin (primi fattori ordinati, 3 semi)",
+           "UMAP sui fattori della GPFA alla pari", "UMAP sui fattori di LFADS (5 semi)"]
+ORDER15 += [m_ for m_ in FIN.index if m_ not in ORDER15]  # in fondo i metodi con le etichette (§8)
+display(FIN.loc[ORDER15].rename_axis("fase riconosciuta (%), trial mai visti; a caso 12.5, l'orologio da solo 48.5"))
+
+HID15 = {"smoothing + GLM (riferimento)": (BPS12[("smoothing + GLM (riferimento)", "tutta la sessione")], B14D["smoothing + GLM"]),
+         "FA": (BPS12[("FA", "tutta la sessione")], B14D["FA"]),
+         "VAE per bin (3 semi)": (M14C["VAE per bin (3 semi)"]["nascosti"], None),
+         "GPFA alla pari": (BPS12[("GPFA alla pari", "tutta la sessione")], B14D["GPFA alla pari"]),
+         "GPFA + regressione di Poisson": (BPS12[("variante: GPFA + regressione di Poisson", "tutta la sessione")], B14D["GPFA + regressione di Poisson"]),
+         "LFADS (§12.4: 5 semi; §14d: 3 semi)": (BPS12[("LFADS (5 semi)", "tutta la sessione")], B14D["LFADS (3 semi)"]),
+         "LFADS + regressione di Poisson (§14c: 5 semi; §14d: 3 semi)": (b_lfglm, B14D["LFADS + regressione di Poisson (3 semi)"]),
+         "LFADS con il controller (§14b, §14d: 3 semi)": (M14B["controller"]["nascosti"], B14D["LFADS con il controller (3 semi)"])}
+display(pd.DataFrame({name: {"12 trial di training (§12.4, §14c)": fmt4(a_), "12 + 16 trial, con le altre due sessioni (§14d)": fmt4(b_) if b_ is not None else "—"}
+                      for name, (a_, b_) in HID15.items()}).T.rename_axis("canali nascosti dei trial di test (bit per spike, 40 canali)"))
+
+STAB15 = {"parte A: PCA": "100 (per costruzione)", "parte A: Isomap": "100 (per costruzione)",
+          "parte A: UMAP": mean_range(cons["UMAP, d = 3"] * 100) + " (d = 3)",
+          "parte A: CEBRA-Time, 4 dimensioni": mean_range(cons["CEBRA-Time, 4 dimensioni (stimato su tutti i trial)"] * 100),
+          "FA (tutti i trial)": "100 (un solo modello)", "GPFA alla pari (tutti i trial)": "100 (un solo modello)",
+          "LFADS (tutti i trial, 5 semi)": (mean_range(cons12["LFADS, primi 3 fattori ordinati, stimato su tutti i trial"] * 100) + " (primi 3); "
+                                            + mean_range(cons12["LFADS, 25 fattori, stimato su tutti i trial"] * 100) + " (25)")}
+TRAJ15 = pd.DataFrame(rows_t12).T
+TRAJ15["stabilità tra semi (R², %)"] = [STAB15.get(i_, "") for i_ in TRAJ15.index]
+display(TRAJ15.fillna("non calcolata").rename_axis("traiettorie (§4.2, §12.3): primi 3 fattori o coordinate"))
+
+# %%
+UNSUP15 = {"PCA": (ACC["PCA, d = 3"], ACC["tetto, 25 dimensioni"]), "Isomap": (ACC["Isomap, d = 3"], None), "UMAP": (ACC["UMAP, d = 3"], None),
+           "CEBRA-Time (4 dimensioni)": (ACC["CEBRA-Time, 4 dimensioni"], None),
+           "FA": (ACC12[("FA", "primi 3 fattori")], ACC12[("FA", "tetto: tutti i 25 fattori")]),
+           "VAE per bin": (M14C["VAE per bin (3 semi)"]["primi 3"], M14C["VAE per bin (3 semi)"]["tetto"]),
+           "GPFA alla pari": (ACC12[("GPFA alla pari", "primi 3 fattori")], ACC12[("GPFA alla pari", "tetto: tutti i 25 fattori")]),
+           "LFADS": (ACC12[("LFADS", "primi 3 fattori")], ACC12[("LFADS", "tetto: tutti i 25 fattori")]),
+           "LFADS con il controller": (M14B["controller"]["primi 3"], M14B["controller"]["tetto"])}  # (3 coordinate libere, tutte le dimensioni)
+COL15 = {"PCA": "C1", "Isomap": "C9", "UMAP": "C2", "CEBRA-Time (4 dimensioni)": "C6", "FA": "C1", "VAE per bin": "C5",
+         "GPFA alla pari": "C0", "LFADS": "C3", "LFADS con il controller": "C4"}
+fig, ax = plt.subplots(1, 2, figsize=(15, 5.2), gridspec_kw={"width_ratios": (1.2, 1)})
+for i, (name, (a3, at)) in enumerate(UNSUP15.items()):    # a sinistra: la fase
+    v = np.atleast_1d(a3)
+    ax[0].barh(i, v.mean(), color=COL15[name], height=0.6, alpha=0.85, label="3 coordinate libere" if i == 0 else None)
+    if len(v) > 1:
+        ax[0].plot([v.min(), v.max()], [i, i], color="k", lw=1)  # minimo-massimo tra i semi
+    if at is not None:
+        ax[0].scatter(np.mean(at), i, marker="D", s=50, color="k", zorder=3, label="tutte le dimensioni (tetto)" if name == "PCA" else None)
+for xv, lab, ls in ((acc_clock, f"l'orologio da solo ({acc_clock:.1f}%)", ":"), (12.5, "a caso", "-")):
+    ax[0].axvline(xv, color="0.3", ls=ls, lw=1, label=lab)
+ax[0].set(yticks=range(len(UNSUP15)), yticklabels=list(UNSUP15), xlabel="fase riconosciuta (%), trial mai visti",
+          title="Riconoscimento della fase, metodi senza etichette")
+ax[0].invert_yaxis(); ax[0].legend(fontsize=8, loc="lower right")
+for i, (name, (a_, b_)) in enumerate(HID15.items()):      # a destra: i canali nascosti
+    v = np.atleast_1d(a_)
+    c_ = "C2" if "regressione" in name else ("0.45" if "smoothing" in name else ("C4" if "controller" in name else ("C3" if "LFADS" in name else ("C0" if "GPFA" in name else ("C5" if "VAE" in name else "C1")))))
+    ax[1].barh(i, v.mean(), color=c_, height=0.6, label="12 trial di training" if i == 0 else None)
+    if len(v) > 1:
+        ax[1].plot([v.min(), v.max()], [i, i], color="k", lw=1)
+    if b_ is not None:
+        ax[1].scatter(np.mean(b_), i, marker="s", s=45, facecolor="white", edgecolor="k", zorder=3,
+                      label="12 + 16 trial, con le altre due sessioni" if i == 0 else None)
+ax[1].set(yticks=range(len(HID15)), yticklabels=[n_.split(" (")[0] for n_ in HID15], xlabel="bit per spike, 40 nascosti, trial di test",
+          title="Canali nascosti (solo i modelli che ricostruiscono l'attività)")
+ax[1].invert_yaxis(); ax[1].legend(fontsize=8, loc="lower right")
+fig.tight_layout(); fig.savefig(FIGS / "04_final.png", bbox_inches="tight"); plt.show()
+
+# %% [markdown]
+# **Lettura.**
+#
+# - **Tra i metodi senza etichette, con poche coordinate**, il quadro della parte A non cambia: UMAP sui 25 PC resta il
+#   migliore con 2-3 coordinate libere (41.2% e 42.6%). I primi fattori ordinati di LFADS sono tra i più bassi della
+#   tabella (17.9% e 20.9% con 2 e 3), sotto la PCA; fanno peggio solo FA, VAE per bin e LFADS con il controller.
+#   Per i modelli non lineari i "primi fattori" non sono una buona descrizione (§12.2, §13.1).
+# - **Con tutte le dimensioni** le due GPFA (50.7% e 51.4%) restano le migliori con 12 trial di training, sopra
+#   l'orologio (48.5%); LFADS fa 46.5%, il controller lo abbassa, il VAE per bin e la FA stanno sotto il 26%. Con 28
+#   trial LFADS arriva al livello della GPFA (§14d; non nella tabella, che usa 12 trial per tutti).
+# - **Sui canali nascosti** LFADS con il controller è il migliore, con 12 trial (0.0631) e con 28 (0.0742). Senza
+#   controller LFADS è sotto la GPFA con 12 trial e sopra con 28.
+# - **Le traiettorie**: quelle di LFADS sono lisce dentro i trial ma ripartono a ogni cambio di trial, e sono
+#   consistenti come quelle della GPFA (§12.3); i suoi 25 fattori sono stabili tra i semi, i primi 3 no.
+#
+# ### 15.3 · Conclusioni per la tesi
+#
+# **La risposta alla domanda, in tre punti.**
+#
+# 1. **Per le traiettorie single-trial e il riconoscimento delle fasi del task, no**: con i dati di una sessione (12
+#    trial di training) la non linearità e la dinamica di LFADS non migliorano la GPFA, in nessuna delle varianti
+#    provate (§12, §14a-§14c). Con più del doppio dei dati (le altre due sessioni dello stesso giorno) LFADS la
+#    raggiunge, ma non la supera (§14d).
+# 2. **Come modello generativo dei canali nascosti, sì, a due condizioni**: con il controller (gli ingressi inferiti)
+#    LFADS supera tutti già con 12 trial, perché segue il ritmo a 18 Hz comune alla popolazione che i modelli più
+#    lisci cancellano (§14b, con tre controlli); senza controller la supera solo con più dati (§14d).
+# 3. **Quello che conta in questi dati è modellare il tempo, non la non linearità**: dalla FA alla GPFA si guadagnano
+#    circa 25 punti sulla fase, mentre la mappa non lineare, senza il tempo (VAE per bin) o con il tempo (LFADS con
+#    12 trial), non aggiunge niente (§14c).
+#
+# **Perché.** LFADS ha molti più parametri della GPFA e con pochi trial memorizza: sui trial nuovi trattiene il 40% del
+# voto dei trial visti, la GPFA il 66% (§13.2). Ogni modo di aumentargli la libertà (generatore più grande, KL più
+# basso) peggiora, ogni modo di frenarlo lo spegne (§11b, §14a); più dati invece lo aiutano, e la GPFA, che con pochi
+# dati è già al suo massimo, non migliora più (§13b, §14d).
+#
+# **Che cosa vuol dire per una BCI.** Su una sessione breve, per descrivere le fasi del task e avere traiettorie
+# interpretabili, la GPFA basta ed è più robusta (un solo modello, stabile, pochi dati). LFADS diventa interessante
+# quando si hanno più dati o quando conta prevedere l'attività dei canali (per esempio per ricostruire canali persi):
+# lì la versione completa, con il controller, è la migliore.
+#
+# > **Regola per la tesi.** Un risultato di LFADS va riportato con: la configurazione (grandezze, dropout, peso del KL,
+# > coordinated dropout, controller sì o no) e come è stata scelta; il numero di trial di training e le epoche; la
+# > lunghezza dei pezzi e la ricucitura; i semi (media e minimo-massimo) e la stabilità tra semi dei fattori; il
+# > confronto **alla pari** con la GPFA (stessi pezzi, stessi trial) e con lo smoothing + GLM; la misura
+# > (riconoscimento della fase con tutti i fattori e con pochi, canali nascosti in bit per spike) e il rapporto tra
+# > trial nuovi e trial visti. Per esempio: *"LFADS (lfads-torch, 25 fattori, generatore 64, dropout 0.05, KL × 0.3,
+# > senza controller, 200 epoche, pezzi da 600 ms) allenato su 12 trial: fase riconosciuta su trial mai visti 46.5%
+# > (44.7-47.7, 5 semi) contro 51.4% della GPFA sugli stessi pezzi; canali nascosti 0.0388 contro 0.0422 bit per
+# > spike; con il controller 0.0631; con 28 trial 51.7% e 0.0460"*.
+#
+# ### 15.4 · Che cosa non abbiamo verificato
+#
+# - **AutoLFADS** (la ricerca automatica dei parametri, Keshtkaran et al. 2022): non fattibile su un portatile;
+#   parametri scelti con una piccola griglia sul blocco 0 (§11b) e variati uno alla volta (§14), mai in combinazione.
+# - **Il controller** in una sola configurazione (4 ingressi, priori della libreria); perché peggiori la fase; il
+#   controller con meno o più ingressi.
+# - **Il generatore lineare** e un VAE per bin con una rete fatta apposta (qui è LFADS con pezzi di 1 bin).
+# - **Più dati** solo dallo stesso giorno, aggiunti come trial in più; niente LFADS multi-sessione, niente sessioni di
+#   giorni diversi.
+# - **Una sola sessione di test** e i 5 blocchi del 03; un solo sorteggio dei canali nascosti.
+# - **La decodifica della cinematica** (il benchmark di FALCON) non è stata fatta. Prima di farla va corretto il
+#   binning: la nostra riga k corrisponde alla riga k+1 di FALCON (il bin k contiene gli spike dei 20 ms *dopo* il
+#   campione k invece che prima). Non cambia nulla nelle misure di questo notebook basate sulle fasi; cambia di poco
+#   i numeri che usano la cinematica (parte A, §6).
+#
+# ### 15.5 · Riferimenti della parte B
+#
+# - Sussillo, D., Jozefowicz, R., Abbott, L. F., Pandarinath, C. (2016). LFADS - Latent Factor Analysis via Dynamical
+#   Systems. *arXiv*:1608.06315.
+# - Pandarinath, C., O'Shea, D. J., Collins, J., et al. (2018). Inferring single-trial neural population dynamics using
+#   sequential auto-encoders. *Nature Methods*, 15, 805–815.
+# - Keshtkaran, M. R., Sedler, A. R., Chowdhury, R. H., et al. (2022). A large-scale neural network training framework
+#   for generalized estimation of single-trial population dynamics. *Nature Methods*, 19, 1572–1577. (AutoLFADS.)
+# - Sedler, A. R., Pandarinath, C. (2023). lfads-torch: a modular and extensible implementation of latent factor
+#   analysis via dynamical systems. *arXiv*:2309.01230.
+# - Pei, F., Ye, J., Zoltowski, D., et al. (2021). Neural Latents Benchmark '21: evaluating latent variable models of
+#   neural population activity. *NeurIPS Datasets and Benchmarks Track*.
+# - Kingma, D. P., Welling, M. (2014). Auto-encoding variational Bayes. *International Conference on Learning
+#   Representations*.
+# - Yu, B. M., et al. (2009). Gaussian-process factor analysis for low-dimensional single-trial analysis of neural
+#   population activity. *Journal of Neurophysiology*, 102, 614–635.
+# - Lorenz, E. N. (1963). Deterministic nonperiodic flow. *Journal of the Atmospheric Sciences*, 20, 130–141.
