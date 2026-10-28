@@ -1,0 +1,11 @@
+# dati: già pubblici su DANDI (DANDI:000954), soggetti al Data Use Agreement di FALCON H1; data/raw è un link a ~/000954
+data/
+*.nwb
+# file temporanei
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+*.tmp
+*.tmp.*
+.tmp_*

@@ -1,0 +1,37 @@
+name: tesi-manifolds
+# Ambiente per la pipeline manifold -> decoder su FALCON H1 (DANDI:000954).
+# Ricrea con:  conda env create -f environment.yml
+# (è lo stesso ambiente usato per FALCON B1: nessuna dipendenza nuova serve per i notebook 01-02)
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - ipykernel
+  - jupyterlab
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - statsmodels
+  - matplotlib
+  - seaborn
+  - h5py
+  - numba
+  - networkx
+  - joblib
+  - tqdm
+  - pyyaml
+  - pip
+  - pip:
+      # I/O dati neurali (NWB / DANDI)
+      - pynwb==3.1.3
+      - hdmf==4.3.1
+      - dandi==0.76.0
+      # manifold learning
+      - elephant==1.2.0       # GPFA (notebook 02)
+      - neo==0.14.4
+      - cebra==0.6.0          # CEBRA (notebook 03)
+      - umap-learn==0.5.12    # UMAP (notebook 03, §9)
+      # decoder / deep learning
+      - torch==2.7.1
