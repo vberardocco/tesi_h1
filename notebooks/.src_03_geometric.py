@@ -434,8 +434,11 @@ print("Correlazione (in valore assoluto) Isomap con k = n − 1 vs PCA, per asse
 #
 # In alto, ogni punto di X nelle prime due coordinate di Isomap e della PCA, colorato con la fase;
 # i due pannelli hanno **gli stessi assi**, così si vede anche la differenza di scala tra le mappe.
-# In basso, le **traiettorie medie** di ogni fase: proiettiamo tutti i bin (a 20 ms) delle finestre
-# da 1 s del notebook 02 e facciamo la media delle ripetizioni. Per Isomap usiamo `transform`, che
+# In basso, le **traiettorie medie** di ogni condizione: proiettiamo tutti i bin (a 20 ms) delle
+# finestre da 1 s del notebook 02 e facciamo la media delle ripetizioni. Come nel 02_new (§8), una
+# condizione è una coppia (fase, versione del task): il task alterna due versioni tra trial dispari
+# e pari (lo mostriamo al §9.2), quindi le ripetizioni di una fase non sono tutte repliche dello
+# stesso movimento. Sono 16 condizioni, con 7-8 ripetizioni ciascuna. Per Isomap usiamo `transform`, che
 # colloca ogni punto nuovo a partire dai suoi vicini tra i punti di X.
 #
 # La PCA di confronto è stimata **sugli stessi punti X**: stessi dati, cambia solo il modo di
@@ -449,6 +452,12 @@ win_X = [Z25[w["start"]:w["stop"]] for w in windows]        # ogni finestra nell
 traj = {"Isomap": [iso.transform(x_) for x_ in win_X],      # ogni finestra nelle coordinate Isomap...
         "PCA": [pca_x.transform(x_) for x_ in win_X]}       # ...e in quelle della PCA
 
+VERSIONS = ("dispari", "pari")                              # le due versioni del task: trial dispari e trial pari (§9.2)
+def cond_of(w):                                             # la condizione di una finestra: (fase, versione), come nel 02_new
+    return (w["tag"], "dispari" if w["trial"] % 2 == 1 else "pari")
+CONDS = [(p, v) for p in io.MOVEMENT_PHASES for v in VERSIONS]  # le 16 condizioni
+VER_LS = {"dispari": "-", "pari": "--"}                     # linea continua = trial dispari, tratteggiata = trial pari
+
 fig, ax = plt.subplots(2, 2, figsize=(12, 9.5))
 ax[0, 1].sharex(ax[0, 0]); ax[0, 1].sharey(ax[0, 0])        # riga in alto: stessi assi per Isomap e PCA, così si vede la differenza di scala
 for j, (name, Y_) in enumerate([("Isomap", iso.embedding_), ("PCA", Y_pca)]):
@@ -456,13 +465,14 @@ for j, (name, Y_) in enumerate([("Isomap", iso.embedding_), ("PCA", Y_pca)]):
         m = ph == p
         ax[0, j].scatter(Y_[m, 0], Y_[m, 1], s=6, alpha=0.5, color=io.PHASE_COLORS[p])
     ax[0, j].set(title=f"{name}: tutti i punti ({len(X)})", xlabel=f"{name} 1", ylabel=f"{name} 2")
-    for p in io.MOVEMENT_PHASES:                            # traiettoria media di ogni fase
-        avg = np.mean([t_[:, :2] for t_, w in zip(traj[name], windows) if w["tag"] == p], axis=0)
-        ax[1, j].plot(avg[:, 0], avg[:, 1], color=io.PHASE_COLORS[p], lw=2)
+    for (p, v) in CONDS:                                    # traiettoria media di ogni condizione
+        avg = np.mean([t_[:, :2] for t_, w in zip(traj[name], windows) if cond_of(w) == (p, v)], axis=0)
+        ax[1, j].plot(avg[:, 0], avg[:, 1], color=io.PHASE_COLORS[p], ls=VER_LS[v], lw=2)
         ax[1, j].plot(avg[0, 0], avg[0, 1], "o", color=io.PHASE_COLORS[p], ms=6)  # pallino = inizio della fase
-    ax[1, j].set(title=f"{name}: media delle ripetizioni di ogni fase", xlabel=f"{name} 1", ylabel=f"{name} 2")
-handles = [plt.Line2D([], [], color=io.PHASE_COLORS[p], lw=2, label=p) for p in io.MOVEMENT_PHASES]
-fig.legend(handles=handles, ncol=8, fontsize=8, loc="lower center", bbox_to_anchor=(0.5, -0.01))
+    ax[1, j].set(title=f"{name}: media delle ripetizioni di ogni condizione", xlabel=f"{name} 1", ylabel=f"{name} 2")
+handles = ([plt.Line2D([], [], color=io.PHASE_COLORS[p], lw=2, label=p) for p in io.MOVEMENT_PHASES]
+           + [plt.Line2D([], [], color="0.3", ls=VER_LS[v], lw=1.6, label=f"trial {v}") for v in VERSIONS])
+fig.legend(handles=handles, ncol=10, fontsize=8, loc="lower center", bbox_to_anchor=(0.5, -0.01))
 fig.tight_layout(rect=(0, 0.03, 1, 1)); fig.savefig(FIGS / "03_isomap_vs_pca.png", bbox_inches="tight"); plt.show()
 
 # %% [markdown]
@@ -481,6 +491,10 @@ fig.tight_layout(rect=(0, 0.03, 1, 1)); fig.savefig(FIGS / "03_isomap_vs_pca.png
 #   Una parte di questo "più spazio" è quindi attesa per costruzione: quanto ne resta lo dicono le
 #   misure dei §5 e §6. I pannelli in basso hanno invece assi liberi, per leggere la forma delle
 #   traiettorie.
+# - **Le due versioni del task si vedono già qui.** Nei pannelli in basso le medie dei trial dispari
+#   (linea continua) e dei pari (tratteggiata) di `Shape` vanno in direzioni diverse; in Isomap la
+#   traiettoria lunga di `Shape` è quasi solo quella dei trial pari. È la differenza tra le due
+#   versioni che misuriamo al §9.2, ed è il motivo per cui le medie si fanno per condizione.
 # - Le traiettorie medie di Isomap sono **seghettate**, quelle della PCA lisce. `transform` colloca
 #   ogni punto nuovo a partire dai suoi vicini tra i punti di X, e quando i vicini cambiano il punto
 #   salta (lo misuriamo al §6.1).
@@ -755,53 +769,54 @@ fig.tight_layout(); fig.savefig(FIGS / "03_phase_decoding.png", bbox_inches="tig
 # Ultima misura, la stessa del notebook 02: prendiamo le 119 finestre da 1 s (tutti i bin, uno ogni
 # 20 ms), le proiettiamo con Isomap e con la PCA, e calcoliamo sulle prime 3 dimensioni la
 # **seghettatura** (quanto la traiettoria salta da un bin all'altro) e la **consistenza** (quanto si
-# somigliano le ripetizioni della stessa fase). Le funzioni sono quelle del 02_new (§9.4).
+# somigliano le ripetizioni della stessa condizione, cioè stessa fase e stessa versione del task,
+# mediata sulle 16 condizioni). Le funzioni sono quelle del 02_new (§9.4).
 
 # %%
 def roughness(trajs):                                       # seghettatura media (02_new, §9.4)
     return float(np.mean([(np.diff((T_ - T_.mean(0)) / (T_.std(0) + 1e-9), n=2, axis=0) ** 2).mean()
                           for T_ in trajs]))                # z-score di ogni dimensione, poi differenza seconda al quadrato
 
-def consistency(trajs):                                     # correlazione media tra ripetizioni della stessa fase (02_new, §9.4)
-    tags_ = [w["tag"] for w in windows]
+def consistency(trajs):                                     # correlazione media tra ripetizioni della stessa condizione (02_new, §9.4)
+    conds_ = [cond_of(w) for w in windows]
     out = []
-    for p in io.MOVEMENT_PHASES:
-        R = np.stack([t_ for t_, tg in zip(trajs, tags_) if tg == p])  # (ripetizioni, 50 bin, 3 dimensioni)
+    for c in CONDS:
+        R = np.stack([t_ for t_, cw in zip(trajs, conds_) if cw == c])  # (ripetizioni, 50 bin, 3 dimensioni)
         out.append(np.mean([np.corrcoef(R[:, :, j])[np.triu_indices(len(R), 1)].mean() for j in range(R.shape[2])]))
-    return float(np.mean(out))
+    return float(np.mean(out))                              # media sulle 16 condizioni
 
 tab_traj = pd.DataFrame([{"metodo": m, "seghettatura (più bassa = meglio)": roughness([t_[:, :3] for t_ in traj[m]]),
                           "consistenza (più alta = meglio)": consistency([t_[:, :3] for t_ in traj[m]])}
                          for m in ("PCA", "Isomap")]).set_index("metodo")
 display(tab_traj.round(4))
 
-PH_SHOW = "Release"                                         # la fase più riproducibile nel notebook 02
-idx_ph = [i for i, w in enumerate(windows) if w["tag"] == PH_SHOW]
+PH_SHOW = ("Release", "dispari")                            # una condizione tra le più riproducibili nel notebook 02
+idx_ph = [i for i, w in enumerate(windows) if cond_of(w) == PH_SHOW]
 t_win = np.arange(50) * 20                                  # ms dall'inizio della fase
 fig, ax = plt.subplots(1, 2, figsize=(12, 3.6), sharey=True)
 for a_, m in zip(ax, ("PCA", "Isomap")):
     R = np.stack([traj[m][i][:, 0] for i in idx_ph])        # prima dimensione di ogni ripetizione
     R = (R - R.mean()) / R.std()                            # stessa scala per i due metodi
     for r_ in R:
-        a_.plot(t_win, r_, color=io.PHASE_COLORS[PH_SHOW], lw=0.8, alpha=0.5)
+        a_.plot(t_win, r_, color=io.PHASE_COLORS[PH_SHOW[0]], lw=0.8, alpha=0.6)
     a_.plot(t_win, R.mean(0), color="0.1", lw=2.2)          # media delle ripetizioni
     a_.set(title=f"{m}: prima dimensione", xlabel="ms dall'inizio della fase")
 ax[0].set_ylabel("z")
-fig.suptitle(f"Le {len(idx_ph)} ripetizioni di {PH_SHOW}, una per linea (nero = media)", y=1.02)
+fig.suptitle(f"Le {len(idx_ph)} ripetizioni di {PH_SHOW[0]} nei trial {PH_SHOW[1]}, una per linea (nero = media)", y=1.02)
 fig.tight_layout(); fig.savefig(FIGS / "03_trajectories.png", bbox_inches="tight"); plt.show()
 
 # %% [markdown]
 # **Lettura.**
 #
-# - **Consistenza simile**, appena più alta per Isomap: le ripetizioni della stessa fase si
-#   somigliano un po' di più.
+# - **Consistenza simile**, un po' più alta per Isomap (0.122 contro 0.109): le ripetizioni della
+#   stessa condizione si somigliano un po' di più.
 # - **Seghettatura circa 20 volte più alta.** È un limite strutturale di Isomap: non produce una
 #   funzione liscia che porta dai dati alle coordinate. `transform` colloca ogni punto nuovo
 #   guardando i suoi 10 vicini tra i punti di X; quando il gruppo dei vicini cambia, il punto salta.
 #   Nella figura si vede come un tremolio sulle curve di Isomap, assente in quelle della PCA.
 # - È il terzo limite comune dei metodi geometrici indicato dalla review (§4.1): danno una mappa
 #   descrittiva, non un modello dei dati. Per le traiettorie single-trial il riferimento resta la
-#   GPFA del notebook 02 (seghettatura 0.011, consistenza 0.11).
+#   GPFA del 02_new, §10.5 (seghettatura 0.011, consistenza 0.137 con la stessa misura per condizione).
 #
 # ## 7 · Analisi di sensibilità e alternative provate
 #
@@ -918,7 +933,7 @@ fig.tight_layout(); fig.savefig(FIGS / "03_sensitivity_k.png", bbox_inches="tigh
 # | un bin ogni 2 / ogni 10 | la griglia del sottocampionamento | quanto conta il passo scelto |
 # | finestra di Theiler | tutti i bin (20 ms), ma vietati come vicini quelli dello stesso trial entro 200 ms | toglie la catena senza buttare punti |
 # | tutta la sessione | anche `Presentation` e `Intertrial` | i momenti di pausa cambiano la mappa? |
-# | medie per fase | le 8 traiettorie medie (400 punti) | il segnale "pulito" del notebook 02, §8 |
+# | medie per condizione | le 16 traiettorie medie, fase × versione (800 punti) | il segnale "pulito" del 02_new, §8 |
 # | fattori GPFA | i 25 fattori della GPFA al posto della PCA | l'input più pulito possibile |
 
 # %%
@@ -937,16 +952,17 @@ alts = {                                                    # ogni variante camb
 rows_alt = {name: evaluate(**kw) for name, kw in alts.items()}
 
 # %% [markdown]
-# **Le medie per fase** (notebook 02, §8): per ogni fase, la media delle 14-15 ripetizioni della
-# finestra da 1 s, proiettata sulle stesse 25 direzioni. Sono 8 curve da 50 punti. Qui non ha senso
+# **Le medie per condizione** (02_new, §8): per ogni condizione (fase × versione), la media delle
+# 7-8 ripetizioni della finestra da 1 s, proiettata sulle stesse 25 direzioni. Sono 16 curve da 50
+# punti. Qui non ha senso
 # parlare di trial né di cross-validation: misuriamo solo il vantaggio di Isomap nella varianza
 # residua.
 
 # %%
-PSTH = np.concatenate([np.mean([Z25[w["start"]:w["stop"]] for w in windows if w["tag"] == p], axis=0)
-                       for p in io.MOVEMENT_PHASES])        # (8 fasi × 50 bin, 25)
+PSTH = np.concatenate([np.mean([Z25[w["start"]:w["stop"]] for w in windows if cond_of(w) == c], axis=0)
+                       for c in CONDS])                     # (16 condizioni × 50 bin, 25)
 iso_avg = isomap_on(PSTH, K_NN, D_EVAL)
-rows_alt["medie per fase (400 punti)"] = {
+rows_alt[f"medie per condizione ({len(PSTH)} punti)"] = {
     "punti": len(PSTH),
     "pezzi del grafo": connected_components(kneighbors_graph(PSTH, K_NN), directed=False)[0],
     "vantaggio Isomap, dati": (residual_variance(pdist(PSTH), PCA(D_EVAL).fit_transform(PSTH))
@@ -1051,7 +1067,7 @@ tab_alt = pd.DataFrame(rows_alt).T
 display(tab_alt.round(1))
 
 # %%
-alt = tab_alt.drop(index="medie per fase (400 punti)").astype(float)  # senza le medie per fase: non informative (grafo in 3 pezzi)
+alt = tab_alt.drop(index=f"medie per condizione ({len(PSTH)} punti)").astype(float)  # senza le medie: variante non confrontabile (§7.2)
 short = {"principale": "principale", "conteggi grezzi (PCA a 25)": "conteggi grezzi",
          "PCA a 10": "PCA a 10", "PCA a 50": "PCA a 50", "nessuna PCA (160 canali)": "nessuna PCA",
          "un bin ogni 2": "un bin ogni 2", "un bin ogni 10": "un bin ogni 10",
@@ -1086,7 +1102,7 @@ fig.tight_layout(); fig.savefig(FIGS / "03_alternatives.png", bbox_inches="tight
 #
 # La figura riassume la tabella. A sinistra il riconoscimento della fase: un segmento per variante,
 # dalla PCA a Isomap. A destra il vantaggio di Isomap nella varianza residua, sui dati veri e sul
-# gemello: conta la distanza tra i due punti. Mancano solo le medie per fase (variante non
+# gemello: conta la distanza tra i due punti. Mancano solo le medie per condizione (variante non
 # informativa).
 #
 # - **Conteggi grezzi**: Isomap peggio della PCA (−6.9 punti) e fasi al 21-22% per entrambi. È la
@@ -1108,9 +1124,10 @@ fig.tight_layout(); fig.savefig(FIGS / "03_alternatives.png", bbox_inches="tight
 #   trial" scende al 16%). La PCA peggiora molto nel riconoscere le fasi (25.6%), probabilmente
 #   perché le sue prime direzioni descrivono soprattutto la differenza tra pausa e movimento (non
 #   l'abbiamo verificato); Isomap regge meglio (32.8%).
-# - **Medie per fase**: il grafo si spezza in 3 pezzi (alcune curve medie sono troppo lontane dalle
-#   altre), Isomap deve ricollegarli artificialmente, e il risultato è pari alla PCA.
-#   Con 8 curve lisce e separate questa variante **non è informativa**.
+# - **Medie per condizione** (16 curve, fase × versione): il grafo si spezza in 2 pezzi (alcune
+#   curve medie sono troppo lontane dalle altre), Isomap deve ricollegarli artificialmente, e il
+#   risultato è peggiore della PCA (−4.7 punti). Con poche curve lisce e separate questa variante
+#   **non è informativa**.
 # - **Fattori GPFA**: nella varianza residua Isomap è pari alla PCA (−0.7), ma sui 5 gemelli passati
 #   per la stessa GPFA perderebbe di 8-11 punti (−9.8 se la GPFA si ristima sul gemello): la distanza
 #   tra dati e gemello, circa 9 punti, è in linea con le altre varianti. Nel riconoscimento delle
@@ -1145,7 +1162,7 @@ fig.tight_layout(); fig.savefig(FIGS / "03_alternatives.png", bbox_inches="tight
 # | dimensioni della PCA iniziale | 10, 25, 50, 160 | Isomap meglio della PCA con 10-25, peggio con 50-160 | §7.2 |
 # | passo / catena del tempo | ogni 2, 5, 10 bin; Theiler | catena 52, 20, 6, 0%; con Theiler +6 punti sulle fasi | §7.2 |
 # | quali istanti | fasi di movimento vs tutta la sessione | con la sessione intera la PCA crolla (25.6%), Isomap regge (32.8%) | §7.2 |
-# | medie per fase | 400 punti | grafo in 3 pezzi, Isomap = PCA: non informativo | §7.2 |
+# | medie per condizione | 16 condizioni fase × versione, 800 punti | grafo in 2 pezzi, Isomap peggio della PCA (−4.7): non informativo | §7.2 |
 # | fattori GPFA come input | 25 fattori, GPFA stimata per blocco | fasi: Isomap 40.7% contro PCA 30.5%, il vantaggio più grande; varianza residua: −0.7 sui dati, −8.3 sul gemello | §7.2 |
 #
 # ### Che cosa abbiamo imparato su Isomap
@@ -1615,8 +1632,8 @@ print("Punti e trial per fase:", {p: (int((ph == p).sum()), len(np.unique(tr[ph 
 # - Le due isole di `Shape` corrispondono a una differenza reale nel task. Per `Grasp` e `Release`
 #   no: lì la divisione in due gruppi della mappa non segue le due versioni (52-67%, entro il caso).
 # - Le 15 ripetizioni di una fase **non sono repliche** dello stesso movimento: almeno g3 cambia tra
-#   un trial e l'altro, in tutte le fasi. Le medie per fase e la consistenza (notebook 02; qui §4,
-#   §6.1, §7.2 e §9.4) mescolano le due versioni. Non l'abbiamo ancora corretto. Tra le fasi della
+#   un trial e l'altro, in tutte le fasi. Per questo le medie e la consistenza (02_new; qui §4,
+#   §6.1, §7.2 e §9.4) usano 16 condizioni, fase × versione, invece delle 8 fasi. Tra le fasi della
 #   mano, la divisione della mappa segue le due versioni solo in `Shape`; per le fasi del braccio non
 #   l'abbiamo controllato.
 #
@@ -1687,11 +1704,11 @@ display(tab_traj_u.round(4))
 #
 # - **Seghettatura ancora più alta**: 0.59 contro 0.27 di Isomap e 0.013 della PCA. Anche
 #   `transform` di UMAP lavora a vicini, e il punto salta quando i vicini cambiano.
-# - **Consistenza più alta** (0.13 contro 0.095 e 0.088, con un solo seme): nelle coordinate di UMAP
-#   le ripetizioni della stessa fase hanno un andamento nel tempo un po' più simile. La misura
-#   mescola però le due versioni del task (§9.2).
+# - **Consistenza più alta** (0.144 contro 0.122 e 0.109, con un solo seme): nelle coordinate di UMAP
+#   le ripetizioni della stessa condizione (fase × versione, §9.2) hanno un andamento nel tempo un
+#   po' più simile.
 # - Vale il limite del §6.1: UMAP dà una mappa, non un modello dei dati. Per le traiettorie
-#   single-trial il riferimento resta la GPFA: consistenza simile (0.11), ma seghettatura circa 50
+#   single-trial il riferimento resta la GPFA: consistenza simile (0.137), ma seghettatura circa 50
 #   volte più bassa (0.011 contro 0.59).
 #
 # ### 9.5 · Riepilogo di UMAP
@@ -1708,7 +1725,7 @@ display(tab_traj_u.round(4))
 # | semi | 5 | 1-3 punti tra il migliore e il peggiore | §9.1, §9.3 |
 # | `n_neighbors` | 5, 10, 20, 50 | stabile fino a 20, scende a 50 (38.6% e 47.6%) | §9.3 |
 # | `min_dist` | 0, 0.1, 0.5 | nessun effetto sulla misura | §9.3 |
-# | traiettorie single-trial | PCA, Isomap, UMAP | seghettatura 0.013, 0.27, 0.59 | §9.4 |
+# | traiettorie single-trial | PCA, Isomap, UMAP | seghettatura 0.013, 0.27, 0.59; consistenza per condizione 0.109, 0.122, 0.144 | §9.4 |
 #
 # **Che cosa abbiamo imparato su UMAP**
 #
@@ -1732,7 +1749,7 @@ display(tab_traj_u.round(4))
 #    dispari e pari); per `Grasp` e `Release` no: la loro divisione in due gruppi non segue le due
 #    versioni (52-67%, entro il caso).
 # 5. **Le ripetizioni di una fase non sono repliche**: il task alterna due versioni tra trial dispari
-#    e pari. Riguarda anche le medie per fase e la consistenza dei notebook precedenti.
+#    e pari. Per questo medie e consistenza, qui e nel 02_new, usano 16 condizioni (fase × versione).
 # 6. **Limiti**: le distanze nella mappa non si interpretano, non c'è una stima della dimensione,
 #    le traiettorie sono le più seghettate di tutte.
 #

@@ -1442,10 +1442,11 @@ fig.tight_layout(); fig.savefig(FIGS / "04_phase_decoding.png", bbox_inches="tig
 # - **Le due versioni del task.** Nel 03 (§9.2) abbiamo scoperto che il task alterna due versioni
 #   tra trial dispari e pari: le 15 ripetizioni di una fase non sono repliche. Calcoliamo quindi la
 #   consistenza anche **dentro** ciascuna versione (solo le ripetizioni dei trial dispari, solo
-#   quelle dei pari) e ne facciamo la media. È una correzione che nel 03 mancava; la applichiamo qui
-#   anche a PCA, Isomap e UMAP, ricalcolati con lo stesso codice del 03. La GPFA (02_new, §10.5) la
-#   citiamo dal 03 senza ricalcolarla: richiederebbe di ristimarla, e per lei la consistenza per
-#   versione non c'è.
+#   quelle dei pari) e ne facciamo la media. È la stessa misura che dal 29/10 usano il 02_new e il 03
+#   (16 condizioni, fase × versione). La applichiamo qui anche a PCA, Isomap e UMAP, ricalcolati con
+#   lo stesso codice del 03. La GPFA (02_new, §10.5) non la ricalcoliamo, perché richiederebbe di
+#   ristimarla: la citiamo dal 02_new, 0.11 mescolando le versioni (calcolata prima della correzione)
+#   e 0.137 per versione.
 
 # %%
 windows = io.phase_windows(s, win_s=1.0, align="start")     # le 119 finestre da 1 s del 02 e del 03
@@ -1496,7 +1497,8 @@ for name, runs in TRAJ.items():
 rows_t["GPFA (dal 03, §6.1, e dal 02_new, §10.5)"] = {"seghettatura": "0.011", "consistenza, tutte le ripetizioni": "0.11"}
 tab_traj4 = pd.DataFrame(rows_t).T.fillna("non calcolata")
 display(tab_traj4)
-print("Nel 03, con un solo seme di UMAP: seghettatura PCA 0.013, Isomap 0.27, UMAP 0.59; consistenza 0.088, 0.095, 0.13")
+print("Nel 03, con un solo seme di UMAP: seghettatura PCA 0.013, Isomap 0.27, UMAP 0.59; consistenza per versione 0.109, 0.122, 0.144"
+      " (mescolando le versioni, prima della correzione del 29/10: 0.088, 0.095, 0.13)")
 
 # %%
 PH_SHOW = "Release"                                         # la fase più riproducibile nel 02 e nel 03
@@ -1523,8 +1525,10 @@ fig.tight_layout(); fig.savefig(FIGS / "04_trajectories.png", bbox_inches="tight
 # %% [markdown]
 # **Lettura.**
 #
-# - **I numeri del 03 si ritrovano**: PCA 0.013 e 0.088, Isomap 0.275 e 0.095; UMAP con 5 semi 0.596
-#   (0.571-0.628) e 0.125 (0.110-0.134), in linea con il seme unico del 03 (0.59 e 0.13).
+# - **I numeri del 03 si ritrovano**: seghettatura e consistenza per versione PCA 0.013 e 0.109,
+#   Isomap 0.275 e 0.122, identiche al 03; UMAP con 5 semi 0.596 (0.571-0.628) e 0.144 (0.137-0.152),
+#   in linea con il seme unico del 03 (0.59 e 0.144). Mescolando le versioni: 0.088, 0.095 e 0.125,
+#   i valori del 03 prima della correzione.
 # - **Le traiettorie di CEBRA sono lisce, ma non quanto quelle dei metodi lineari.** Seghettatura
 #   0.080 (3 dimensioni) e 0.074 (4 dimensioni): 7-8 volte meno di UMAP e 3-4 volte meno di Isomap,
 #   ma 6 volte più della PCA (0.013) e della GPFA (0.011). Il motivo è nel modo in cui sono fatte:
@@ -1537,7 +1541,7 @@ fig.tight_layout(); fig.savefig(FIGS / "04_trajectories.png", bbox_inches="tight
 # - **Le due versioni del task.** Per tutti i metodi la consistenza dentro una sola versione è più
 #   alta che mescolandole: PCA da 0.088 a 0.109, UMAP da 0.125 a 0.144, CEBRA a 4 dimensioni da
 #   0.106 a 0.122. Mescolare le versioni abbassava quindi la consistenza nel 02 e nel 03, come
-#   sospettato (03, §9.2). L'ordine dei metodi però non cambia. I trial pari sono più consistenti dei
+#   sospettato (03, §9.2); dal 29/10 entrambi la calcolano per versione. L'ordine dei metodi però non cambia. I trial pari sono più consistenti dei
 #   dispari con tutti i metodi (per esempio UMAP 0.187 contro 0.102): non sappiamo perché, e non
 #   l'abbiamo indagato.
 # - Nella figura, le ripetizioni di `Release` lungo la prima coordinata: lisce con la PCA, a salti con
@@ -1546,7 +1550,7 @@ fig.tight_layout(); fig.savefig(FIGS / "04_trajectories.png", bbox_inches="tight
 #   seghettatura, non la forma.
 # - **Limiti**: queste mappe sono stimate su tutti i trial, quindi descrivono e non misurano la
 #   generalizzazione; con circa 7 ripetizioni per versione la consistenza per versione è rumorosa;
-#   per la GPFA non l'abbiamo calcolata.
+#   per la GPFA non l'abbiamo ricalcolata qui (nel 02_new, §10.5: 0.137).
 
 # %% [markdown]
 # ## 5 · Controlli: che cosa c'è nella mappa di CEBRA-Time
@@ -2773,7 +2777,7 @@ fig.tight_layout(); fig.savefig(FIGS / "04_summary.png", bbox_inches="tight"); p
 # - **Traiettorie e stabilità**: PCA e GPFA sono le più lisce (0.01), CEBRA è nel mezzo (0.07-0.08),
 #   Isomap e UMAP saltano (0.3-0.6). La consistenza tra ripetizioni è più alta per UMAP (0.125; 0.144
 #   per versione); CEBRA a 4 dimensioni, GPFA e Isomap stanno tra 0.095 e 0.11, PCA e CEBRA a 3
-#   dimensioni intorno a 0.09. CEBRA è il meno stabile da un seme all'altro (63-75%, contro 87-93%
+#   dimensioni intorno a 0.09. Per versione la GPFA del 02_new arriva a 0.137, vicino a UMAP. CEBRA è il meno stabile da un seme all'altro (63-75%, contro 87-93%
 #   di UMAP).
 # - **In una frase**: su questa sessione CEBRA-Time è un buon metodo senza etichette, tra Isomap e
 #   UMAP con poche dimensioni e pari a UMAP con più dimensioni, con traiettorie più lisce di UMAP ma
@@ -5342,8 +5346,8 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_phase.png", bbox_inches="tight"
 #
 # Le misure del §4.2 (seghettatura e consistenza, anche per versione del task) sulle 119 finestre da 1 s,
 # con i **primi 3 fattori ordinati** dei modelli stimati su **tutti i 15 trial**. Accanto, i numeri della
-# parte A (PCA, Isomap, UMAP, CEBRA-Time sui 25 PC) e quelli della GPFA del 02_new (0.011 e 0.11, stimata
-# sulle finestre stesse).
+# parte A (PCA, Isomap, UMAP, CEBRA-Time sui 25 PC) e quelli della GPFA del 02_new (seghettatura 0.011,
+# consistenza 0.11 mescolando le versioni e 0.137 per versione; stimata sulle finestre stesse).
 #
 # Va tenuto presente che per GPFA alla pari e LFADS ogni finestra è ricucita da pezzi da 600 ms (§9.2),
 # mentre la GPFA del 02_new vedeva ogni finestra da 1 s intera.
@@ -5398,7 +5402,8 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_trajectories.png", bbox_inches=
 # - **Per tutti i metodi la consistenza sale separando le versioni**, e i trial pari sono più simili tra loro
 #   dei dispari (GPFA alla pari 0.159 contro 0.118, LFADS 0.155 contro 0.109), come per i metodi della parte A
 #   nelle righe in basso.
-# - **GPFA alla pari e GPFA del 02_new**: seghettatura 0.017 contro 0.011, consistenza 0.118 contro 0.11. I
+# - **GPFA alla pari e GPFA del 02_new**: seghettatura 0.017 contro 0.011, consistenza 0.118 contro 0.11 (per
+#   versione 0.138 contro 0.137). I
 #   pezzi ricuciti rendono la GPFA un po' meno liscia, non meno consistente.
 # - **La figura** (le 14 ripetizioni di `Release`, primo fattore ordinato): la FA è rumore attorno a una media
 #   quasi piatta; GPFA e LFADS danno curve lisce, e in tutti e due la media dei trial dispari scende verso i
