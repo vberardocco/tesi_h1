@@ -756,7 +756,9 @@ for k, (D, ttl) in enumerate([(one, "Una sola ripetizione per condizione"),
         ax[k].plot(D[(ph, v)][:, 0], D[(ph, v)][:, 1], color=io.PHASE_COLORS[ph], ls=VER_LS[v], lw=1.6)  # traiettoria nel piano PC1-PC2
         ax[k].plot(D[(ph, v)][0, 0], D[(ph, v)][0, 1], "o", color=io.PHASE_COLORS[ph], ms=6)  # pallino = inizio della fase
     ax[k].set(xlabel="PC1", ylabel="PC2", title=ttl)
-ax[2].set_xlim(ax[1].get_xlim()); ax[2].set_ylim(ax[1].get_ylim())  # stessa scala nei due pannelli, per confrontarli
+lims = np.array([[*ax[k].get_xlim(), *ax[k].get_ylim()] for k in (1, 2)])  # i limiti che ciascun pannello sceglierebbe da solo
+for k in (1, 2):                                        # stessa scala nei due pannelli, larga abbastanza per tutte le traiettorie
+    ax[k].set_xlim(lims[:, 0].min(), lims[:, 1].max()); ax[k].set_ylim(lims[:, 2].min(), lims[:, 3].max())
 handles = ([plt.Line2D([], [], color=io.PHASE_COLORS[ph], lw=2, label=ph) for ph in io.MOVEMENT_PHASES]
            + [plt.Line2D([], [], color="0.3", ls=VER_LS[v], lw=1.6, label=f"trial {v}") for v in VERSIONS])
 fig.legend(handles=handles, ncol=10, fontsize=8, loc="lower center", bbox_to_anchor=(0.62, -0.02))
