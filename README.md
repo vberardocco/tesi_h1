@@ -62,7 +62,9 @@ tesi_h1/
 
 - **Dimensionalità, due contrasti.** Single-trial vs media per condizione: participation ratio
   ≈ 106 contro ≈ 11 — il segnale è a bassa dimensione, il rumore no. Embedding vs intrinsic:
-  la PCA richiede ~106 dimensioni effettive dove il two-NN ne stima ~22 → **il manifold è curvo**.
+  la PCA richiede ~106 dimensioni effettive dove il two-NN ne stima ~22; il divario non dimostra
+  che il manifold sia curvo, perché le ~106 dimensioni della PCA sono soprattutto rumore (nel
+  notebook 03, §5, la componente non lineare risulta modesta).
 - **Factor Analysis**: solo il ~5% della varianza di ciascuna unità è condivisa con la popolazione
   (conteggi a 20 ms); K\* ≈ 30 fattori condivisi. Ma le traiettorie single-trial di FA non sono
   migliori di quelle della PCA: modellare il rumore non basta, serve modellare il tempo.

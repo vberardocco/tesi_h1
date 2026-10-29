@@ -15,7 +15,6 @@
 #             ──(2. selezione dei canali attivi ≥ 0.5 Hz)──► conteggi        T × 160
 #             ──(3. smoothing gaussiano σ = 50 ms)─────────► firing rate     T × 160
 #             ──(4. z-score per canale)────────────────────► stessa scala    T × 160
-#             ──(5. PCA)───────────────────────────────────► componenti principali
 #
 # poi, per capire quanto di quello che vede la PCA è segnale:
 #
@@ -30,9 +29,6 @@
 #
 # **Tempo di esecuzione:** circa 20 minuti, quasi tutti nelle cross-validation della FA (§9.1, §9.5)
 # e della GPFA (§10.2).
-#
-# Usiamo la stessa sessione del notebook 02 (`held-in-calib`, `19250108T110520`), così i numeri
-# sono confrontabili.
 
 # %% [markdown]
 # ## 0 · Setup
@@ -154,64 +150,6 @@ print(f"2) Intervallo minimo tra due crossing dello stesso canale: {np.median(mi
 #    canali diversi indica un limite dello strumento, non della fisiologia. È compatibile con il
 #    tempo morto del rilevatore: dopo un crossing il processore salva un frammento di forma d'onda
 #    (1.6 ms) e per quella durata non può rilevarne un altro.
-#
-# ### Come funziona la soglia: un esempio su segnale sintetico
-#
-# Per vedere che cosa fa la soglia, la applichiamo a un segnale **sintetico** (la tensione vera non
-# è nel dataset). Rumore di fondo più gli spike di due neuroni: uno vicino all'elettrodo (spike
-# grandi) e uno più lontano (spike piccoli). Confrontiamo tre soglie.
-
-# %%
-rng = np.random.default_rng(1)                          # generatore casuale con seme fisso: la figura è riproducibile
-t_ms = np.arange(0, 60, 1000 / FS_RAW)                  # 60 ms di tempo campionato a 30 kHz, espresso in ms
-noise = rng.normal(0, 10, t_ms.size)                    # rumore di fondo gaussiano, deviazione standard 10 µV
-
-def spike(t0, amp):                                     # forma d'onda di uno spike extracellulare che inizia in t0 (ms)
-    return (-amp * np.exp(-((t_ms - t0) / 0.15) ** 2)               # fase negativa, rapida
-            + 0.35 * amp * np.exp(-((t_ms - t0 - 0.5) / 0.3) ** 2))  # risalita positiva, più lenta
-
-v = noise.copy()                                        # la tensione parte dal solo rumore...
-for t0 in (8, 27, 49):                                  # ...e riceve 3 spike grandi (neurone vicino, 90 µV)
-    v += spike(t0, 90)
-for t0 in (17, 38):                                     # ...e 2 spike piccoli (neurone lontano, 52 µV)
-    v += spike(t0, 52)
-
-rms = np.sqrt(np.mean(noise ** 2))                      # RMS del rumore: nel sistema reale si misura su un periodo
-                                                        # di riferimento a inizio sessione; qui sul rumore puro
-
-def crossings(v, thr, dead=49):                         # indici in cui v scende sotto thr, con tempo morto di 49 campioni
-    down = np.flatnonzero((v[1:] < thr) & (v[:-1] >= thr)) + 1  # campioni in cui la tensione passa da sopra a sotto la soglia
-    keep, last = [], -dead                              # eventi accettati; "last" = ultimo evento accettato
-    for i in down:                                      # scorre i passaggi in ordine di tempo...
-        if i - last >= dead:                            # ...e accetta solo quelli fuori dal tempo morto del precedente
-            keep.append(i); last = i
-    return np.array(keep, dtype=int)
-
-fig, ax = plt.subplots(figsize=(11, 3.6))
-ax.plot(t_ms, v, color="0.35", lw=0.7, label="tensione (sintetica)")          # il segnale
-for k, ls in [(-3.0, ":"), (THRESH_RMS, "--"), (-6.0, "-.")]:                 # tre soglie a confronto
-    thr = k * rms                                                             # soglia in µV
-    idx = crossings(v, thr)                                                   # eventi rilevati con quella soglia
-    ax.axhline(thr, color="C3" if k == THRESH_RMS else "0.6", ls=ls, lw=1.2,
-               label=f"{k:+.1f} × RMS → {len(idx)} eventi")
-    print(f"soglia {k:+.1f} × RMS = {thr:6.1f} µV -> {len(idx)} eventi")
-idx = crossings(v, THRESH_RMS * rms)                                          # eventi con la soglia vera, da marcare
-ax.plot(t_ms[idx], np.full(len(idx), THRESH_RMS * rms), "v", color="C3", ms=8)
-ax.set(xlabel="tempo (ms)", ylabel="tensione (µV)",
-       title="Illustrazione su segnale sintetico: 3 spike grandi (neurone vicino) + 2 piccoli (neurone lontano)")
-ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), fontsize=8, ncol=4)   # legenda sotto il grafico, per non coprire gli spike
-fig.tight_layout(); fig.savefig(FIGS / "02new_threshold_sketch.png", bbox_inches="tight"); plt.show()
-
-# %% [markdown]
-# **Lettura.** La soglia decide che cosa conta come evento:
-#
-# - **−3 × RMS** è troppo bassa: il rumore stesso la attraversa, e compaiono eventi falsi;
-# - **−6 × RMS** è troppo alta: comincia a perdere gli spike del neurone lontano (qui uno dei due);
-# - **−4.5 × RMS** tiene gli spike di **entrambi** i neuroni e quasi nessun evento di rumore.
-#   Gli eventi dei due neuroni finiscono però nello stesso canale, senza distinzione: è esattamente
-#   il motivo per cui i nostri 176 canali sono *multi-unit*.
-#
-# Da qui in avanti partiamo dagli `spike_times` così come sono nel file.
 
 # %% [markdown]
 # ## 2 · Dagli istanti degli eventi a una matrice: il binning
@@ -690,7 +628,7 @@ fig.tight_layout(rect=(0, 0.05, 1, 1)); fig.savefig(FIGS / "02new_pca_timecourse
 # e del tempo (GPFA). Sono i passi successivi.
 
 # %% [markdown]
-# ## 8 · Il segnale c'è? PCA sulle medie per fase
+# ## 8 · Il segnale c'è? PCA sulle medie per condizione
 #
 # Al §6 la PCA ha trovato ~106 dimensioni, e abbiamo detto che sono soprattutto rumore. Qui lo
 # verifichiamo.
@@ -728,32 +666,47 @@ fig.tight_layout(rect=(0, 0.05, 1, 1)); fig.savefig(FIGS / "02new_pca_timecourse
 #
 # 1 s resta comunque una scelta nostra: al §10.7 rifacciamo le misure principali con finestre da
 # 0.5 e 0.75 s, e anche senza le ripetizioni in cui la fase dura un solo bin.
+#
+# **Le condizioni sono 16, non 8: fase × versione del task.** Il task alterna due versioni tra
+# trial dispari e trial pari (lo abbiamo scoperto nel notebook 03, §9.2): per esempio il grado di
+# libertà g3 della presa va in direzioni opposte, in `Shape` scende nei trial dispari e sale nei
+# pari. Le circa 15 ripetizioni di una fase **non sono quindi repliche dello stesso movimento**:
+# sono circa 7-8 ripetizioni di una versione e 7-8 dell'altra. Mediarle tutte insieme mescola due
+# risposte diverse. Per questo una **condizione** è una coppia (fase, versione), con la versione data
+# dal numero del trial in cui la finestra comincia (dispari o pari): 8 fasi × 2 versioni = 16
+# condizioni, con circa 7 ripetizioni ciascuna.
 
 # %%
 WIN_S = 1.0                                             # durata della finestra dopo l'inizio di ogni fase, in s
 L = int(round(WIN_S / BIN_S))                           # la stessa durata in bin: 1 s / 20 ms = 50
 windows = io.phase_windows(s, win_s=WIN_S, align="start")  # una finestra per ogni ripetizione di ogni fase di movimento
-reps = {ph: np.stack([Z[w["start"]:w["stop"]]           # per ogni fase, le sue finestre una sopra l'altra:
-                      for w in windows if w["tag"] == ph])  # array (ripetizioni, 50 bin, 160 canali)
-        for ph in io.MOVEMENT_PHASES}
-print("Ripetizioni per fase:", {ph: r.shape[0] for ph, r in reps.items()})
+VERSIONS = ("dispari", "pari")                          # le due versioni del task: trial dispari e trial pari
 
-PSTH = np.concatenate([reps[ph].mean(axis=0)            # media sulle ripetizioni (asse 0): una finestra "media" per fase
-                       for ph in io.MOVEMENT_PHASES])   # le 8 fasi una dopo l'altra: matrice (8 × 50, 160) = (400, 160)
+def cond_of(w):                                         # la condizione di una finestra: (fase, versione)
+    return (w["tag"], "dispari" if w["trial"] % 2 == 1 else "pari")
+
+CONDS = [(ph, v) for ph in io.MOVEMENT_PHASES for v in VERSIONS]  # le 16 condizioni, fase per fase
+reps = {c: np.stack([Z[w["start"]:w["stop"]]            # per ogni condizione, le sue finestre una sopra l'altra:
+                     for w in windows if cond_of(w) == c])  # array (ripetizioni, 50 bin, 160 canali)
+        for c in CONDS}
+print("Ripetizioni per condizione:", {f"{ph} {v}": r.shape[0] for (ph, v), r in reps.items()})
+
+PSTH = np.concatenate([reps[c].mean(axis=0)             # media sulle ripetizioni (asse 0): una finestra "media" per condizione
+                       for c in CONDS])                 # le 16 condizioni una dopo l'altra: matrice (16 × 50, 160) = (800, 160)
 pca_avg = PCA().fit(PSTH)                               # PCA sulle medie
 lam_avg = pca_avg.explained_variance_                   # le varianze lungo le sue direzioni
-print(f"PCA sulle medie per fase: matrice {PSTH.shape[0]} × {PSTH.shape[1]}, "
+print(f"PCA sulle medie per condizione: matrice {PSTH.shape[0]} × {PSTH.shape[1]}, "
       f"participation ratio = {pr(lam_avg):.1f}, PC1-3 = {lam_avg[:3].sum() / lam_avg.sum() * 100:.0f}% della varianza")
 
 # %% [markdown]
 # ### Attenzione: il confronto giusto non è 106 contro 11
 #
-# Le due PCA non hanno lo stesso numero di punti: al §6 c'erano 12233 bin, qui 400 (8 fasi × 50
-# bin). Con pochi punti la PCA non riesce a "riempire" tante dimensioni, e il participation ratio
-# scende anche senza fare nessuna media. Per separare i due effetti teniamo **sempre 400 punti** e
+# Le due PCA non hanno lo stesso numero di punti: al §6 c'erano 12233 bin, qui 800 (16 condizioni ×
+# 50 bin). Con pochi punti la PCA non riesce a "riempire" tante dimensioni, e il participation ratio
+# scende anche senza fare nessuna media. Per separare i due effetti teniamo **sempre 800 punti** e
 # cambiamo solo **quante ripetizioni mediamo**:
 #
-# - **finestre allineate alle fasi**: per ogni fase, la media di *n* ripetizioni scelte a caso;
+# - **finestre allineate alle fasi**: per ogni condizione, la media di *n* ripetizioni scelte a caso;
 # - **controllo con finestre casuali**: stessa procedura, ma con finestre prese in punti a caso della
 #   sessione, non allineate a nessuna fase. Qui non c'è nessun segnale comune da far emergere.
 #
@@ -761,15 +714,15 @@ print(f"PCA sulle medie per fase: matrice {PSTH.shape[0]} × {PSTH.shape[1]}, "
 
 # %%
 rng = np.random.default_rng(0)                          # seme fisso: le estrazioni casuali sono riproducibili
-N_REP = min(r.shape[0] for r in reps.values())          # ripetizioni disponibili in tutte le fasi (la fase con meno ne ha 14)
+N_REP = min(r.shape[0] for r in reps.values())          # ripetizioni disponibili in tutte le condizioni (quella con meno)
 N_DRAWS = 20                                            # quante estrazioni casuali per ogni valore di n
-N_LIST = [1, 2, 4, 8, N_REP]                            # quante ripetizioni mediare
+N_LIST = sorted({1, 2, 4, N_REP})                       # quante ripetizioni mediare
 
-def pr_aligned(n):                                      # PR medio quando mediamo n ripetizioni vere di ogni fase
+def pr_aligned(n):                                      # PR medio quando mediamo n ripetizioni vere di ogni condizione
     out = []
     for _ in range(N_DRAWS):
-        M = np.concatenate([reps[ph][rng.choice(len(reps[ph]), n, replace=False)].mean(axis=0)  # n ripetizioni a caso, mediate
-                            for ph in io.MOVEMENT_PHASES])                                     # le 8 fasi in fila: (400, 160)
+        M = np.concatenate([reps[c][rng.choice(len(reps[c]), n, replace=False)].mean(axis=0)  # n ripetizioni a caso, mediate
+                            for c in CONDS])                                                 # le 16 condizioni in fila: (800, 160)
         out.append(pr(PCA().fit(M).explained_variance_))
     return np.mean(out)
 
@@ -777,7 +730,7 @@ def pr_random(n):                                       # stessa cosa, ma con fi
     out = []
     for _ in range(N_DRAWS):
         M = np.concatenate([np.mean([Z[a:a + L] for a in rng.integers(0, n_bins - L, n)], axis=0)  # n finestre a caso, mediate
-                            for _ in io.MOVEMENT_PHASES])                                          # 8 "fasi finte": (400, 160)
+                            for _ in CONDS])                                                       # 16 "condizioni finte": (800, 160)
         out.append(pr(PCA().fit(M).explained_variance_))
     return np.mean(out)
 
@@ -790,35 +743,44 @@ display(pd.DataFrame({"finestre allineate alle fasi": pr_al, "finestre casuali (
 fig, ax = plt.subplots(1, 3, figsize=(15.5, 4.4), gridspec_kw={"width_ratios": [1.15, 1, 1]})
 ax[0].plot(N_LIST, pr_al, "o-", color="C0", lw=2, ms=7, label="finestre allineate alle fasi")
 ax[0].plot(N_LIST, pr_rd, "s--", color="0.55", lw=1.5, ms=7, label="finestre casuali (controllo)")
-ax[0].set(xlabel="ripetizioni mediate", ylabel="participation ratio (400 punti)", xticks=N_LIST, ylim=(0, 40),
+ax[0].set(xlabel="ripetizioni mediate", ylabel="participation ratio (800 punti)", xticks=N_LIST, ylim=(0, None),
           title="La media abbassa il PR solo se le finestre sono allineate")
 ax[0].legend(loc="lower left")
 
-one = {ph: pca_avg.transform(reps[ph][0])[:, :2] for ph in io.MOVEMENT_PHASES}        # la prima ripetizione di ogni fase
-avg = {ph: pca_avg.transform(reps[ph].mean(axis=0))[:, :2] for ph in io.MOVEMENT_PHASES}  # la media di ogni fase
-for k, (D, ttl) in enumerate([(one, "Una sola ripetizione per fase"),
-                              (avg, "Media delle ripetizioni (14-15 per fase)")], start=1):
-    for ph in io.MOVEMENT_PHASES:
-        ax[k].plot(D[ph][:, 0], D[ph][:, 1], color=io.PHASE_COLORS[ph], lw=1.6)  # traiettoria della fase nel piano PC1-PC2
-        ax[k].plot(D[ph][0, 0], D[ph][0, 1], "o", color=io.PHASE_COLORS[ph], ms=6)  # pallino = inizio della fase
+VER_LS = {"dispari": "-", "pari": "--"}                 # linea continua = trial dispari, tratteggiata = trial pari
+one = {c: pca_avg.transform(reps[c][0])[:, :2] for c in CONDS}        # la prima ripetizione di ogni condizione
+avg = {c: pca_avg.transform(reps[c].mean(axis=0))[:, :2] for c in CONDS}  # la media di ogni condizione
+for k, (D, ttl) in enumerate([(one, "Una sola ripetizione per condizione"),
+                              (avg, f"Media delle ripetizioni ({N_REP}-{max(len(r) for r in reps.values())} per condizione)")], start=1):
+    for (ph, v) in CONDS:
+        ax[k].plot(D[(ph, v)][:, 0], D[(ph, v)][:, 1], color=io.PHASE_COLORS[ph], ls=VER_LS[v], lw=1.6)  # traiettoria nel piano PC1-PC2
+        ax[k].plot(D[(ph, v)][0, 0], D[(ph, v)][0, 1], "o", color=io.PHASE_COLORS[ph], ms=6)  # pallino = inizio della fase
     ax[k].set(xlabel="PC1", ylabel="PC2", title=ttl)
 ax[2].set_xlim(ax[1].get_xlim()); ax[2].set_ylim(ax[1].get_ylim())  # stessa scala nei due pannelli, per confrontarli
-handles = [plt.Line2D([], [], color=io.PHASE_COLORS[ph], lw=2, label=ph) for ph in io.MOVEMENT_PHASES]
-fig.legend(handles=handles, ncol=8, fontsize=8, loc="lower center", bbox_to_anchor=(0.62, -0.02))
+handles = ([plt.Line2D([], [], color=io.PHASE_COLORS[ph], lw=2, label=ph) for ph in io.MOVEMENT_PHASES]
+           + [plt.Line2D([], [], color="0.3", ls=VER_LS[v], lw=1.6, label=f"trial {v}") for v in VERSIONS])
+fig.legend(handles=handles, ncol=10, fontsize=8, loc="lower center", bbox_to_anchor=(0.62, -0.02))
 fig.tight_layout(rect=(0, 0.06, 1, 1)); fig.savefig(FIGS / "02new_pca_phase_averages.png", bbox_inches="tight"); plt.show()
 
 # %% [markdown]
 # **Lettura.**
 #
-# - **A parità di punti**, una sola ripetizione per fase dà un participation ratio di circa 33.
-#   Mediando 14 ripetizioni **allineate alle fasi** scende a circa 11, e la curva non si è ancora
-#   fermata: con più ripetizioni scenderebbe ancora. ~11 è quindi un tetto, non il valore finale.
-# - Con le **finestre casuali** il PR resta intorno a 33 qualunque sia n. Mediare rumore puro dà
+# - **A parità di punti** (800), una sola ripetizione per condizione dà un participation ratio di
+#   circa 50. Mediando le 7 ripetizioni **allineate** disponibili in ogni condizione scende a circa
+#   21, e la curva non si è ancora fermata: con più ripetizioni scenderebbe ancora. ~20 è quindi un
+#   tetto, non il valore finale.
+# - Con le **finestre casuali** il PR resta intorno a 50 qualunque sia n. Mediare rumore puro dà
 #   ancora rumore, solo più piccolo, sparso sulle stesse direzioni. Il calo delle finestre allineate
 #   viene quindi da quello che le ripetizioni **hanno in comune**: il segnale del task.
+# - **Perché ~20 e non ~11, come mescolando le due versioni.** Con 8 condizioni (le fasi, senza
+#   distinguere la versione) si mediavano 14-15 ripetizioni su 400 punti; con 16 condizioni se ne
+#   mediano 7-8 su 800 punti. Meno ripetizioni lasciano più rumore, e più punti lasciano alla PCA
+#   più spazio per contarlo. Il numero più alto non vuol dire che il segnale sia più complesso: è
+#   il prezzo di non mescolare due movimenti diversi. Il calo con la media è circa il 59% (§10.7).
 # - Nelle figure: una ripetizione singola dà traiettorie aggrovigliate e sovrapposte; le medie danno
-#   traiettorie lisce e ben separate per fase. (Gli assi sono quelli della PCA sulle medie: vanno bene per guardare, non
-#   per misurare quanto è buona una traiettoria singola, perché quella PCA ha già "visto" le fasi.)
+#   traiettorie lisce e separate per condizione (linea continua = trial dispari, tratteggiata =
+#   trial pari). (Gli assi sono quelli della PCA sulle medie: vanno bene per guardare, non per
+#   misurare quanto è buona una traiettoria singola, perché quella PCA ha già "visto" le condizioni.)
 #
 # **Il segnale c'è ed è semplice, ma nel singolo trial è sepolto nel rumore.** La media però in
 # pratica non si può fare: un'interfaccia cervello-computer deve capire il movimento **mentre** la
@@ -995,7 +957,7 @@ print(f"Parte condivisa: participation ratio {pr_shared:.1f}, dimensioni per il 
 
 display(pd.DataFrame(
     [["PCA su tutti i bin (σ = 50 ms)", "segnale + tutto il rumore", PR, n95(lam)],
-     ["PCA sulle medie per fase", "segnale + rumore rimasto dopo la media", pr(lam_avg), n95(lam_avg)],
+     ["PCA sulle medie per condizione", "segnale + rumore rimasto dopo la media", pr(lam_avg), n95(lam_avg)],
      [f"FA su tutti i bin, conteggi grezzi (K* = {K_FA})", "solo la parte condivisa tra canali", pr_shared, d_shared]],
     columns=["metodo", "che cosa conta", "participation ratio", "dimensioni per il 95%"]).set_index("metodo").round(1))
 
@@ -1003,12 +965,12 @@ display(pd.DataFrame(
 # **Lettura.**
 #
 # - **Con la stessa misura (participation ratio)** la FA sui bin singoli trova circa 9.5 dimensioni
-#   efficaci: quasi come le medie per fase (~10.5), **senza fare nessuna media**, e lontanissimo
-#   dalle ~106 della PCA.
+#   efficaci, **senza fare nessuna media**: meno delle medie per condizione (~20) e lontanissimo
+#   dalle ~106 della PCA. Le medie di 7-8 ripetizioni contengono ancora molto rumore (§8), la FA
+#   lo mette da parte.
 # - **Con le dimensioni per il 95%** la differenza è ancora più netta: alla PCA sulle medie ne
-#   servono 46, alla FA 14. Il rumore rimasto dopo la media, anche se piccolo, è sparso su tante
-#   direzioni, e le ultime percentuali di varianza sono quasi tutte rumore. La FA quel rumore l'ha
-#   messo da parte.
+#   servono 78, alla FA 14. Il rumore rimasto dopo la media, anche se piccolo, è sparso su tante
+#   direzioni, e le ultime percentuali di varianza sono quasi tutte rumore.
 #
 # Attenzione: qui la FA usa tutta la sessione (comprese le pause tra un movimento e l'altro), le
 # medie solo il primo secondo di ogni fase. Il confronto alla pari, sugli stessi istanti, è al §9.6.
@@ -1021,8 +983,11 @@ display(pd.DataFrame(
 #
 # - **seghettatura** (*roughness*): quanto la traiettoria salta da un bin all'altro. Più bassa =
 #   più liscia;
-# - **consistenza**: quanto si somigliano le ripetizioni della stessa fase (correlazione media tra
-#   ripetizioni). Più alta = meglio: ripetizioni dello stesso movimento dovrebbero somigliarsi.
+# - **consistenza**: quanto si somigliano le ripetizioni della stessa condizione, cioè stessa fase
+#   **e** stessa versione del task (§8): correlazione media tra le coppie di ripetizioni, calcolata
+#   in ognuna delle 16 condizioni e poi mediata. Più alta = meglio: ripetizioni dello stesso
+#   movimento dovrebbero somigliarsi. Ripetizioni di versioni diverse non si confrontano, perché il
+#   movimento è diverso.
 #
 # Per un confronto equo, PCA e FA ricevono **gli stessi dati** (conteggi grezzi). Aggiungiamo PCA e
 # FA sui dati smussati (σ = 50 ms) come riferimento, per vedere quanto conta lo smoothing.
@@ -1040,14 +1005,19 @@ def roughness(trajs):                                   # seghettatura media di 
     return float(np.mean([(np.diff((T_ - T_.mean(0)) / (T_.std(0) + 1e-9), n=2, axis=0) ** 2).mean()
                           for T_ in trajs]))            # z-score di ogni dimensione, poi differenza seconda al quadrato
 
-def consistency(trajs):                                 # correlazione media tra ripetizioni della stessa fase
-    tags_ = [w["tag"] for w in windows]
-    out = []
-    for ph in io.MOVEMENT_PHASES:
-        R = np.stack([tr for tr, tg in zip(trajs, tags_) if tg == ph])  # (ripetizioni, 50 bin, 3 dimensioni)
-        out.append(np.mean([np.corrcoef(R[:, :, j])[np.triu_indices(len(R), 1)].mean()  # tutte le coppie di ripetizioni
-                            for j in range(R.shape[2])]))                             # per ogni dimensione, poi media
-    return float(np.mean(out))
+def consistency_w(trajs, win_list, per_phase=False):    # correlazione media tra ripetizioni della stessa condizione (fase, versione)
+    conds_ = [cond_of(w) for w in win_list]
+    out = {}
+    for c in CONDS:
+        R = np.stack([tr for tr, cw in zip(trajs, conds_) if cw == c])  # (ripetizioni, bin, 3 dimensioni)
+        out[c] = np.mean([np.corrcoef(R[:, :, j])[np.triu_indices(len(R), 1)].mean()  # tutte le coppie di ripetizioni
+                          for j in range(R.shape[2])])                              # per ogni dimensione, poi media
+    if per_phase:                                       # per fase: media delle due versioni
+        return {ph: (out[(ph, "dispari")] + out[(ph, "pari")]) / 2 for ph in io.MOVEMENT_PHASES}
+    return float(np.mean(list(out.values())))           # media sulle 16 condizioni
+
+def consistency(trajs):                                 # la consistenza sulle finestre da 1 s del §8
+    return consistency_w(trajs, windows)
 
 fa_sm = FactorAnalysis(n_components=K_FA, svd_method="lapack", random_state=0).fit(Z)  # stessa FA sui dati smussati del §5
 latents = {
@@ -1070,8 +1040,8 @@ display(tab_traj)
 # - **FA e PCA sui conteggi grezzi si comportano quasi allo stesso modo**: traiettorie ugualmente
 #   seghettate e ripetizioni ugualmente poco simili tra loro. Eppure la FA ha appena mostrato di
 #   saper separare segnale e rumore.
-# - **Lo smoothing cambia tutto**: la seghettatura crolla e la consistenza sale da circa 0.03 a
-#   circa 0.1, sia per la PCA sia per la FA.
+# - **Lo smoothing cambia tutto**: la seghettatura crolla e la consistenza sale da circa 0.035 a
+#   circa 0.12-0.13, sia per la PCA sia per la FA.
 #
 # Il motivo: la FA separa il rumore **tra canali**, ma tratta ogni bin da solo, senza sapere che il
 # bin prima e il bin dopo sono vicini nel tempo. Il rumore **nel tempo** resta tutto. Per le
@@ -1160,7 +1130,7 @@ eig_win = np.linalg.eigvalsh(W_win @ W_win.T)[::-1][:K_WIN]  # varianze della pa
 lam_win_sm = PCA().fit(Z[in_win]).explained_variance_   # PCA sugli stessi bin singoli, smussati (come le medie)
 lam_win_raw = PCA().fit(X_win).explained_variance_      # PCA sugli stessi bin singoli, grezzi (come la FA)
 display(pd.DataFrame(
-    [["PCA sulle medie per fase", "media di 14-15 ripetizioni, smussati", pr(lam_avg), n95(lam_avg)],
+    [["PCA sulle medie per condizione", "media di 7-8 ripetizioni, smussati", pr(lam_avg), n95(lam_avg)],
      ["PCA sui bin singoli (smussati)", "nessuna media, smussati σ = 50 ms", pr(lam_win_sm), n95(lam_win_sm)],
      ["PCA sui bin singoli (grezzi)", "nessuna media, conteggi grezzi", pr(lam_win_raw), n95(lam_win_raw)],
      [f"FA sui bin singoli (K* = {K_WIN})", "nessuna media, conteggi grezzi", pr(eig_win), n95(eig_win)]],
@@ -1172,14 +1142,14 @@ display(pd.DataFrame(
 #
 # - **Senza media, la PCA vede tantissime dimensioni** (~92 sui dati smussati, ~146 sui grezzi):
 #   il rumore.
-# - **Con la media, la PCA scende a ~10.5.**
-# - **La FA, senza nessuna media, scende ancora più in basso: circa 7.** Ottiene dai bin singoli
-#   quello che la PCA ottiene solo mediando 14-15 ripetizioni.
+# - **Con la media per condizione, la PCA scende a ~20.**
+# - **La FA, senza nessuna media, scende molto più in basso: circa 7.** Ottiene dai bin singoli
+#   più di quello che la PCA ottiene mediando 7-8 ripetizioni.
 #
-# Perché la FA scende persino sotto le medie? Nelle medie resta un po' di rumore: la media di 14
-# ripetizioni non lo cancella del tutto (la curva del §8 non si era ancora fermata), e quel rumore
-# aggiunge dimensioni. La FA invece lo mette da parte. Si vede bene nella colonna del 95%: alle
-# medie servono 46 direzioni, alla FA meno di 10.
+# Perché la FA scende sotto le medie? Nelle medie resta rumore: la media di 7-8 ripetizioni non lo
+# cancella del tutto (la curva del §8 non si era ancora fermata), e quel rumore aggiunge dimensioni.
+# La FA invece lo mette da parte. Si vede bene nella colonna del 95%: alle medie servono 78
+# direzioni, alla FA 9.
 #
 # Qui la cross-validation sceglie meno fattori che su tutta la sessione (K* = 10 invece di 15). In
 # parte perché i dati sono circa la metà, in parte perché questi istanti sono meno vari: solo
@@ -1187,7 +1157,8 @@ display(pd.DataFrame(
 #
 # **Riassunto della FA.** La FA risolve il problema del *quanto*: separa il segnale condiviso dal
 # rumore privato e, **senza fare medie**, trova una struttura di circa 7-10 dimensioni efficaci,
-# simile a quella delle medie per fase e stabile rispetto a σ. Non risolve il problema del *come
+# più compatta di quella delle medie per condizione (che conservano un po' di rumore) e stabile
+# rispetto a σ. Non risolve il problema del *come
 # nel tempo*: le traiettorie single-trial restano rumorose quanto quelle della PCA (§9.4). Il passo
 # successivo, GPFA, aggiunge proprio il modello del tempo.
 
@@ -1531,18 +1502,13 @@ for name, tr in traj.items():
 tab_final = pd.DataFrame(rows).set_index("metodo")
 display(tab_final.round(4))
 
-def consistency_per_phase(trajs):                       # la consistenza separata per fase
-    tags_ = [w["tag"] for w in windows]
-    out = {}
-    for ph in io.MOVEMENT_PHASES:
-        R = np.stack([t_ for t_, tg in zip(trajs, tags_) if tg == ph])
-        out[ph] = np.mean([np.corrcoef(R[:, :, j])[np.triu_indices(len(R), 1)].mean() for j in range(R.shape[2])])
-    return out
-display(pd.DataFrame({name: consistency_per_phase(tr) for name, tr in traj.items()}).T.round(2))
+display(pd.DataFrame({name: consistency_w(tr, windows, per_phase=True)  # la consistenza fase per fase
+                     for name, tr in traj.items()}).T.round(2)              # (media delle due versioni)
+        .rename_axis(columns="consistenza per fase (media delle due versioni)"))
 
 # %%
-PH_SHOW = "Release"                                     # una fase ben modulata, per la figura
-idx_ph = [i for i, w in enumerate(windows) if w["tag"] == PH_SHOW]  # le sue ripetizioni
+PH_SHOW = ("Release", "dispari")                        # una condizione ben modulata, per la figura
+idx_ph = [i for i, w in enumerate(windows) if cond_of(w) == PH_SHOW]  # le sue ripetizioni
 t_win = np.arange(L) * BIN_S * 1000                     # tempo dall'inizio della fase, in ms
 
 fig, ax = plt.subplots(1, 4, figsize=(16, 3.6))
@@ -1550,53 +1516,55 @@ for k, (name, tr) in enumerate(traj.items()):
     R = np.stack([tr[i][:, 0] for i in idx_ph])         # prima dimensione di ogni ripetizione: (ripetizioni, 50)
     R = (R - R.mean()) / R.std()                        # stessa scala per tutti i metodi
     for r in R:
-        ax[k].plot(t_win, r, color=io.PHASE_COLORS[PH_SHOW], lw=0.8, alpha=0.45)  # ogni ripetizione, sottile
+        ax[k].plot(t_win, r, color=io.PHASE_COLORS[PH_SHOW[0]], lw=0.8, alpha=0.6)  # ogni ripetizione, sottile
     ax[k].plot(t_win, R.mean(axis=0), color="0.1", lw=2.2)                        # la loro media, spessa
     ax[k].set(title=name, xlabel="ms dall'inizio della fase", ylim=(-4, 4))
 ax[0].set_ylabel("prima dimensione latente (z)")
-fig.suptitle(f"Le {len(idx_ph)} ripetizioni di {PH_SHOW}, una per linea (nero = media)", y=1.02)
+fig.suptitle(f"Le {len(idx_ph)} ripetizioni di {PH_SHOW[0]} nei trial {PH_SHOW[1]}, una per linea (nero = media)", y=1.02)
 fig.tight_layout(); fig.savefig(FIGS / "02new_gpfa_repetitions.png", bbox_inches="tight"); plt.show()
 
 # %% [markdown]
 # **Lettura.**
 #
 # - **La GPFA vince su entrambe le misure**: è la più liscia e quella in cui le ripetizioni della
-#   stessa fase si somigliano di più, anche se rispetto alla PCA smussata il margine è piccolo.
-#   Nella figura le ripetizioni di `Release` sono lisce e seguono in gran parte lo stesso andamento
-#   (salgono nei primi ~200 ms e poi scendono), lo stesso che trova la PCA smussata, anche se con
-#   una certa dispersione; con PCA e FA sui conteggi grezzi sono una nuvola seghettata.
-# - Fase per fase, la GPFA è migliore su `Grasp` e `Release`, un po' peggiore della PCA smussata su
-#   `Shape`.
+#   stessa condizione si somigliano di più (0.137 contro 0.117 della PCA smussata).
+#   Nella figura le ripetizioni di `Release` nei trial dispari sono lisce e seguono in gran parte lo
+#   stesso andamento (salgono nei primi ~200 ms e poi scendono), lo stesso che trova la PCA
+#   smussata, anche se con una certa dispersione; con PCA e FA sui conteggi grezzi sono una nuvola
+#   seghettata.
+# - Fase per fase, la GPFA è migliore su `Grasp` e `Release`, pari alla PCA smussata su `Shape`, un
+#   po' peggiore su `Reach`.
 # - **La FA con la radice dei conteggi si comporta come la PCA grezza**, anche se ha gli stessi dati
 #   e lo stesso numero di fattori della GPFA. L'unica differenza tra FA e GPFA è il modello del
 #   tempo: **è il tempo che pulisce le traiettorie**.
 # - Il salto più grande è da "nessun modello del tempo" a "un modello del tempo". Tra la PCA smussata
 #   a mano e la GPFA la differenza è più piccola; il vantaggio della GPFA è che non abbiamo dovuto
 #   scegliere σ, e che ogni fattore ha la sua scala di tempo.
-# - **Onestamente**, la consistenza resta bassa in assoluto per molte fasi (`Reach`, `Carry`,
-#   `Orient2` sono quasi a zero con tutti i metodi). Le fasi più riproducibili sono quelle della
+# - **Onestamente**, la consistenza resta bassa in assoluto per molte fasi (`Reach`, `Orient`,
+#   `SnapTo`, `Carry`, `Orient2` restano sotto 0.1 con tutti i metodi). Le fasi più riproducibili sono quelle della
 #   mano (`Shape`, `Grasp`, `Release`), coerentemente con la posizione degli array nell'area della
 #   mano della corteccia motoria.
 #
 # ### Le traiettorie GPFA nel piano, come al §8
 #
 # Al §8 le traiettorie pulite si vedevano solo facendo la media delle ripetizioni. Con la GPFA
-# guardiamo **una sola ripetizione per fase**. Gli assi sono le prime due dimensioni della GPFA,
-# stimate **senza sapere a quale fase appartiene ogni finestra**.
+# guardiamo **una sola ripetizione per condizione**. Gli assi sono le prime due dimensioni della
+# GPFA, stimate **senza sapere a quale condizione appartiene ogni finestra**.
 
 # %%
-first = {ph: next(i for i, w in enumerate(windows) if w["tag"] == ph) for ph in io.MOVEMENT_PHASES}  # prima ripetizione di ogni fase
+first = {c: next(i for i, w in enumerate(windows) if cond_of(w) == c) for c in CONDS}  # prima ripetizione di ogni condizione
 fig, ax = plt.subplots(1, 2, figsize=(11.5, 4.6), sharex=True, sharey=True)
-for ph in io.MOVEMENT_PHASES:
-    one_gp = G[first[ph]][:, :2]                        # una ripetizione
-    avg_gp = np.mean([G[i][:, :2] for i, w in enumerate(windows) if w["tag"] == ph], axis=0)  # media delle ripetizioni
+for (ph, v) in CONDS:
+    one_gp = G[first[(ph, v)]][:, :2]                   # una ripetizione
+    avg_gp = np.mean([G[i][:, :2] for i, w in enumerate(windows) if cond_of(w) == (ph, v)], axis=0)  # media delle ripetizioni
     for k, D_ in enumerate((one_gp, avg_gp)):
-        ax[k].plot(D_[:, 0], D_[:, 1], color=io.PHASE_COLORS[ph], lw=1.6)
+        ax[k].plot(D_[:, 0], D_[:, 1], color=io.PHASE_COLORS[ph], ls=VER_LS[v], lw=1.6)
         ax[k].plot(D_[0, 0], D_[0, 1], "o", color=io.PHASE_COLORS[ph], ms=6)  # pallino = inizio della fase
-ax[0].set(xlabel="GPFA 1", ylabel="GPFA 2", title="GPFA: una sola ripetizione per fase")
+ax[0].set(xlabel="GPFA 1", ylabel="GPFA 2", title="GPFA: una sola ripetizione per condizione")
 ax[1].set(xlabel="GPFA 1", title="GPFA: media delle ripetizioni")
-handles = [plt.Line2D([], [], color=io.PHASE_COLORS[ph], lw=2, label=ph) for ph in io.MOVEMENT_PHASES]
-fig.legend(handles=handles, ncol=8, fontsize=8, loc="lower center", bbox_to_anchor=(0.5, -0.03))
+handles = ([plt.Line2D([], [], color=io.PHASE_COLORS[ph], lw=2, label=ph) for ph in io.MOVEMENT_PHASES]
+           + [plt.Line2D([], [], color="0.3", ls=VER_LS[v], lw=1.6, label=f"trial {v}") for v in VERSIONS])
+fig.legend(handles=handles, ncol=10, fontsize=8, loc="lower center", bbox_to_anchor=(0.5, -0.03))
 fig.tight_layout(rect=(0, 0.06, 1, 1)); fig.savefig(FIGS / "02new_gpfa_plane.png", bbox_inches="tight"); plt.show()
 
 # %% [markdown]
@@ -1740,7 +1708,7 @@ print(f"Blocchi in cui la stima sulle finestre intere ha il voto più alto: {int
 # - **Il numero di dimensioni non cambia**: participation ratio 12.6 contro 12.2, e 21 dimensioni
 #   per il 95% in entrambi i casi.
 # - **Le traiettorie sono molto simili**: un po' più lisce (0.009 contro 0.011) e un po' meno
-#   consistenti (0.106 contro 0.113).
+#   consistenti (0.128 contro 0.137).
 # - **Il costo:** ogni stima richiede circa 7 volte più tempo, e 500 iterazioni non bastano.
 #
 # **Scelta.** Nel resto del notebook teniamo i pezzi da 20 bin, il default di `elephant`: nessuna
@@ -1778,26 +1746,18 @@ print(f"Blocchi in cui la stima sulle finestre intere ha il voto più alto: {int
 def pr_avg(win_list, n, aligned=True, n_draws=20, seed=0):  # PR medio quando mediamo n ripetizioni (o n finestre casuali)
     rng_ = np.random.default_rng(seed)                  # seme fisso: estrazioni riproducibili
     L_ = win_list[0]["stop"] - win_list[0]["start"]     # bin per finestra
-    reps_ = {ph: np.stack([Z[w["start"]:w["stop"]] for w in win_list if w["tag"] == ph])  # (ripetizioni, bin, canali)
-             for ph in io.MOVEMENT_PHASES}
+    reps_ = {c: np.stack([Z[w["start"]:w["stop"]] for w in win_list if cond_of(w) == c])  # (ripetizioni, bin, canali)
+             for c in CONDS}
     out = []
     for _ in range(n_draws):
-        if aligned:                                     # n ripetizioni vere di ogni fase, mediate
-            M = np.concatenate([reps_[ph][rng_.choice(len(reps_[ph]), n, replace=False)].mean(axis=0)
-                                for ph in io.MOVEMENT_PHASES])
+        if aligned:                                     # n ripetizioni vere di ogni condizione, mediate
+            M = np.concatenate([reps_[c][rng_.choice(len(reps_[c]), n, replace=False)].mean(axis=0)
+                                for c in CONDS])
         else:                                           # controllo: n finestre in punti a caso, mediate
             M = np.concatenate([np.mean([Z[a:a + L_] for a in rng_.integers(0, n_bins - L_, n)], axis=0)
-                                for _ in io.MOVEMENT_PHASES])
+                                for _ in CONDS])
         out.append(pr(PCA().fit(M).explained_variance_))
     return np.mean(out)
-
-def consistency_w(trajs, win_list, per_phase=False):    # come consistency() del §9.4, ma per una lista di finestre qualsiasi
-    tags_ = [w["tag"] for w in win_list]
-    out = {}
-    for ph in io.MOVEMENT_PHASES:
-        R = np.stack([t_ for t_, tg in zip(trajs, tags_) if tg == ph])  # (ripetizioni, bin, 3 dimensioni)
-        out[ph] = np.mean([np.corrcoef(R[:, :, j])[np.triu_indices(len(R), 1)].mean() for j in range(R.shape[2])])
-    return out if per_phase else float(np.mean(list(out.values())))
 
 def window_trajs(win_list, gp_params):                  # le prime 3 dimensioni di PCA, FA e GPFA in ogni finestra
     mask = np.zeros(n_bins, dtype=bool)                 # i bin delle finestre, contati una volta sola
@@ -1823,7 +1783,7 @@ gp_by_len[WIN_S] = params_gp                            # per 1 s riusiamo la GP
 rows_pr, rows_tr = [], []
 for ws in WIN_LIST:
     wl = win_by_len[ws]
-    n_rep = min(sum(w["tag"] == ph for w in wl) for ph in io.MOVEMENT_PHASES)  # ripetizioni disponibili in tutte le fasi
+    n_rep = min(sum(cond_of(w) == c for w in wl) for c in CONDS)  # ripetizioni disponibili in tutte le condizioni
     single, avg, rand = pr_avg(wl, 1), pr_avg(wl, n_rep), pr_avg(wl, n_rep, aligned=False)
     rows_pr.append({"durata finestra (s)": ws, "bin per finestra": wl[0]["stop"] - wl[0]["start"],
                     "PR, una ripetizione": single, f"PR, media delle ripetizioni": avg,
@@ -1860,12 +1820,12 @@ fig.tight_layout(); fig.savefig(FIGS / "02new_window_length.png", bbox_inches="t
 # **Lettura.**
 #
 # - **La conclusione del §8 non dipende dalla durata.** Con 0.5, 0.75 e 1 s la media delle
-#   ripetizioni allineate abbassa il participation ratio di circa due terzi (67-69%), mentre mediare
+#   ripetizioni allineate abbassa il participation ratio del 59-63%, mentre mediare
 #   finestre casuali non lo abbassa (anzi lo alza leggermente). I valori assoluti del PR cambiano
 #   con la durata, perché con finestre più corte ci sono meno punti, ma il calo è lo stesso.
 # - **La classifica dei metodi non cambia.** A ogni durata la GPFA è la più liscia e la più
 #   consistente, la PCA smussata la segue da vicino, PCA grezza e FA restano molto indietro.
-# - **La consistenza cresce con la durata, per tutti i metodi** (GPFA: 0.05 → 0.07 → 0.11). Una
+# - **La consistenza cresce con la durata, per tutti i metodi** (GPFA: 0.045 → 0.068 → 0.137). Una
 #   finestra più lunga contiene più della risposta che si ripete uguale, cioè la salita e la discesa
 #   del PSTH del notebook 01; con 0.5 s ne vediamo solo la prima metà. Per questo i valori di
 #   consistenza vanno confrontati tra metodi alla stessa durata, non tra durate diverse.
@@ -1878,7 +1838,7 @@ fig.tight_layout(); fig.savefig(FIGS / "02new_window_length.png", bbox_inches="t
 # Torniamo alle finestre da 1 s e togliamo le ripetizioni in cui la fase dura meno di 100 ms. I
 # modelli restano quelli stimati prima: cambia solo quali ripetizioni entrano nelle misure. Per il
 # confronto del PR mediamo lo stesso numero di ripetizioni nei due casi, cioè quante ne restano
-# nella fase che ne perde di più.
+# nella condizione che ne ha di meno.
 
 # %%
 MIN_PHASE_S = 0.1                                       # durata minima di una fase, in s
@@ -1889,7 +1849,7 @@ windows_long = [w for w, k in zip(windows, keep) if k]  # le finestre che restan
 print("Ripetizioni escluse per fase:",
       pd.Series([w["tag"] for w, k in zip(windows, keep) if not k]).value_counts().to_dict())
 
-n_same = min(sum(w["tag"] == ph for w in windows_long) for ph in io.MOVEMENT_PHASES)  # ripetizioni mediate in entrambi i casi
+n_same = min(sum(cond_of(w) == c for w in windows_long) for c in CONDS)  # ripetizioni mediate in entrambi i casi
 rows = []
 for label, wl in [("tutte le ripetizioni", windows), (f"senza le fasi < {MIN_PHASE_S * 1000:.0f} ms", windows_long)]:
     single, avg = pr_avg(wl, 1), pr_avg(wl, n_same)
@@ -1911,11 +1871,16 @@ display(pd.DataFrame(rows).set_index(["metodo", "ripetizioni"]).round(2))
 #
 # - Le ripetizioni escluse sono 12 su 119: 5 di `Orient`, 3 di `Orient2`, 2 di `Reach` e 2 di
 #   `Carry`.
-# - **Non cambia nulla**: il calo del PR è lo stesso (circa 58-60%), e la consistenza di ogni fase
-#   cambia al massimo di 0.01.
-# - Quindi la consistenza quasi nulla di `Reach`, `Orient`, `Carry` e `Orient2` **non dipende da
-#   queste ripetizioni**: resta bassa anche senza. Una spiegazione possibile, da verificare, è che
-#   gli array sono nell'area della mano e queste fasi muovono soprattutto il braccio e il polso.
+#   Divise per versione, la condizione che ne perde di più è `Orient` nei trial pari (3 su 7): ne
+#   restano 4, ed è per questo che il confronto del PR media 4 ripetizioni.
+# - **Il PR non cambia**: il calo è lo stesso (circa 40% con 4 ripetizioni).
+# - **La consistenza non cambia per 6 fasi su 8** (al massimo ±0.02). Cambia `Orient` (GPFA da 0.08
+#   a 0.01, PCA smussata da 0.06 a −0.01) e un po' `Carry` (PCA smussata +0.03): sono le fasi che
+#   perdono più ripetizioni, e con 4-6 ripetizioni per condizione la misura è rumorosa. La media
+#   sulle fasi cambia al massimo di 0.01.
+# - Quindi la consistenza bassa di `Reach`, `Orient`, `Carry` e `Orient2` **non dipende da queste
+#   ripetizioni**: resta bassa anche senza. Una spiegazione possibile, da verificare, è che gli
+#   array sono nell'area della mano e queste fasi muovono soprattutto il braccio e il polso.
 #
 # Teniamo tutte le ripetizioni: escluderle non cambia i risultati.
 
@@ -1930,7 +1895,7 @@ display(pd.DataFrame(rows).set_index(["metodo", "ripetizioni"]).round(2))
 # | 3 · smoothing | gaussiano, σ = 50 ms | un bin da 20 ms contiene 0 o 1 eventi: serve una media pesata dei bin vicini per stimare il firing rate | il participation ratio va da ~150 (nessuno smoothing) a ~65 (σ = 200 ms), senza plateau (§6.1) |
 # | 4 · z-score | media 0, varianza 1 per canale | la varianza cresce con il firing rate: senza z-score la PC1 descrive i canali più attivi | alternativa: *soft normalization* (Churchland 2012) |
 # | 5 · PCA | tutte le componenti | direzioni di massima varianza della popolazione | — |
-# | PCA sulle medie | finestre da 1 s dall'inizio di ogni fase, 14-15 ripetizioni | la media cancella il rumore e lascia il segnale del task | il confronto va fatto a parità di punti (§8) |
+# | PCA sulle medie | finestre da 1 s dall'inizio di ogni fase; 16 condizioni fase × versione del task, 7-8 ripetizioni | la media cancella il rumore e lascia il segnale del task; le due versioni (trial dispari e pari) sono movimenti diversi e non si mescolano | il confronto va fatto a parità di punti (§8) |
 # | FA | conteggi grezzi 20 ms, K scelto per cross-validation, SVD esatta | separa il segnale condiviso dal rumore privato di ogni canale | con lo smoothing la quota condivisa sale, la dimensionalità cambia poco (§9.5) |
 # | GPFA | radice dei conteggi, finestre da 1 s, 500 iterazioni, d per cross-validation | FA + scala di tempo imparata per ogni fattore: traiettorie single-trial lisce | a parità di fattori stesse dimensioni della FA; traiettorie migliori (§10.5) |
 #
@@ -1944,15 +1909,15 @@ display(pd.DataFrame(rows).set_index(["metodo", "ripetizioni"]).round(2))
 # | soglia di attività dei canali | 0.1, 0.5, 1, 2, 5 Hz | esclude 1, 16, 28, 46, 72 canali su 176 | §3 |
 # | larghezza dello smoothing σ | 20, 50, 100 ms (figura); 0, 10, 20, 50, 100, 200 ms (PCA) | PR da ~150 a ~65, senza plateau: il numero dipende da σ, la conclusione qualitativa no | §4, §6.1 |
 # | normalizzazione | nessuna vs z-score | peso dei 10 canali più attivi nella PC1: 64% vs 21% | §5 |
-# | ripetizioni mediate | 1, 2, 4, 8, 14; finestre allineate vs casuali | il PR scende da ~33 a ~11 solo con finestre allineate alle fasi | §8 |
+# | ripetizioni mediate | 1, 2, 4, 7; finestre allineate vs casuali | il PR (800 punti) scende da ~50 a ~21 solo con finestre allineate alle fasi | §8 |
 # | algoritmo della FA | SVD approssimata (default) vs esatta | la versione di default si ferma prima della soluzione | §9 |
 # | numero di fattori K | 2, 5, 10, 15, 20, 30 (cross-validation) | K* = 15, curva piatta tra 10 e 20 | §9.1 |
 # | z-score prima della FA | con / senza | quota condivisa identica: la FA non dipende dalla scala | §9.2 |
 # | metodo per le traiettorie | PCA vs FA, conteggi grezzi vs smussati | la FA non migliora le traiettorie single-trial; lo smoothing sì | §9.4 |
 # | smoothing prima della FA | σ = 0, 20, 50, 100 ms | quota condivisa ~4% → ~19%; dimensionalità della FA stabile (PR 9.5-13) | §9.5 |
 # | istanti usati dalla FA | tutta la sessione vs solo le finestre delle fasi | PR condiviso 9.5 → 7; K* 15 → 10 | §9.6 |
-# | durata della finestra | 0.5, 0.75, 1 s | calo del PR con la media uguale (67-69%); stessa classifica dei metodi; consistenza più alta con 1 s | §10.7 |
-# | ripetizioni troppo corte | tutte vs senza le fasi < 100 ms (12 su 119) | nessun cambiamento: stesso calo del PR, consistenza ±0.01 | §10.7 |
+# | durata della finestra | 0.5, 0.75, 1 s | calo del PR con la media simile (59-63%); stessa classifica dei metodi; consistenza più alta con 1 s | §10.7 |
+# | ripetizioni troppo corte | tutte vs senza le fasi < 100 ms (12 su 119) | stesso calo del PR; consistenza media ±0.01 (cambia solo `Orient`, rimasta con 4 ripetizioni) | §10.7 |
 # | binning per la GPFA | quello di elephant vs il nostro | pochi bin diversi (eventi sul bordo): usiamo il nostro | §10 |
 # | iterazioni della GPFA | 100 (notebook 02), 500, 1000 | a 100 non ha finito; 500 ≈ 1000 | §10.1 |
 # | numero di fattori d | 2, 5, 10, 15, 20, 25, 30, 40, 50 (cross-validation) | voto massimo a 25-30, poi scende (overfitting); scelto 25: batte 20 in 5 blocchi su 5, pari con 30 | §10.2 |
@@ -1967,10 +1932,11 @@ display(pd.DataFrame(rows).set_index(["metodo", "ripetizioni"]).round(2))
 #
 # **Cosa abbiamo imparato su PCA e FA.**
 #
-# 1. La PCA single-trial vede ~106 dimensioni, ma sono soprattutto rumore: mediando le ripetizioni
-#    allineate alle fasi il segnale del task si riduce a ~11 dimensioni (a parità di punti: da ~33 a ~11).
+# 1. La PCA single-trial vede ~106 dimensioni, ma sono soprattutto rumore: mediando le 7-8
+#    ripetizioni di ognuna delle 16 condizioni (fase × versione del task) scende a ~20 (a parità di
+#    punti: da ~50 a ~21), e scenderebbe ancora con più ripetizioni.
 # 2. La FA separa il segnale condiviso dal rumore privato **senza fare la media**: sugli stessi
-#    istanti delle medie trova ~7 dimensioni efficaci (le medie ~10.5), e questa stima dipende poco
+#    istanti delle medie trova ~7 dimensioni efficaci (le medie ~20), e questa stima dipende poco
 #    dallo smoothing, a differenza di quella della PCA.
 # 3. Né la PCA né la FA producono traiettorie single-trial pulite: trattano ogni bin da solo.
 # 4. La GPFA aggiunge il modello del tempo, con una scala di tempo imparata per ogni fattore (da
