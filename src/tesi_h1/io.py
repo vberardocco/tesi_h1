@@ -26,6 +26,23 @@ assunzione (`timestamps = offset + arange(T) * rate`), quindi la manteniamo per 
 Convenzioni di questo modulo:
   - Le matrici neurali sono sempre (n_time_bins, n_units).
   - Il binning e' a 20 ms, identico a quello del benchmark: nessun ricampionamento nascosto.
+
+Binning: quale finestra di 20 ms finisce nella riga k.
+  Sia t_k = offset + k * 20 ms l'istante del campione k di cinematica (offset = 0 in tutti i
+  file di H1). La riga k dei conteggi si abbina sempre al campione k (kin, vel, trial_num,
+  eval_mask hanno lo stesso indice); cambia solo quale finestra di tempo conta:
+
+  - bins="falcon" (predefinita dal 30/10/2026): il bin k contiene gli spike in
+    [t_k - 20 ms, t_k). Sono gli stessi conteggi di `falcon_challenge.dataloaders.load_nwb`
+    (verificato su tutti i 40 file). Il bin k finisce all'istante del campione k, quindi un
+    decoder che usa i bin fino al k-esimo vede solo spike precedenti al campione: e' causale.
+  - bins="legacy": il bin k contiene gli spike in [t_k, t_k + 20 ms), cioe' i 20 ms DOPO il
+    campione. E' la convenzione di questo modulo fino al 30/10/2026 (il commento nel codice
+    diceva il contrario). Riga k legacy = riga k+1 falcon. Serve solo a rileggere le cache del
+    notebook 04, le cui chiavi dipendono dai conteggi.
+
+  Le funzioni che passano da un istante a un bin (`phase_windows`, `windows_spiketrains`)
+  leggono la convenzione dalla `Session` (`session.bins`), tramite `time_to_bin` e `bin_start`.
 """
 from __future__ import annotations
 
@@ -44,6 +61,9 @@ SPLITS = ("held-in-calib", "held-in-minival", "held-out-calib")
 
 # Passo temporale nativo del benchmark: 20 ms
 BIN_S = 0.02
+
+# Convenzioni di binning (vedi la docstring del modulo); la prima e' quella predefinita
+BINS = ("falcon", "legacy")
 
 # Nomi dei 7 gradi di liberta' (dal campo `description` dei TimeSeries)
 KIN_LABELS = ["tx", "ty", "tz", "rx", "g1", "g2", "g3"]
@@ -79,6 +99,8 @@ class Session:
     eval_mask: np.ndarray           # (T,) bool
     epochs: pd.DataFrame            # start_time, stop_time, tag, dur
     spike_times: list = field(repr=False, default_factory=list)  # per unita', tempi grezzi (s)
+    bins: str = "falcon"            # convenzione di binning usata per `spikes` e `times` (BINS)
+    offset: float = 0.0             # istante (s) del campione 0 di cinematica: t_k = offset + k * BIN_S
 
     @property
     def n_units(self) -> int:
@@ -160,10 +182,31 @@ def bin_units(spike_times: "list[np.ndarray]", bin_edges: np.ndarray) -> np.ndar
     return out
 
 
-def load_session(path: str | Path) -> Session:
-    """Carica un NWB FALCON H1 in una `Session`, binnando gli spike a 20 ms."""
+def bin_edges(n_bins: int, offset: float = 0.0, bins: str = "falcon") -> np.ndarray:
+    """I n_bins + 1 bordi dei bin da 20 ms, con t_k = offset + k * BIN_S (campione k di cinematica).
+
+    falcon: bordi t_k - 20 ms ... t_k, cioe' il bin k copre [t_k - 20 ms, t_k)
+            (come `falcon_challenge.dataloaders.bin_units` con i timestamp come fine del bin);
+    legacy: bordi t_k ... t_k + 20 ms, cioe' il bin k copre [t_k, t_k + 20 ms).
+    """
+    k = np.arange(n_bins + 1)
+    if bins == "falcon":
+        return offset + (k - 1) * BIN_S
+    if bins == "legacy":
+        return offset + k * BIN_S
+    raise ValueError(f"bins deve essere uno di {BINS}, non {bins!r}")
+
+
+def load_session(path: str | Path, bins: str = "falcon") -> Session:
+    """Carica un NWB FALCON H1 in una `Session`, binnando gli spike a 20 ms.
+
+    bins="falcon" (predefinita): bin k = [t_k - 20 ms, t_k), conteggi identici a `load_nwb`.
+    bins="legacy": bin k = [t_k, t_k + 20 ms), la convenzione usata fino al 30/10/2026 (cache del 04).
+    """
     from pynwb import NWBHDF5IO
 
+    if bins not in BINS:
+        raise ValueError(f"bins deve essere uno di {BINS}, non {bins!r}")
     path = Path(path)
     split, sid = _infer_split_and_id(path)
 
@@ -179,13 +222,12 @@ def load_session(path: str | Path) -> Session:
         n_bins = kin.shape[0]
         # `rate` vale 0.02 = passo in secondi (vedi docstring del modulo)
         offset = float(getattr(kin_ts, "offset", 0.0) or 0.0)
-        # bin i-esimo = (t_i - 20ms, t_i]; i timestamp indicano la *fine* del bin
-        bin_ends = offset + (np.arange(n_bins) + 1) * BIN_S
-        bin_edges = np.concatenate([[offset], bin_ends])
+        # t_k = offset + k * 20 ms; il bin k e' [t_k - 20 ms, t_k) (falcon) o [t_k, t_k + 20 ms) (legacy)
+        edges = bin_edges(n_bins, offset, bins)
 
         n_units = len(nwb.units.id)
         spike_times = [np.asarray(nwb.units["spike_times"][u]) for u in range(n_units)]
-        spikes = bin_units(spike_times, bin_edges)
+        spikes = bin_units(spike_times, edges)
 
         ep = nwb.intervals["epochs"].to_dataframe()
         epochs = pd.DataFrame({
@@ -200,14 +242,32 @@ def load_session(path: str | Path) -> Session:
         split=split,
         session_id=sid,
         spikes=spikes,
-        times=bin_ends - BIN_S / 2,          # centro del bin
+        times=edges[1:] - BIN_S / 2,         # centro del bin (falcon: t_k - 10 ms; legacy: t_k + 10 ms)
         kin=kin,
         vel=vel,
         trial_num=trial_num,
         eval_mask=eval_mask,
         epochs=epochs,
         spike_times=spike_times,
+        bins=bins,
+        offset=offset,
     )
+
+
+def time_to_bin(session: Session, t: float) -> int:
+    """Indice del bin che comincia all'istante t (arrotondato alla griglia dei 20 ms).
+
+    falcon: il bin k comincia a t_k - 20 ms, quindi k = (t - offset) / 20 ms + 1;
+    legacy: il bin k comincia a t_k,         quindi k = (t - offset) / 20 ms.
+    """
+    shift = 1 if session.bins == "falcon" else 0
+    return int(round((t - session.offset) / BIN_S)) + shift
+
+
+def bin_start(session: Session, k: int) -> float:
+    """Istante (s) in cui comincia il bin k: l'inverso di `time_to_bin`."""
+    shift = 1 if session.bins == "falcon" else 0
+    return session.offset + (k - shift) * BIN_S
 
 
 # --------------------------------------------------------------------------------------
@@ -275,6 +335,8 @@ def phase_windows(
     Vengono scartate le finestre che escono dai bordi della registrazione.
 
     Ritorna una lista di dict con: tag, trial, start (bin), stop (bin).
+    La finestra copre sempre gli stessi istanti; il suo indice di bin dipende da `session.bins`
+    (con "falcon" e' un bin piu' avanti che con "legacy": il bin k+1 falcon = il bin k legacy).
     """
     n_win = int(round(win_s / BIN_S))
     out = []
@@ -282,9 +344,9 @@ def phase_windows(
         if e.tag not in tags:
             continue
         if align == "start":
-            a = int(round(e.start_time / BIN_S))
+            a = time_to_bin(session, e.start_time)            # il bin che comincia all'inizio della fase
         else:
-            a = int(round(e.stop_time / BIN_S)) - n_win
+            a = time_to_bin(session, e.stop_time) - n_win     # l'ultimo bin finisce alla fine della fase
         b = a + n_win
         if a < 0 or b > session.n_bins:
             continue
@@ -302,8 +364,8 @@ def windows_spiketrains(session: Session, windows: "list[dict]", units=None) -> 
         units = np.arange(session.n_units)
     out = []
     for w in windows:
-        t0 = w["start"] * BIN_S
-        t1 = w["stop"] * BIN_S
+        t0 = bin_start(session, w["start"])                   # inizio vero della finestra (dipende da session.bins)
+        t1 = bin_start(session, w["stop"])
         dur = (t1 - t0) * pq.s
         trains = []
         for u in units:

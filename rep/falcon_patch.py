@@ -1,3 +1,10 @@
+"""SUPERATO dal 30/10/2026: non usarlo piu'. io.py ora fa da solo i bin di FALCON (default bins="falcon",
+controllo su tutti i 40 file in scripts/io_bins_check.py) e phase_windows / windows_spiketrains seguono la
+convenzione della sessione. Con io.py nuovo questo file sposterebbe i bin una seconda volta e il controllo in
+fondo fallirebbe. Resta qui come traccia di come sono state eseguite le repliche del 29-30/10 (build_nb.py,
+angles.py lo caricano con exec): per rifarle basta io.load_session con il default, senza questo file.
+"""
+
 """Bin come FALCON dentro i notebook di replica (si esegue con exec() nella prima cella).
 
 FALCON (load_nwb): il bin k copre [t_k - 20 ms, t_k) e si abbina al campione di cinematica k, t_k = offset + k·20 ms.

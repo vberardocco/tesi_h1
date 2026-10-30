@@ -1,0 +1,44 @@
+40 file NWB in /Users/valerio/000954
+ok  -held-in-calib 19250101T111740: 10819 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 103 True, spike train True
+ok  -held-in-calib 19250101T112404:  6456 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 62 True, spike train True
+ok  -held-in-calib 19250108T110520: 12233 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250108T111022:  6786 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 63 True, spike train True
+ok  -held-in-calib 19250108T111455:  6505 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 63 True, spike train True
+ok  -held-in-calib 19250113T120811: 11646 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250113T121303: 11732 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250115T110633: 10071 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 104 True, spike train True
+ok  -held-in-calib 19250115T111328: 12267 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250119T113543: 11951 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250119T114045: 12022 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250120T115044: 12078 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  -held-in-calib 19250120T115537: 11425 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 119 True, spike train True
+ok  eld-in-minival 19250101T111740:  1503 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 16 True, spike train True
+ok  eld-in-minival 19250101T112404:  1714 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250108T110520:  1691 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250108T111022:  1831 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250108T111455:  1761 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250113T120811:  1530 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250113T121303:  1536 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250115T110633:  1547 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 16 True, spike train True
+ok  eld-in-minival 19250115T111328:  1530 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250119T113543:  1583 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250119T114045:  1657 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250120T115044:  1517 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  eld-in-minival 19250120T115537:  1520 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 15 True, spike train True
+ok  held-out-calib 19250126T113454:  2376 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250126T114029:  2408 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250127T120333:  2454 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250127T120826:  2647 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250129T112555:  2469 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250129T113059:  2347 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250202T113958:  2406 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250202T114452:  2496 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250203T113515:  2369 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250203T114018:  2303 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250206T112219:  2470 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250206T112712:  2442 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250209T111826:  2713 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+ok  held-out-calib 19250209T112327:  2590 bin, offset 0, = load_nwb True, legacy spostato di 1 True, centri True, finestre 23 True, spike train True
+
+File controllati: 40, falliti: 0 
+exit 0
