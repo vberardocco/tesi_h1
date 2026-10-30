@@ -19,10 +19,14 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 from tesi_h1 import decoding as dec
 
-MODEL = REPO / "models/ridge_h50.npz"
+# Modello e batch si possono cambiare da ambiente (es. MODEL=models/ridge_h30.npz BATCHES=4 per il
+# controllo di confrontabilità a 600 ms); i valori predefiniti sono quelli della valutazione del modello finale.
+MODEL = REPO / os.environ.get("MODEL", "models/ridge_h50.npz")
+BATCHES = [int(x) for x in os.environ.get("BATCHES", "4,1").split(",")]
+ORIGIN = {"ridge_h50.npz": "alpha 10^4.5, allenata su tutto il calib held-in (commit 5a45607)",
+          "ridge_h30.npz": "alpha 10^4.5, allenata su tutto il calib held-in (scripts/05_ridge_minival.py, commit c8fbd9b)"}
 RAW = Path.home() / "000954"
 LOG = REPO / "run05/minival_h50.log"
-BATCHES = [4, 1]
 TMP = Path(os.environ.get("MINIVAL_TMP", tempfile.mkdtemp()))
 
 LOG.parent.mkdir(exist_ok=True)
@@ -39,12 +43,12 @@ from falcon_challenge.evaluator import FalconEvaluator
 t0 = time.time()
 m = np.load(MODEL)
 W, b, mu, sd, H = m["W"], m["b"], m["mu"], m["sd"], int(m["H"])
-assert H == 50 and W.shape == (dec.N_CH * H, 7)
+assert W.shape == (dec.N_CH * H, 7)
 
 out("=" * 100)
-out(f"Valutazione minival del modello finale   {datetime.now():%Y-%m-%d %H:%M}")
-out(f"modello        : models/ridge_h50.npz  md5 {hashlib.md5(MODEL.read_bytes()).hexdigest()}")
-out(f"storia         : H = {H} bin = {H * dec.BIN_MS} ms; alpha 10^4.5 (commit 5a45607); allenata su tutto il calib held-in")
+out(f"Valutazione minival di {MODEL.name}   {datetime.now():%Y-%m-%d %H:%M}")
+out(f"modello        : {MODEL.relative_to(REPO)}  md5 {hashlib.md5(MODEL.read_bytes()).hexdigest()}")
+out(f"storia         : H = {H} bin = {H * dec.BIN_MS} ms; {ORIGIN.get(MODEL.name, '')}")
 out(f"falcon_challenge: {version('falcon_challenge')}  ({Path(falcon_challenge.__file__).parent})")
 out(f"batch size     : streaming con {BATCHES} (4 = BATCH_SIZE dell'immagine Docker)")
 out(f"riferimento    : storia 600 ms (H = 30), minival R² 0.3831, commit c8fbd9b")

@@ -36,3 +36,24 @@ riferimento    : storia 600 ms (H = 30), minival R² 0.3831, commit c8fbd9b
   streaming - blocco, differenza massima delle predizioni: tutti i bin 5.61e-10, bin valutati 5.61e-10
   coincidono con il blocco (R² alla 4a cifra, diff < 1e-4): SÌ
 tempo totale 3 s
+====================================================================================================
+Valutazione minival di ridge_h30.npz   2026-10-30 13:11
+modello        : models/ridge_h30.npz  md5 ee61a017a9e9912e3c2fbc7b64fba1c5
+storia         : H = 30 bin = 600 ms; alpha 10^4.5, allenata su tutto il calib held-in (scripts/05_ridge_minival.py, commit c8fbd9b)
+falcon_challenge: 1.0.2  (/Users/valerio/tesi_h1_work/falcon-challenge/falcon_challenge)
+batch size     : streaming con [4] (4 = BATCH_SIZE dell'immagine Docker)
+riferimento    : storia 600 ms (H = 30), minival R² 0.3831, commit c8fbd9b
+----------------------------------------------------------------------------------------------------
+[blocco, nostro evaluator] 13 file
+  R² medio sui giorni: 0.3831   (0.383147)
+  per giorno: S0 0.4588, S1 0.3898, S2 0.4010, S3 0.3475, S4 0.3762, S5 0.3256
+  per DoF (media giorni): tx 0.2439, ty 0.1115, tz 0.2312, rx 0.3823, g1 0.4685, g2 0.3657, g3 0.3049
+[streaming, evaluator ufficiale FALCON, batch 4] 1 s
+  risultato ufficiale: {'Normalized Latency': np.float64(0.0006228879122615545), 'Held In R2 Mean': np.float64(0.3831469426576444), 'Held In R2 Std.': np.float64(0.042259340438752624)}
+  R² medio ufficiale : 0.3831   (0.383147)
+  nostro evaluator sulle predizioni in streaming: 0.3831; per DoF: tx 0.2439, ty 0.1115, tz 0.2312, rx 0.3823, g1 0.4685, g2 0.3657, g3 0.3049
+  streaming - blocco, differenza massima delle predizioni: tutti i bin 5.79e-10, bin valutati 5.79e-10
+  coincidono con il blocco (R² alla 4a cifra, diff < 1e-4): SÌ
+tempo totale 1 s
+  CONFERMATO: 0.3831 (0.383147) come nel commit c8fbd9b, con lo stesso evaluator e falcon_challenge 1.0.2 di oggi;
+  decoding.py identico tra c8fbd9b e oggi (blob 29ae45c). Confronto sullo stesso evaluator: 600 ms 0.3831, 1000 ms 0.4483.
