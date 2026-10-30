@@ -3,14 +3,24 @@
 Generato da `rep/tabelle.py` dalle uscite dei notebook eseguiti, da `decoder.json` e da `angles.pkl`.
 
 **Modifiche del 30/10.**
-- §4: aggiunta la diagnosi del caso "dalla covarianza" (§4b). La covarianza usata dal caso è la stessa dei dati su cui
-  sono stimati i sottospazi, con lo stesso preprocessing (differenza massima 0), e il campionamento la riproduce. Lo
-  spettro però è piatto (PR tra 87 e 145 su 155 canali; i primi 10 autovalori tengono l'11-23% della varianza): per
-  questo il caso è quasi uniforme. Non c'è un errore da correggere e il caso non è stato rifatto: i numeri del §4 e
-  `angoli.csv` sono gli stessi di prima.
-- §7: aggiunto il controllo sulla cinematica (variazione della posizione contro velocità) dentro i trial e in
-  eval_mask, con la cross-correlazione. In S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi; torna a
-  0.98-0.99 con una media mobile di 300 ms: lo scarto è rumore veloce nella posizione, non nella velocità.
+- §4, angoli principali: **i sottospazi sono stimati su tutti i bin, il caso nuovo sulle medie per condizione.**
+  Aggiunto il caso dalla covarianza delle medie delle 16 condizioni (8 fasi × versione), per PCA, FA e GPFA ognuno con
+  il suo preprocessing, come in Elsayed et al. 2016; restano il caso "tutti i bin" e quello uniforme. Per ogni caso:
+  mediana e 5° percentile dell'angolo medio (500 coppie); §4c confronta ogni angolo osservato, tra sessioni e tra le
+  due metà, con il 5° percentile del suo caso. Sotto il 5° percentile: 42 angoli su
+  42 con il caso delle medie per condizione, 42 su 42 con quello di tutti i bin,
+  42 su 42 con quello uniforme. Il margine più stretto è la PCA a K = 25 (55.5° contro 58.0°
+  tra rif. S1 e S5). Gli angoli osservati e il caso "tutti i bin" sono identici a prima (differenza 0).
+  Il caso delle medie per condizione è ripido solo per la PCA (PR 15-20), che lavora su firing rate smussati; per FA e
+  GPFA, che lavorano su conteggi a 20 ms senza smoothing, la media di 7-8 ripetizioni lascia molto rumore (PR 49-85)
+  e il caso resta vicino all'uniforme (§4b).
+- §4b: diagnosi delle covarianze dei casi. La covarianza del caso "tutti i bin" è la stessa dei dati dei sottospazi
+  (stesso preprocessing, differenza 0) e il campionamento la riproduce; lo spettro è piatto (PR 87-145 su 155 canali),
+  per questo quel caso è quasi uniforme. Non era un errore di campionamento.
+- §7: cinematica, variazione della posizione contro velocità dentro i trial e in eval_mask, con cross-correlazione. In
+  S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi. §7b: è **rumore nella posizione**, non una
+  velocità più liscia (autocorrelazione a 1 bin della variazione di posizione 0.11-0.72 in S5 contro 0.51-0.89; sd
+  quasi doppia in traslazione; velocità con la stessa autocorrelazione, 0.997-0.999, e sd non più bassa).
 
 Note per leggere le tabelle:
 - **originale (io.py)**: i notebook 02_new e 04_deep sulla sessione di riferimento, con i bin di io.py (una riga di
@@ -226,17 +236,66 @@ Formato di minival: R² medio e per grado di libertà. Zero-shot: allenata sulle
 
 ## 4. Angoli principali tra sessioni (angolo medio, gradi; 155 canali attivi in tutte e tre)
 
-Metà – metà: le due metà della stessa sessione (trial 1-2, 5-6, … contro 3-4, 7-8, …), il pavimento del rumore. Caso dalla covarianza: sottospazi presi dalla covarianza dei dati (Elsayed et al. 2016), 500 estrazioni. Uniforme: sottospazi casuali uniformi negli stessi canali, per confronto.
+I sottospazi sono stimati su tutti i bin (PCA, FA) o su tutte le finestre (GPFA). Metà – metà: le due metà della stessa sessione (trial 1-2, 5-6, … contro 3-4, 7-8, …), il pavimento del rumore. Tre casi, tutti con sottospazi presi da una covarianza come in Elsayed et al. 2016 (v = U S^1/2 r, poi QR; 500 coppie): **tutti i bin**, la covarianza dei dati dei sottospazi (spettro piatto, quasi uniforme, §4b); **medie per condizione**, la covarianza delle medie delle 16 condizioni (8 fasi × versione pari/dispari, finestre da 1 s dall'inizio della fase) con il preprocessing del metodo, il caso di Elsayed et al.; **uniforme**, covarianza identità. Per le coppie di sessioni il caso usa la media delle due covarianze, per le due metà la covarianza della sessione. Ogni caso: mediana e, tra parentesi, 5° percentile dell'angolo medio.
 
-| metodo | rif. S1 – S2 | rif. S1 – S5 | S2 – S5 | metà – metà (media) | metà – metà rif. S1 | metà – metà S2 | metà – metà S5 | caso dalla covarianza (mediana) | uniforme (mediana) |
-|---|---|---|---|---|---|---|---|---|---|
-| PCA, K = 10 | 46.5 | 50.7 | 46.9 | 40.7 | 43.7 | 41.0 | 37.3 | 75.8 | 77.5 |
-| PCA, K = 25 | 51.9 | 55.5 | 53.2 | 50.0 | 50.8 | 49.9 | 49.4 | 67.2 | 69.3 |
-| FA, K = 10 | 36.4 | 38.9 | 40.0 | 34.7 | 32.8 | 34.4 | 36.8 | 77.3 | 77.5 |
-| FA, K = 15 | 42.8 | 42.8 | 45.3 | 40.3 | 40.4 | 41.6 | 39.0 | 74.1 | 74.4 |
-| FA, K = 25 | 46.8 | 47.8 | 47.2 | 46.9 | 46.3 | 48.1 | 46.3 | 69.0 | 69.3 |
-| GPFA, K = 10 | 49.8 | 49.8 | 50.0 | 42.5 | 42.9 | 42.7 | 41.8 | 75.0 | 77.5 |
-| GPFA, K = 25 | 48.4 | 49.7 | 49.8 | 46.3 | 45.1 | 47.6 | 46.2 | 65.4 | 69.3 |
+**4a. Angoli medi osservati e casi (casi della coppia rif. S1 – S2)**
+
+| metodo | rif. S1 – S2 | rif. S1 – S5 | S2 – S5 | metà – metà (media) | metà – metà rif. S1 | metà – metà S2 | metà – metà S5 | caso, tutti i bin: mediana (5°) | caso, medie per condizione: mediana (5°) | uniforme: mediana (5°) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| PCA, K = 10 | 46.5 | 50.7 | 46.9 | 40.7 | 43.7 | 41.0 | 37.3 | 75.7 (73.9) | 67.9 (65.3) | 77.5 (76.0) |
+| PCA, K = 25 | 51.9 | 55.5 | 53.2 | 50.0 | 50.8 | 49.9 | 49.4 | 67.2 (66.1) | 59.1 (57.8) | 69.3 (68.4) |
+| FA, K = 10 | 36.4 | 38.9 | 40.0 | 34.7 | 32.8 | 34.4 | 36.8 | 77.3 (75.6) | 75.4 (73.5) | 77.5 (76.0) |
+| FA, K = 15 | 42.8 | 42.8 | 45.3 | 40.3 | 40.4 | 41.6 | 39.0 | 74.1 (72.8) | 72.1 (70.7) | 74.4 (73.2) |
+| FA, K = 25 | 46.8 | 47.8 | 47.2 | 46.9 | 46.3 | 48.1 | 46.3 | 69.0 (68.0) | 67.1 (66.0) | 69.3 (68.4) |
+| GPFA, K = 10 | 49.8 | 49.8 | 50.0 | 42.5 | 42.9 | 42.7 | 41.8 | 74.9 (73.0) | 73.0 (70.8) | 77.5 (76.0) |
+| GPFA, K = 25 | 48.4 | 49.7 | 49.8 | 46.3 | 45.1 | 47.6 | 46.2 | 65.4 (64.2) | 63.7 (62.5) | 69.3 (68.4) |
+
+**4c. Ogni angolo osservato contro il suo caso** ("sì": sotto il 5° percentile, cioè più vicino di quanto capiti per caso in 95 estrazioni su 100)
+
+| metodo | confronto | osservato | caso, tutti i bin: mediana (5°) | sotto il 5° (caso, tutti i bin) | caso, medie per condizione: mediana (5°) | sotto il 5° (caso, medie per condizione) | uniforme: mediana (5°) | sotto il 5° (uniforme) |
+|---|---|---|---|---|---|---|---|---|
+| PCA, K = 10 | rif. S1 – S2 | 46.5 | 75.7 (73.9) | sì | 67.9 (65.3) | sì | 77.5 (76.0) | sì |
+| PCA, K = 10 | rif. S1 – S5 | 50.7 | 75.6 (73.7) | sì | 68.4 (66.0) | sì | 77.5 (76.0) | sì |
+| PCA, K = 10 | S2 – S5 | 46.9 | 75.5 (73.5) | sì | 68.2 (65.7) | sì | 77.5 (76.0) | sì |
+| PCA, K = 10 | metà – metà rif. S1 | 43.7 | 75.4 (73.4) | sì | 65.1 (62.5) | sì | 77.5 (76.0) | sì |
+| PCA, K = 10 | metà – metà S2 | 41.0 | 75.1 (73.1) | sì | 64.6 (61.9) | sì | 77.5 (76.0) | sì |
+| PCA, K = 10 | metà – metà S5 | 37.3 | 74.7 (72.7) | sì | 65.6 (63.0) | sì | 77.5 (76.0) | sì |
+| PCA, K = 25 | rif. S1 – S2 | 51.9 | 67.2 (66.1) | sì | 59.1 (57.8) | sì | 69.3 (68.4) | sì |
+| PCA, K = 25 | rif. S1 – S5 | 55.5 | 67.1 (66.0) | sì | 59.4 (58.0) | sì | 69.3 (68.4) | sì |
+| PCA, K = 25 | S2 – S5 | 53.2 | 66.9 (65.8) | sì | 59.3 (57.9) | sì | 69.3 (68.4) | sì |
+| PCA, K = 25 | metà – metà rif. S1 | 50.8 | 66.7 (65.6) | sì | 54.9 (53.4) | sì | 69.3 (68.4) | sì |
+| PCA, K = 25 | metà – metà S2 | 49.9 | 66.5 (65.4) | sì | 54.7 (53.2) | sì | 69.3 (68.4) | sì |
+| PCA, K = 25 | metà – metà S5 | 49.4 | 66.2 (65.0) | sì | 55.0 (53.5) | sì | 69.3 (68.4) | sì |
+| FA, K = 10 | rif. S1 – S2 | 36.4 | 77.3 (75.6) | sì | 75.4 (73.5) | sì | 77.5 (76.0) | sì |
+| FA, K = 10 | rif. S1 – S5 | 38.9 | 77.3 (75.6) | sì | 75.6 (73.7) | sì | 77.5 (76.0) | sì |
+| FA, K = 10 | S2 – S5 | 40.0 | 77.3 (75.6) | sì | 75.4 (73.5) | sì | 77.5 (76.0) | sì |
+| FA, K = 10 | metà – metà rif. S1 | 32.8 | 77.2 (75.5) | sì | 74.9 (72.9) | sì | 77.5 (76.0) | sì |
+| FA, K = 10 | metà – metà S2 | 34.4 | 77.2 (75.5) | sì | 74.6 (72.5) | sì | 77.5 (76.0) | sì |
+| FA, K = 10 | metà – metà S5 | 36.8 | 77.2 (75.5) | sì | 74.9 (72.9) | sì | 77.5 (76.0) | sì |
+| FA, K = 15 | rif. S1 – S2 | 42.8 | 74.1 (72.8) | sì | 72.1 (70.7) | sì | 74.4 (73.2) | sì |
+| FA, K = 15 | rif. S1 – S5 | 42.8 | 74.1 (72.8) | sì | 72.3 (70.9) | sì | 74.4 (73.2) | sì |
+| FA, K = 15 | S2 – S5 | 45.3 | 74.1 (72.8) | sì | 72.2 (70.7) | sì | 74.4 (73.2) | sì |
+| FA, K = 15 | metà – metà rif. S1 | 40.4 | 74.0 (72.7) | sì | 71.5 (70.1) | sì | 74.4 (73.2) | sì |
+| FA, K = 15 | metà – metà S2 | 41.6 | 74.0 (72.7) | sì | 71.3 (69.8) | sì | 74.4 (73.2) | sì |
+| FA, K = 15 | metà – metà S5 | 39.0 | 74.0 (72.7) | sì | 71.6 (70.1) | sì | 74.4 (73.2) | sì |
+| FA, K = 25 | rif. S1 – S2 | 46.8 | 69.0 (68.0) | sì | 67.1 (66.0) | sì | 69.3 (68.4) | sì |
+| FA, K = 25 | rif. S1 – S5 | 47.8 | 69.0 (68.0) | sì | 67.2 (66.2) | sì | 69.3 (68.4) | sì |
+| FA, K = 25 | S2 – S5 | 47.2 | 69.0 (68.0) | sì | 67.2 (66.1) | sì | 69.3 (68.4) | sì |
+| FA, K = 25 | metà – metà rif. S1 | 46.3 | 68.9 (67.9) | sì | 66.3 (65.2) | sì | 69.3 (68.4) | sì |
+| FA, K = 25 | metà – metà S2 | 48.1 | 68.9 (67.9) | sì | 66.1 (65.0) | sì | 69.3 (68.4) | sì |
+| FA, K = 25 | metà – metà S5 | 46.3 | 68.8 (67.8) | sì | 66.3 (65.2) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 10 | rif. S1 – S2 | 49.8 | 74.9 (73.0) | sì | 73.0 (70.8) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 10 | rif. S1 – S5 | 49.8 | 74.9 (73.0) | sì | 73.2 (71.1) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 10 | S2 – S5 | 50.0 | 74.9 (72.9) | sì | 73.0 (70.9) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 10 | metà – metà rif. S1 | 42.9 | 74.5 (72.5) | sì | 72.2 (70.0) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 10 | metà – metà S2 | 42.7 | 74.6 (72.5) | sì | 72.0 (69.8) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 10 | metà – metà S5 | 41.8 | 74.6 (72.5) | sì | 72.4 (70.1) | sì | 77.5 (76.0) | sì |
+| GPFA, K = 25 | rif. S1 – S2 | 48.4 | 65.4 (64.2) | sì | 63.7 (62.5) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 25 | rif. S1 – S5 | 49.7 | 65.4 (64.2) | sì | 63.7 (62.5) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 25 | S2 – S5 | 49.8 | 65.3 (64.1) | sì | 63.6 (62.4) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 25 | metà – metà rif. S1 | 45.1 | 64.8 (63.5) | sì | 62.4 (61.2) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 25 | metà – metà S2 | 47.6 | 64.8 (63.6) | sì | 62.5 (61.3) | sì | 69.3 (68.4) | sì |
+| GPFA, K = 25 | metà – metà S5 | 46.2 | 64.8 (63.6) | sì | 62.5 (61.3) | sì | 69.3 (68.4) | sì |
 
 I primi tre angoli principali (gradi):
 
@@ -250,23 +309,30 @@ I primi tre angoli principali (gradi):
 | GPFA, K = 10 | 22 / 29 / 34 | 21 / 32 / 36 | 20 / 31 / 32 |
 | GPFA, K = 25 | 16 / 22 / 23 | 14 / 23 / 24 | 14 / 22 / 24 |
 
-**Attenzione:** il caso dalla covarianza è quasi uguale a quello uniforme, soprattutto per FA: la covarianza dei conteggi z-scorati a 20 ms è quasi piatta (domina il rumore di Poisson). Il confronto che conta qui è quello con le due metà della stessa sessione.
-
 ### 4b. Diagnosi del caso dalla covarianza (`rep/angles_diag.py`)
 
 Per ogni sessione, la covarianza da cui il caso campiona (nel caso si usa la media delle due sessioni confrontate). Preprocessing, uguale per il caso e per i sottospazi: PCA, bin FALCON da 20 ms, smoothing σ = 50 ms, z-score, tutti i bin; FA, conteggi grezzi z-scorati, tutti i bin; GPFA, radice dei conteggi nelle 119 finestre da 1 s, senza z-score. Campionamento (`angles.py`, righe 122-127): autovalori e autovettori della covarianza media, M = U S^1/2, K vettori M r con r gaussiano, ortonormalizzati con QR, 500 coppie. L'errore relativo dei 20000 vettori è quello atteso dal campionamento finito.
 
-| metodo | sessione | canali | PR | primi 10 (%) | primi 15 (%) | primi 25 (%) | differenza massima con la covarianza dei sottospazi | errore relativo, covarianza di 20000 vettori campionati |
-|---|---|---|---|---|---|---|---|---|
-| PCA | rif. S1 | 155 | 102.1 | 20.0 |  | 34.9 | 0 | 0.071 |
-| PCA | S2 | 155 | 96.2 | 21.1 |  | 35.9 | 0 | 0.069 |
-| PCA | S5 | 155 | 87.3 | 23.1 |  | 37.4 | 0 | 0.066 |
-| FA | rif. S1 | 155 | 144.9 | 11.0 | 15.0 | 22.4 | 0 | 0.085 |
-| FA | S2 | 155 | 145.5 | 10.9 | 14.8 | 22.3 | 0 | 0.085 |
-| FA | S5 | 155 | 143.9 | 11.2 | 15.2 | 22.6 | 0 | 0.085 |
-| GPFA | rif. S1 | 155 | 97.4 | 18.0 |  | 35.9 | 0 | 0.070 |
-| GPFA | S2 | 155 | 97.4 | 18.0 |  | 35.8 | 0 | 0.070 |
-| GPFA | S5 | 155 | 98.3 | 17.7 |  | 35.6 | 0 | 0.070 |
+| metodo | sessione | covarianza del caso | canali | PR | primi 10 (%) | primi 15 (%) | primi 25 (%) | differenza massima con la covarianza dei sottospazi | errore relativo, covarianza di 20000 vettori campionati |
+|---|---|---|---|---|---|---|---|---|---|
+| PCA | rif. S1 | tutti i bin | 155 | 102.1 | 20.0 |  | 34.9 | 0 | 0.071 |
+| PCA | rif. S1 | medie per condizione | 155 | 19.1 | 52.7 |  | 71.7 |  |  |
+| PCA | S2 | tutti i bin | 155 | 96.2 | 21.1 |  | 35.9 | 0 | 0.069 |
+| PCA | S2 | medie per condizione | 155 | 15.2 | 55.6 |  | 73.4 |  |  |
+| PCA | S5 | tutti i bin | 155 | 87.3 | 23.1 |  | 37.4 | 0 | 0.066 |
+| PCA | S5 | medie per condizione | 155 | 20.1 | 50.8 |  | 71.0 |  |  |
+| FA | rif. S1 | tutti i bin | 155 | 144.9 | 11.0 | 15.0 | 22.4 | 0 | 0.085 |
+| FA | rif. S1 | medie per condizione | 155 | 85.3 | 21.3 | 26.7 | 36.4 |  |  |
+| FA | S2 | tutti i bin | 155 | 145.5 | 10.9 | 14.8 | 22.3 | 0 | 0.085 |
+| FA | S2 | medie per condizione | 155 | 71.0 | 22.6 | 28.0 | 37.5 |  |  |
+| FA | S5 | tutti i bin | 155 | 143.9 | 11.2 | 15.2 | 22.6 | 0 | 0.085 |
+| FA | S5 | medie per condizione | 155 | 82.5 | 20.8 | 26.3 | 36.1 |  |  |
+| GPFA | rif. S1 | tutti i bin | 155 | 97.4 | 18.0 |  | 35.9 | 0 | 0.070 |
+| GPFA | rif. S1 | medie per condizione | 155 | 59.0 | 28.0 |  | 47.1 |  |  |
+| GPFA | S2 | tutti i bin | 155 | 97.4 | 18.0 |  | 35.8 | 0 | 0.070 |
+| GPFA | S2 | medie per condizione | 155 | 48.5 | 29.3 |  | 47.6 |  |  |
+| GPFA | S5 | tutti i bin | 155 | 98.3 | 17.7 |  | 35.6 | 0 | 0.070 |
+| GPFA | S5 | medie per condizione | 155 | 60.7 | 27.3 |  | 46.5 |  |  |
 
 ## 5. Controllo sul riconoscimento delle fasi (04, sessione di riferimento, bin di io.py)
 
@@ -348,6 +414,40 @@ dkin[k] = (posizione[k+1] - posizione[k]) / 20 ms contro la velocità del file (
 | S5 | g3 | 0.863 | 0.863 | -1 | 0.866 | 0.973 | 0.987 | 55.479 | 64.282 |
 
 <img src="../kin/kin_lag.png" width="820">
+
+**7b. Rumore nella posizione o velocità più liscia?** Stessa pendenza e rapporto delle sd più alto si avrebbero in entrambi i casi. Sugli stessi campioni (k, k+1, k+2 nello stesso trial e in eval_mask): autocorrelazione a 1 bin (20 ms) e sd assoluta. Rumore bianco nella posizione abbassa l'autocorrelazione della variazione di posizione (verso -0.5 se domina) e ne alza la sd; una velocità più liscia alza l'autocorrelazione della velocità e ne abbassa la sd.
+
+| sessione | grado | autocorrelazione a 1 bin, velocità | autocorrelazione a 1 bin, variazione di posizione | sd velocità (unità del file) | sd variazione di posizione (unità/s) |
+|---|---|---|---|---|---|
+| rif. S1 | tx | 0.999 | 0.8142 | 0.0005711 | 0.03271 |
+| rif. S1 | ty | 0.9988 | 0.7646 | 0.0007368 | 0.04378 |
+| rif. S1 | tz | 0.999 | 0.7773 | 0.00107 | 0.06322 |
+| rif. S1 | rx | 0.9992 | 0.8231 | 0.004214 | 0.2384 |
+| rif. S1 | g1 | 0.9982 | 0.5094 | 0.005715 | 0.4141 |
+| rif. S1 | g2 | 0.9979 | 0.687 | 0.006068 | 0.4033 |
+| rif. S1 | g3 | 0.9973 | 0.7654 | 0.005558 | 0.3516 |
+| S2 | tx | 0.999 | 0.8589 | 0.0006498 | 0.03728 |
+| S2 | ty | 0.9991 | 0.8607 | 0.0009957 | 0.05653 |
+| S2 | tz | 0.999 | 0.8911 | 0.001036 | 0.05857 |
+| S2 | rx | 0.9992 | 0.8606 | 0.003802 | 0.2123 |
+| S2 | g1 | 0.9983 | 0.7457 | 0.005863 | 0.3688 |
+| S2 | g2 | 0.9979 | 0.7078 | 0.006246 | 0.42 |
+| S2 | g3 | 0.9973 | 0.8473 | 0.005749 | 0.3512 |
+| S5 | tx | 0.9988 | 0.2911 | 0.0007126 | 0.06258 |
+| S5 | ty | 0.9991 | 0.4833 | 0.00118 | 0.0799 |
+| S5 | tz | 0.9984 | 0.1116 | 0.00115 | 0.1297 |
+| S5 | rx | 0.9991 | 0.4789 | 0.003764 | 0.254 |
+| S5 | g1 | 0.9981 | 0.3896 | 0.00576 | 0.4409 |
+| S5 | g2 | 0.9978 | 0.4089 | 0.006112 | 0.4871 |
+| S5 | g3 | 0.9973 | 0.7204 | 0.00562 | 0.3612 |
+
+**Lettura: rumore nella posizione.** In S5 l'autocorrelazione della variazione di posizione scende in tutti i gradi
+(tx 0.29, tz 0.11, contro 0.78-0.89 nelle altre due sessioni) e la sua sd quasi raddoppia in traslazione (tx 0.063
+contro 0.033-0.037, tz 0.130 contro 0.059-0.063). La velocità invece è come nelle altre sessioni: autocorrelazione
+0.997-0.999 ovunque, S5 non più alta, e sd uguale o un po' più alta (tx 0.00071 contro 0.00057-0.00065), non più
+bassa. L'autocorrelazione della velocità è già al soffitto in tutte le sessioni, quindi da sola avrebbe poco margine:
+è la sd a escludere una velocità più liscia. Il rumore non domina (l'autocorrelazione non arriva verso -0.5): si
+somma a un segnale che resta, e con una media mobile di 300 ms posizione e velocità tornano a 0.98-0.99.
 
 Angoli principali:
 

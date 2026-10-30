@@ -209,10 +209,18 @@ def decoder_table():
     return pd.DataFrame(rows)
 
 
+NULLS = (("random", "noise_random", "caso, tutti i bin"), ("random_cond", "noise_random_cond", "caso, medie per condizione"),
+         ("random_unif", "random_unif", "uniforme"))
+
+
 def angles_tables():
+    """Tabella larga (angoli medi osservati e i tre casi della coppia rif.-S2), tabella lunga (ogni angolo osservato
+    contro il suo caso: per le coppie, la covarianza media delle due sessioni; per le metà, quella della sessione)
+    e i primi tre angoli."""
     d = pickle.load(open(REP / "angles/angles.pkl", "rb"))
     S = list(SIDS); N = SIDS
-    rows = []
+    ms = lambda s: f"{s['mean_p50']:.1f} ({s['mean_p5']:.1f})"
+    wide, long = [], []
     for (meth, K), r in d["RES"].items():
         row = {"metodo": f"{meth}, K = {K}"}
         for a, b in r["pairs"]:
@@ -220,19 +228,22 @@ def angles_tables():
         row["metà – metà (media)"] = f"{np.mean([v.mean() for v in r['noise'].values()]):.1f}"
         for sid in S:
             row[f"metà – metà {N[sid]}"] = f"{r['noise'][sid].mean():.1f}"
-        rnd = r["random"][(S[0], S[1])]
-        row["caso dalla covarianza (mediana)"] = f"{rnd['p50'].mean():.1f}"
-        rows.append(row)
+        for kp, _, lab in NULLS:
+            row[f"{lab}: mediana (5°)"] = ms(r[kp] if kp == "random_unif" else r[kp][(S[0], S[1])])
+        wide.append(row)
+        obs = [(f"{N[a]} – {N[b]}", r["pairs"][(a, b)].mean(), {kp: (r[kp] if kp == "random_unif" else r[kp][(a, b)]) for kp, _, _ in NULLS})
+               for a, b in r["pairs"]]
+        obs += [(f"metà – metà {N[sid]}", r["noise"][sid].mean(), {kp: (r[kn] if kn == "random_unif" else r[kn][sid]) for kp, kn, _ in NULLS})
+                for sid in S]
+        for name, o, nl in obs:
+            row = {"metodo": f"{meth}, K = {K}", "confronto": name, "osservato": f"{o:.1f}"}
+            for kp, _, lab in NULLS:
+                row[f"{lab}: mediana (5°)"] = ms(nl[kp])
+                row[f"sotto il 5° ({lab})"] = "sì" if o < nl[kp]["mean_p5"] else "no"
+            long.append(row)
     first = [{"metodo": f"{meth}, K = {K}", **{f"{N[a]} – {N[b]}": " / ".join(f"{x:.0f}" for x in r["pairs"][(a, b)][:3])
                                                 for a, b in r["pairs"]}} for (meth, K), r in d["RES"].items()]
-    return pd.DataFrame(rows), pd.DataFrame(first), len(d["COMMON"])
-
-
-def uniform_baseline(K, N, draws=300, seed=0):              # sottospazi uniformi, solo per dire quanto il caso "dalla covarianza" se ne discosta
-    from scipy.linalg import subspace_angles, qr
-    rng = np.random.default_rng(seed)
-    return np.median([np.degrees(subspace_angles(qr(rng.normal(size=(N, K)), mode="economic")[0],
-                                                 qr(rng.normal(size=(N, K)), mode="economic")[0])).mean() for _ in range(draws)])
+    return pd.DataFrame(wide), pd.DataFrame(long), pd.DataFrame(first), len(d["COMMON"])
 
 
 # ---------- scrittura
@@ -265,18 +276,27 @@ def figure_grid(names, cols):
     return out
 
 
+KIN_VERDICT = """**Lettura: rumore nella posizione.** In S5 l'autocorrelazione della variazione di posizione scende in tutti i gradi
+(tx 0.29, tz 0.11, contro 0.78-0.89 nelle altre due sessioni) e la sua sd quasi raddoppia in traslazione (tx 0.063
+contro 0.033-0.037, tz 0.130 contro 0.059-0.063). La velocità invece è come nelle altre sessioni: autocorrelazione
+0.997-0.999 ovunque, S5 non più alta, e sd uguale o un po' più alta (tx 0.00071 contro 0.00057-0.00065), non più
+bassa. L'autocorrelazione della velocità è già al soffitto in tutte le sessioni, quindi da sola avrebbe poco margine:
+è la sd a escludere una velocità più liscia. Il rumore non domina (l'autocorrelazione non arriva verso -0.5): si
+somma a un segnale che resta, e con una media mobile di 300 ms posizione e velocità tornano a 0.98-0.99.
+"""
+
+
 def main():
     t02, t04 = extract("02", ROWS_02), extract("04", ROWS_04)
     dec = decoder_table()
-    ang, ang_first, n_common = angles_tables()
-    unif = {K: uniform_baseline(K, n_common) for K in (10, 15, 25)}
-    ang["uniforme (mediana)"] = [f"{unif[int(m.split('= ')[1])]:.1f}" for m in ang["metodo"]]
+    ang, ang_test, ang_first, n_common = angles_tables()
     fasi = pickle.load(open(REP / "fasi/fasi_04.pkl", "rb"))["TAB_FASI"].rename_axis("metodo")
 
     allrows = pd.concat([t02, t04], ignore_index=True)
     allrows.to_csv(OUT / "confronto.csv", index=False)
     dec.to_csv(OUT / "decoder.csv", index=False)
     ang.to_csv(OUT / "angoli.csv", index=False)
+    ang_test.to_csv(OUT / "angoli_contro_il_caso.csv", index=False)
 
     figs = sorted({p.name for sid in SIDS for p in (REP / sid / "figures").glob("*.png")})
     notes = """Note per leggere le tabelle:
@@ -289,27 +309,46 @@ def main():
 - Intervalli tra parentesi: minimo e massimo sui semi. Isomap e UMAP restano fuori (esplorativi).
 """
     diag = pd.read_csv(REP / "angles/diagnosi.csv")
-    diag = diag[diag["covarianza"] == "caso (cov_space)"]
+    diag = diag[diag["covarianza"] != "dati dei sottospazi"]   # identica a quella del caso "tutti i bin" (differenza 0)
     kk = {"PCA": (10, 25), "FA": (10, 15, 25), "GPFA": (10, 25)}
-    diag_t = pd.DataFrame([{"metodo": r["metodo"], "sessione": r["sessione"], "canali": r["canali"], "PR": f"{r['PR']:.1f}",
+    lab = {"caso (cov_space)": "tutti i bin", "medie per condizione": "medie per condizione"}
+    opt = lambda v, f: "" if pd.isna(v) else format(v, f)
+    diag_t = pd.DataFrame([{"metodo": r["metodo"], "sessione": r["sessione"], "covarianza del caso": lab[r["covarianza"]],
+                            "canali": r["canali"], "PR": f"{r['PR']:.1f}",
                             **{f"primi {k} (%)": (f"{r[f'primi {k} (%)']:.1f}" if k in kk[r["metodo"]] else "") for k in (10, 15, 25)},
-                            "differenza massima con la covarianza dei sottospazi": f"{r['differenza massima tra le due']:.1g}",
+                            "differenza massima con la covarianza dei sottospazi": opt(r["differenza massima tra le due"], ".1g"),
                             "errore relativo, covarianza di 20000 vettori campionati":
-                                f"{r['campionamento: errore relativo della covarianza (20000 vettori)']:.3f}"}
+                                opt(r["campionamento: errore relativo della covarianza (20000 vettori)"], ".3f")}
                            for _, r in diag.iterrows()])
     kin = pd.read_csv(REP / "kin/kin_check.csv")
     kin_t = kin[["sessione", "grado", "r, tutti i campioni (come il 04)", "r, dentro i trial e eval_mask (L = 0)",
                  "ritardo migliore (campioni da 20 ms)", "r al ritardo migliore", "r, media mobile 100 ms",
                  "r, media mobile 300 ms", "pendenza dkin ~ vel", "sd(dkin) / sd(vel)"]].round(3)
-    changes = """**Modifiche del 30/10.**
-- §4: aggiunta la diagnosi del caso "dalla covarianza" (§4b). La covarianza usata dal caso è la stessa dei dati su cui
-  sono stimati i sottospazi, con lo stesso preprocessing (differenza massima 0), e il campionamento la riproduce. Lo
-  spettro però è piatto (PR tra 87 e 145 su 155 canali; i primi 10 autovalori tengono l'11-23% della varianza): per
-  questo il caso è quasi uniforme. Non c'è un errore da correggere e il caso non è stato rifatto: i numeri del §4 e
-  `angoli.csv` sono gli stessi di prima.
-- §7: aggiunto il controllo sulla cinematica (variazione della posizione contro velocità) dentro i trial e in
-  eval_mask, con la cross-correlazione. In S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi; torna a
-  0.98-0.99 con una media mobile di 300 ms: lo scarto è rumore veloce nella posizione, non nella velocità.
+    kin_ac = kin[["sessione", "grado", "autocorrelazione a 1 bin, velocità", "autocorrelazione a 1 bin, variazione di posizione",
+                  "sd velocità (unità del file)", "sd variazione di posizione (unità/s)"]].copy()
+    for c in kin_ac.columns[2:]:
+        kin_ac[c] = kin_ac[c].map(lambda v: f"{v:.4g}")
+    n_obs = len(ang_test)
+    n_below = {lab: int((ang_test[f"sotto il 5° ({lab})"] == "sì").sum()) for _, _, lab in NULLS}
+    changes = f"""**Modifiche del 30/10.**
+- §4, angoli principali: **i sottospazi sono stimati su tutti i bin, il caso nuovo sulle medie per condizione.**
+  Aggiunto il caso dalla covarianza delle medie delle 16 condizioni (8 fasi × versione), per PCA, FA e GPFA ognuno con
+  il suo preprocessing, come in Elsayed et al. 2016; restano il caso "tutti i bin" e quello uniforme. Per ogni caso:
+  mediana e 5° percentile dell'angolo medio (500 coppie); §4c confronta ogni angolo osservato, tra sessioni e tra le
+  due metà, con il 5° percentile del suo caso. Sotto il 5° percentile: {n_below['caso, medie per condizione']} angoli su
+  {n_obs} con il caso delle medie per condizione, {n_below['caso, tutti i bin']} su {n_obs} con quello di tutti i bin,
+  {n_below['uniforme']} su {n_obs} con quello uniforme. Il margine più stretto è la PCA a K = 25 (55.5° contro 58.0°
+  tra rif. S1 e S5). Gli angoli osservati e il caso "tutti i bin" sono identici a prima (differenza 0).
+  Il caso delle medie per condizione è ripido solo per la PCA (PR 15-20), che lavora su firing rate smussati; per FA e
+  GPFA, che lavorano su conteggi a 20 ms senza smoothing, la media di 7-8 ripetizioni lascia molto rumore (PR 49-85)
+  e il caso resta vicino all'uniforme (§4b).
+- §4b: diagnosi delle covarianze dei casi. La covarianza del caso "tutti i bin" è la stessa dei dati dei sottospazi
+  (stesso preprocessing, differenza 0) e il campionamento la riproduce; lo spettro è piatto (PR 87-145 su 155 canali),
+  per questo quel caso è quasi uniforme. Non era un errore di campionamento.
+- §7: cinematica, variazione della posizione contro velocità dentro i trial e in eval_mask, con cross-correlazione. In
+  S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi. §7b: è **rumore nella posizione**, non una
+  velocità più liscia (autocorrelazione a 1 bin della variazione di posizione 0.11-0.72 in S5 contro 0.51-0.89; sd
+  quasi doppia in traslazione; velocità con la stessa autocorrelazione, 0.997-0.999, e sd non più bassa).
 
 """
     # --- confronto
@@ -324,13 +363,18 @@ def main():
         f.write("\n## 2. Dimensionalità e sottospazi (02)\n" + by_section(t02, COLS))
         f.write("\n## 3. CEBRA, LFADS, GPFA (04)\n" + by_section(t04, COLS))
         f.write(f"\n## 4. Angoli principali tra sessioni (angolo medio, gradi; {n_common} canali attivi in tutte e tre)\n\n"
-                "Metà – metà: le due metà della stessa sessione (trial 1-2, 5-6, … contro 3-4, 7-8, …), il pavimento del "
-                "rumore. Caso dalla covarianza: sottospazi presi dalla covarianza dei dati (Elsayed et al. 2016), 500 "
-                "estrazioni. Uniforme: sottospazi casuali uniformi negli stessi canali, per confronto.\n\n" + md(ang) +
-                "\nI primi tre angoli principali (gradi):\n\n" + md(ang_first) +
-                "\n**Attenzione:** il caso dalla covarianza è quasi uguale a quello uniforme, soprattutto per FA: la "
-                "covarianza dei conteggi z-scorati a 20 ms è quasi piatta (domina il rumore di Poisson). Il confronto che "
-                "conta qui è quello con le due metà della stessa sessione.\n")
+                "I sottospazi sono stimati su tutti i bin (PCA, FA) o su tutte le finestre (GPFA). Metà – metà: le due "
+                "metà della stessa sessione (trial 1-2, 5-6, … contro 3-4, 7-8, …), il pavimento del rumore. Tre casi, "
+                "tutti con sottospazi presi da una covarianza come in Elsayed et al. 2016 (v = U S^1/2 r, poi QR; 500 "
+                "coppie): **tutti i bin**, la covarianza dei dati dei sottospazi (spettro piatto, quasi uniforme, §4b); "
+                "**medie per condizione**, la covarianza delle medie delle 16 condizioni (8 fasi × versione pari/dispari, "
+                "finestre da 1 s dall'inizio della fase) con il preprocessing del metodo, il caso di Elsayed et al.; "
+                "**uniforme**, covarianza identità. Per le coppie di sessioni il caso usa la media delle due covarianze, "
+                "per le due metà la covarianza della sessione. Ogni caso: mediana e, tra parentesi, 5° percentile "
+                "dell'angolo medio.\n\n**4a. Angoli medi osservati e casi (casi della coppia rif. S1 – S2)**\n\n" + md(ang) +
+                "\n**4c. Ogni angolo osservato contro il suo caso** (\"sì\": sotto il 5° percentile, cioè più vicino di "
+                "quanto capiti per caso in 95 estrazioni su 100)\n\n" + md(ang_test) +
+                "\nI primi tre angoli principali (gradi):\n\n" + md(ang_first))
         f.write("\n### 4b. Diagnosi del caso dalla covarianza (`rep/angles_diag.py`)\n\n"
                 "Per ogni sessione, la covarianza da cui il caso campiona (nel caso si usa la media delle due sessioni "
                 "confrontate). Preprocessing, uguale per il caso e per i sottospazi: PCA, bin FALCON da 20 ms, smoothing "
@@ -347,7 +391,12 @@ def main():
                 "consecutivi dello stesso trial, entrambi in eval_mask. Ritardo: quello che massimizza la correlazione "
                 "tra -10 e +10 campioni (negativo: la velocità anticipa). Velocità ed eval_mask uguali a quelle di "
                 "`load_nwb`; la posizione viene dallo stesso NWB.\n\n" + md(kin_t) +
-                '\n<img src="../kin/kin_lag.png" width="820">\n')
+                '\n<img src="../kin/kin_lag.png" width="820">\n'
+                "\n**7b. Rumore nella posizione o velocità più liscia?** Stessa pendenza e rapporto delle sd più alto si "
+                "avrebbero in entrambi i casi. Sugli stessi campioni (k, k+1, k+2 nello stesso trial e in eval_mask): "
+                "autocorrelazione a 1 bin (20 ms) e sd assoluta. Rumore bianco nella posizione abbassa l'autocorrelazione "
+                "della variazione di posizione (verso -0.5 se domina) e ne alza la sd; una velocità più liscia alza "
+                "l'autocorrelazione della velocità e ne abbassa la sd.\n\n" + md(kin_ac) + "\n" + KIN_VERDICT)
         f.write("\nAngoli principali:\n\n" + "".join(f'<img src="../angles/figures/{p.name}" width="420"> '
                                                        for p in sorted((REP / "angles/figures").glob("*.png"))) + "\n")
 
@@ -355,7 +404,7 @@ def main():
     for sid, name in SIDS.items():
         cols = [name] + ([ORIG] if sid == list(SIDS)[0] else [])
         d = dec[dec["sessione"].str.startswith(name)].drop(columns="sessione")
-        a = ang[["metodo", *[c for c in ang.columns if name in c and "metà – metà (" not in c], "caso dalla covarianza (mediana)"]]
+        a = ang_test[ang_test["confronto"].str.contains(name, regex=False)]
         with open(OUT / f"{sid}.md", "w", encoding="utf-8") as f:
             f.write(f"# Sessione {sid} ({name})\n\nGenerato da `rep/tabelle.py`. Bin di FALCON"
                     + (", con accanto i numeri dei notebook originali (bin di io.py)." if ORIG in cols else ".") + "\n\n")
@@ -363,7 +412,8 @@ def main():
             f.write("\n## Dimensionalità e sottospazi (02)\n" + by_section(t02, cols))
             t = t04 if sid == list(SIDS)[0] else t04[~t04["sezione"].str.startswith("§6")]
             f.write("\n## CEBRA, LFADS, GPFA (04)\n" + by_section(t, cols))
-            f.write("\n## Angoli principali (angolo medio, gradi)\n\n" + md(a))
+            f.write("\n## Angoli principali (angolo medio, gradi)\n\nSottospazi stimati su tutti i bin; casi: mediana e "
+                    "5° percentile dell'angolo medio su 500 coppie (vedi confronto.md, §4).\n\n" + md(a))
             f.write("\n## Figure\n\n" + "".join(f'<img src="../{sid}/figures/{p.name}" width="420"> '
                                                 for p in sorted((REP / sid / "figures").glob("*.png"))) + "\n")
 

@@ -9,9 +9,15 @@ Sottospazi (bin di FALCON, canali attivi in TUTTE e tre le sessioni, così gli s
 Termini di confronto:
 - rumore: le due metà della stessa sessione (trial 1-2, 5-6, ... contro 3-4, 7-8, ...: entrambe le versioni del task
   in ogni metà), stesso metodo e stesso K;
-- caso: sottospazi casuali presi dalla covarianza dei dati (Elsayed et al. 2016): v = U S^1/2 r, r gaussiano,
-  poi ortonormalizzati; covarianza = media di quelle delle due sessioni confrontate, nello spazio del metodo.
-  Sottospazi uniformi, con ~150 canali, sarebbero quasi ortogonali per costruzione.
+- caso: sottospazi casuali presi da una covarianza (Elsayed et al. 2016): v = U S^1/2 r, r gaussiano, poi
+  ortonormalizzati; covarianza = media di quelle delle due sessioni confrontate (per le due metà: quella della
+  sessione), nello spazio del metodo. Tre versioni:
+  * "tutti i bin": la covarianza dei dati su cui sono stimati i sottospazi. Lo spettro è piatto (domina il rumore),
+    quindi questo caso è quasi uniforme;
+  * "medie per condizione": la covarianza delle medie delle 16 condizioni (8 fasi × versione pari/dispari, finestre
+    da 1 s dall'inizio della fase, come il 02_new §7), con il preprocessing del metodo. È il caso di Elsayed et al.;
+  * "uniforme": covarianza identità, per riferimento.
+  Per ogni caso: percentili 5, 50, 95 di ogni angolo e dell'angolo medio, su 500 coppie.
 
 Uso: python angles.py   ->  rep/angles/angles.pkl e figure
 """
@@ -119,28 +125,59 @@ def cov_space(method, sid):
     return np.cov(np.sqrt(np.concatenate([C[w["start"]:w["stop"]] for w in wins]).astype(float)), rowvar=False)
 
 
-def random_angles(method, K, sa, sb, seed=0):          # Elsayed et al. 2016: sottospazi casuali dalla covarianza dei dati
-    ev, U = np.linalg.eigh((cov_space(method, sa) + cov_space(method, sb)) / 2)
+def cond_cov(method, sid, L=50):
+    """Covarianza delle medie per condizione (16 = 8 fasi × versione), con il preprocessing del metodo."""
+    Z, Xfa, wins = data[(sid, None)]
+    X = {"PCA": Z, "FA": Xfa}.get(method)
+    if X is None:                                       # GPFA: radice dei conteggi, senza z-score
+        X = np.sqrt(S[sid].spikes[:, COMMON].astype(float))
+    groups = {}
+    for w in wins:
+        assert w["stop"] - w["start"] == L
+        groups.setdefault((w["tag"], w["trial"] % 2), []).append(X[w["start"]:w["stop"]])
+    assert len(groups) == 16
+    return np.cov(np.concatenate([np.mean(g, 0) for g in groups.values()]), rowvar=False)
+
+
+def draw_angles(C, K, seed=0):                         # Elsayed et al. 2016: N_DRAWS coppie di sottospazi casuali dalla covarianza C
+    ev, U = np.linalg.eigh(C)
     ev = np.clip(ev, 0, None); M = U * np.sqrt(ev)
     rng = np.random.default_rng(seed)
     return np.array([angles(orth(M @ rng.normal(size=(len(ev), K))), orth(M @ rng.normal(size=(len(ev), K))))
                      for _ in range(N_DRAWS)])
 
 
+def random_angles(method, K, sa, sb, seed=0):          # caso "tutti i bin": covarianza dei dati dei sottospazi
+    return draw_angles((cov_space(method, sa) + cov_space(method, sb)) / 2, K, seed)
+
+
+def summary(rnd):                                      # percentili di ogni angolo e dell'angolo medio
+    m = rnd.mean(1)
+    return dict(p5=np.percentile(rnd, 5, 0), p50=np.percentile(rnd, 50, 0), p95=np.percentile(rnd, 95, 0),
+                mean_p5=np.percentile(m, 5), mean_p50=np.percentile(m, 50), mean_p95=np.percentile(m, 95))
+
+
 METHODS = [("PCA", 10), ("PCA", 25), ("FA", 10), ("FA", 15), ("FA", 25), ("GPFA", 10), ("GPFA", 25)]
 PAIRS = [(SIDS[0], SIDS[1]), (SIDS[0], SIDS[2]), (SIDS[1], SIDS[2])]
 RES = {}
+CC = {(meth, sid): cond_cov(meth, sid) for meth in ("PCA", "FA", "GPFA") for sid in SIDS}
 for meth, K in METHODS:
-    r = dict(pairs={}, noise={}, random={})
+    r = dict(pairs={}, noise={}, random={}, random_cond={}, noise_random={}, noise_random_cond={},
+             random_unif=summary(draw_angles(np.eye(len(COMMON)), K)))
     for a, b in PAIRS:
         r["pairs"][(a, b)] = angles(BASES[(meth, K, a, None)], BASES[(meth, K, b, None)])
-        rnd = random_angles(meth, K, a, b)
-        r["random"][(a, b)] = dict(p5=np.percentile(rnd, 5, 0), p50=np.percentile(rnd, 50, 0), p95=np.percentile(rnd, 95, 0))
+        r["random"][(a, b)] = summary(random_angles(meth, K, a, b))
+        r["random_cond"][(a, b)] = summary(draw_angles((CC[(meth, a)] + CC[(meth, b)]) / 2, K))
     for sid in SIDS:
         r["noise"][sid] = angles(BASES[(meth, K, sid, "A")], BASES[(meth, K, sid, "B")])
+        r["noise_random"][sid] = summary(draw_angles(cov_space(meth, sid), K))
+        r["noise_random_cond"][sid] = summary(draw_angles(CC[(meth, sid)], K))
     RES[(meth, K)] = r
     log(f"{meth} K={K}: angolo medio rif-S2 {r['pairs'][PAIRS[0]].mean():.1f}°, rif-S5 {r['pairs'][PAIRS[1]].mean():.1f}°, "
-        f"metà-metà {np.mean([v.mean() for v in r['noise'].values()]):.1f}°, caso (mediana) {r['random'][PAIRS[0]]['p50'].mean():.1f}°")
+        f"metà-metà {np.mean([v.mean() for v in r['noise'].values()]):.1f}°; caso rif-S2, mediana (5°): tutti i bin "
+        f"{r['random'][PAIRS[0]]['mean_p50']:.1f} ({r['random'][PAIRS[0]]['mean_p5']:.1f}), medie per condizione "
+        f"{r['random_cond'][PAIRS[0]]['mean_p50']:.1f} ({r['random_cond'][PAIRS[0]]['mean_p5']:.1f}), uniforme "
+        f"{r['random_unif']['mean_p50']:.1f} ({r['random_unif']['mean_p5']:.1f})")
 
 pickle.dump(dict(RES=RES, COMMON=COMMON, SIDS=SIDS, N_DRAWS=N_DRAWS), open(OUT / "angles.pkl", "wb"))
 
@@ -151,8 +188,11 @@ for (meth, K), r in RES.items():
     for (a, b), col in zip(PAIRS, ["C0", "C1", "C2"]):
         ax.plot(idx, r["pairs"][(a, b)], "o-", ms=3.5, color=col, label=f"{NAME[a]} – {NAME[b]}")
     rr = r["random"][PAIRS[0]]
-    ax.fill_between(idx, rr["p5"], rr["p95"], color="0.85", label="caso dalla covarianza (5°-95° perc.)")
+    ax.fill_between(idx, rr["p5"], rr["p95"], color="0.85", label="caso, covarianza di tutti i bin (5°-95° perc.)")
     ax.plot(idx, rr["p50"], color="0.5", lw=1)
+    rc = r["random_cond"][PAIRS[0]]
+    ax.fill_between(idx, rc["p5"], rc["p95"], color="C4", alpha=0.18, label="caso, covarianza delle medie per condizione")
+    ax.plot(idx, rc["p50"], color="C4", lw=1)
     nm = np.mean([v for v in r["noise"].values()], 0)
     ax.plot(idx, nm, "k--", lw=1.2, label="due metà della stessa sessione (media)")
     ax.set(xlabel="angolo principale", ylabel="gradi", ylim=(0, 90),

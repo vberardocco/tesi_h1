@@ -19,7 +19,7 @@ HERE = Path(__file__).parent
 SRC = (HERE / "angles.py").read_text(encoding="utf-8")
 exec(SRC.split("# --- stime")[0])                            # stesse sessioni (bin di FALCON), stessi canali, stesso preprocessing
 for nd in ast.parse(SRC).body:                                # e le stesse funzioni del caso
-    if isinstance(nd, ast.FunctionDef) and nd.name in ("cov_space", "random_angles"):
+    if isinstance(nd, ast.FunctionDef) and nd.name in ("cov_space", "cond_cov", "draw_angles", "random_angles"):
         exec(ast.get_source_segment(SRC, nd))
 
 data = {(sid, None): spaces(sid, None) for sid in SIDS}
@@ -58,6 +58,10 @@ for meth, ks in KS.items():
             rows.append(dict(metodo=meth, sessione=NAME[sid], covarianza=which, **spectrum(Cv, (10, 15, 25)),
                              **{"differenza massima tra le due": np.abs(C_rand - C_fit).max(),
                                 "campionamento: errore relativo della covarianza (20000 vettori)": err}))
+        C_cond = cond_cov(meth, sid)                          # il caso delle medie per condizione (angles.py)
+        rows.append(dict(metodo=meth, sessione=NAME[sid], covarianza="medie per condizione", **spectrum(C_cond, (10, 15, 25)),
+                         **{"differenza massima tra le due": np.nan,
+                            "campionamento: errore relativo della covarianza (20000 vettori)": np.nan}))
 diag = pd.DataFrame(rows)
 diag.to_csv(OUT / "diagnosi.csv", index=False)
 pd.set_option("display.width", 250); pd.set_option("display.max_columns", 20)

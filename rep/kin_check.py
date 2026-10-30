@@ -6,7 +6,10 @@ Nel 04 (§1) la correlazione era su tutti i campioni, confini di trial e pause c
   con k, k+1 e k+1+L nello stesso trial e in eval_mask. L = 0 è l'allineamento del 04; L > 0 vuol dire che la
   velocità arriva dopo la variazione di posizione.
 - la stessa correlazione dopo una media mobile di 100 e 300 ms su entrambi i segnali, la pendenza della retta
-  dkin ~ vel e il rapporto tra le deviazioni standard: dicono se lo scarto è rumore veloce o un disaccordo vero.
+  dkin ~ vel e il rapporto tra le deviazioni standard: dicono se lo scarto è rumore veloce o un disaccordo vero;
+- autocorrelazione a 1 campione (20 ms) e deviazione standard assoluta di velocità e variazione di posizione, sugli
+  stessi campioni. Rumore bianco nella posizione abbassa l'autocorrelazione della variazione di posizione (verso
+  -0.5) e ne alza la sd; una velocità più liscia alza l'autocorrelazione della velocità e ne abbassa la sd.
 Velocità ed eval_mask: controllate contro il caricatore ufficiale (load_nwb); la posizione non è in load_nwb per H1
 e si legge dallo stesso NWB (OpenLoopKinematics) con io.py.
 
@@ -60,12 +63,18 @@ for sid, name in SIDS.items():
         best = int(np.nanargmax(r_lag))
         jumps = np.abs(dkin[:, j]) > 10 * np.std(dkin[base, j])  # salti (> 10 deviazioni standard) fuori e dentro i trial
         r_sm = {w: corr(uniform_filter1d(dkin[:, j], w)[base], uniform_filter1d(vel[1:, j], w)[base]) for w in (5, 15)}
+        pair = base[:-1] & base[1:]                           # campioni k, k+1, k+2 nello stesso trial e in eval_mask
+        x, v = dkin[:, j], vel[1:, j]                         # stesso supporto per i due segnali (v[k] = vel[k+1])
+        ac_x, ac_v = corr(x[:-1][pair], x[1:][pair]), corr(v[:-1][pair], v[1:][pair])
         rows.append({"sessione": name, "grado": d, "r, tutti i campioni (come il 04)": r_all,
                      "r, dentro i trial e eval_mask (L = 0)": r_lag[LAGS == 0][0],
                      "ritardo migliore (campioni da 20 ms)": int(LAGS[best]), "r al ritardo migliore": r_lag[best],
                      "r, media mobile 100 ms": r_sm[5], "r, media mobile 300 ms": r_sm[15],
                      "pendenza dkin ~ vel": np.polyfit(vel[1:][base, j], dkin[base, j], 1)[0],
                      "sd(dkin) / sd(vel)": dkin[base, j].std() / vel[1:][base, j].std(),
+                     "autocorrelazione a 1 bin, velocità": ac_v, "autocorrelazione a 1 bin, variazione di posizione": ac_x,
+                     "sd velocità (unità del file)": vel[1:][base, j].std(),
+                     "sd variazione di posizione (unità/s)": dkin[base, j].std(),
                      "coppie usate (L = 0)": int(base.sum()),
                      "salti > 10 sd, ai confini o fuori eval_mask": int((jumps & ~base).sum()),
                      "salti > 10 sd, dentro i trial e eval_mask": int((jumps & base).sum())})
