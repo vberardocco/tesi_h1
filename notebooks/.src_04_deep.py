@@ -50,6 +50,15 @@
 #
 # Stessa sessione di tutti i notebook (`held-in-calib`, `19250108T110520`).
 #
+# **Bin di prima del 30/10/2026 (`bins="legacy"`).** Questo notebook carica i dati con
+# `io.load_session(..., bins="legacy")`: il bin k conta gli spike nei 20 ms *dopo* il campione k di
+# cinematica, la convenzione di `io.py` fino al 30/10/2026 (la riga k è la riga k+1 di FALCON). Resta
+# così perché i modelli salvati in `cache_04` dipendono dai conteggi, e non si riallena: è la traccia
+# di come sono stati scelti gli iperparametri. **I numeri della tesi sono quelli della replica sulla
+# stessa sessione con i bin di FALCON e gli stessi iperparametri** (`rep/19250108T110520/04_rep.out.ipynb`,
+# tabella in `rep/tabelle/19250108T110520.md`; le celle non rifatte nella replica sono elencate in
+# `rep/cfg04.py`).
+#
 # **Tempo di esecuzione:** circa 6-7 minuti se gli allenamenti sono già salvati su disco (§3.1);
 # circa 2 ore la prima volta (molto di più con il computer sotto carico: il §7 da solo ha richiesto
 # quasi 2 ore). Con il computer sotto carico può volerci molto di più (un'esecuzione è
@@ -108,7 +117,7 @@ SESS = ROOT / "data/raw/sub-HumanPitt-held-in-calib/sub-HumanPitt-held-in-calib_
 # 5 blocchi da 3 trial (`GroupKFold`), così ogni trial finisce nel test una volta sola.
 
 # %%
-s = io.load_session(SESS)                                   # conteggi a 20 ms, cinematica, fasi del task
+s = io.load_session(SESS, bins="legacy")                    # conteggi a 20 ms (bin di prima del 30/10, vedi l'intestazione), cinematica, fasi
 ACTIVE = io.active_units(s, min_hz=0.5)                     # i 160 canali attivi
 Z = StandardScaler().fit_transform(                         # z-score per canale...
     io.smooth_rates(s.spikes, sigma_ms=50)[:, ACTIVE].astype(float))  # ...dei firing rate smussati con σ = 50 ms
@@ -7263,7 +7272,7 @@ fig.tight_layout(); fig.savefig(FIGS / "04_lfads_nodynamics.png", bbox_inches="t
 
 # %%
 EXTRA_SID = ("19250108T111022", "19250108T111455")         # le altre due sessioni dello stesso giorno
-EXTRA = {sid: io.load_session(SESS.parent / SESS.name.replace("19250108T110520", sid)) for sid in EXTRA_SID}
+EXTRA = {sid: io.load_session(SESS.parent / SESS.name.replace("19250108T110520", sid), bins="legacy") for sid in EXTRA_SID}  # stessi bin del resto del notebook
 X_EX = {sid: s_.spikes[:, ACTIVE].astype(np.float32) for sid, s_ in EXTRA.items()}  # i conteggi dei nostri 160 canali attivi
 pieces_ex, inside_ex = [], []
 for sid, s_ in EXTRA.items():
