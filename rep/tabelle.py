@@ -288,10 +288,35 @@ def main():
 - Il §6 (CEBRA-Behavior, PLS, kin_r2) è stato ricalcolato solo sulla sessione di riferimento: "—" nelle altre.
 - Intervalli tra parentesi: minimo e massimo sui semi. Isomap e UMAP restano fuori (esplorativi).
 """
+    diag = pd.read_csv(REP / "angles/diagnosi.csv")
+    diag = diag[diag["covarianza"] == "caso (cov_space)"]
+    kk = {"PCA": (10, 25), "FA": (10, 15, 25), "GPFA": (10, 25)}
+    diag_t = pd.DataFrame([{"metodo": r["metodo"], "sessione": r["sessione"], "canali": r["canali"], "PR": f"{r['PR']:.1f}",
+                            **{f"primi {k} (%)": (f"{r[f'primi {k} (%)']:.1f}" if k in kk[r["metodo"]] else "") for k in (10, 15, 25)},
+                            "differenza massima con la covarianza dei sottospazi": f"{r['differenza massima tra le due']:.1g}",
+                            "errore relativo, covarianza di 20000 vettori campionati":
+                                f"{r['campionamento: errore relativo della covarianza (20000 vettori)']:.3f}"}
+                           for _, r in diag.iterrows()])
+    kin = pd.read_csv(REP / "kin/kin_check.csv")
+    kin_t = kin[["sessione", "grado", "r, tutti i campioni (come il 04)", "r, dentro i trial e eval_mask (L = 0)",
+                 "ritardo migliore (campioni da 20 ms)", "r al ritardo migliore", "r, media mobile 100 ms",
+                 "r, media mobile 300 ms", "pendenza dkin ~ vel", "sd(dkin) / sd(vel)"]].round(3)
+    changes = """**Modifiche del 30/10.**
+- §4: aggiunta la diagnosi del caso "dalla covarianza" (§4b). La covarianza usata dal caso è la stessa dei dati su cui
+  sono stimati i sottospazi, con lo stesso preprocessing (differenza massima 0), e il campionamento la riproduce. Lo
+  spettro però è piatto (PR tra 87 e 145 su 155 canali; i primi 10 autovalori tengono l'11-23% della varianza): per
+  questo il caso è quasi uniforme. Non c'è un errore da correggere e il caso non è stato rifatto: i numeri del §4 e
+  `angoli.csv` sono gli stessi di prima.
+- §7: aggiunto il controllo sulla cinematica (variazione della posizione contro velocità) dentro i trial e in
+  eval_mask, con la cross-correlazione. In S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi; torna a
+  0.98-0.99 con una media mobile di 300 ms: lo scarto è rumore veloce nella posizione, non nella velocità.
+
+"""
     # --- confronto
     with open(OUT / "confronto.md", "w", encoding="utf-8") as f:
         f.write("# Repliche su 19250113T120811 (S2) e 19250120T115044 (S5): confronto\n\n"
-                "Generato da `rep/tabelle.py` dalle uscite dei notebook eseguiti, da `decoder.json` e da `angles.pkl`.\n\n" + notes)
+                "Generato da `rep/tabelle.py` dalle uscite dei notebook eseguiti, da `decoder.json` e da `angles.pkl`.\n\n"
+                + changes + notes)
         f.write("\n## 1. Decoder (ridge causale, 1000 ms di storia, R² pesato per varianza sul 20% finale, eval_mask)\n\n"
                 "Formato di minival: R² medio e per grado di libertà. Zero-shot: allenata sulle held-in degli altri giorni, "
                 "α = 10^4,5. Held-in 80%: primo 80% di tutti i file held-in, giorno incluso, α = 10^4,5. Solo la sessione: "
@@ -306,9 +331,23 @@ def main():
                 "\n**Attenzione:** il caso dalla covarianza è quasi uguale a quello uniforme, soprattutto per FA: la "
                 "covarianza dei conteggi z-scorati a 20 ms è quasi piatta (domina il rumore di Poisson). Il confronto che "
                 "conta qui è quello con le due metà della stessa sessione.\n")
+        f.write("\n### 4b. Diagnosi del caso dalla covarianza (`rep/angles_diag.py`)\n\n"
+                "Per ogni sessione, la covarianza da cui il caso campiona (nel caso si usa la media delle due sessioni "
+                "confrontate). Preprocessing, uguale per il caso e per i sottospazi: PCA, bin FALCON da 20 ms, smoothing "
+                "σ = 50 ms, z-score, tutti i bin; FA, conteggi grezzi z-scorati, tutti i bin; GPFA, radice dei conteggi "
+                "nelle 119 finestre da 1 s, senza z-score. Campionamento (`angles.py`, righe 122-127): autovalori e "
+                "autovettori della covarianza media, M = U S^1/2, K vettori M r con r gaussiano, ortonormalizzati con QR, "
+                "500 coppie. L'errore relativo dei 20000 vettori è quello atteso dal campionamento finito.\n\n" + md(diag_t))
         f.write("\n## 5. Controllo sul riconoscimento delle fasi (04, sessione di riferimento, bin di io.py)\n\n"
                 "Mappe rilette dalla cache del 04, nessun allenamento (`rep/fasi`).\n\n" + md(fasi, index=True))
         f.write("\n## 6. Figure\n\nOriginale, poi le tre repliche.\n\n" + figure_grid(figs, COLS))
+        f.write("\n## 7. Cinematica: variazione della posizione contro velocità (`rep/kin_check.py`)\n\n"
+                "dkin[k] = (posizione[k+1] - posizione[k]) / 20 ms contro la velocità del file (target di FALCON). "
+                "Tutti i campioni: come nel §1 del 04. Dentro i trial e in eval_mask: solo coppie di campioni "
+                "consecutivi dello stesso trial, entrambi in eval_mask. Ritardo: quello che massimizza la correlazione "
+                "tra -10 e +10 campioni (negativo: la velocità anticipa). Velocità ed eval_mask uguali a quelle di "
+                "`load_nwb`; la posizione viene dallo stesso NWB.\n\n" + md(kin_t) +
+                '\n<img src="../kin/kin_lag.png" width="820">\n')
         f.write("\nAngoli principali:\n\n" + "".join(f'<img src="../angles/figures/{p.name}" width="420"> '
                                                        for p in sorted((REP / "angles/figures").glob("*.png"))) + "\n")
 

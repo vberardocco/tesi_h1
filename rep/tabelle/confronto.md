@@ -2,6 +2,16 @@
 
 Generato da `rep/tabelle.py` dalle uscite dei notebook eseguiti, da `decoder.json` e da `angles.pkl`.
 
+**Modifiche del 30/10.**
+- §4: aggiunta la diagnosi del caso "dalla covarianza" (§4b). La covarianza usata dal caso è la stessa dei dati su cui
+  sono stimati i sottospazi, con lo stesso preprocessing (differenza massima 0), e il campionamento la riproduce. Lo
+  spettro però è piatto (PR tra 87 e 145 su 155 canali; i primi 10 autovalori tengono l'11-23% della varianza): per
+  questo il caso è quasi uniforme. Non c'è un errore da correggere e il caso non è stato rifatto: i numeri del §4 e
+  `angoli.csv` sono gli stessi di prima.
+- §7: aggiunto il controllo sulla cinematica (variazione della posizione contro velocità) dentro i trial e in
+  eval_mask, con la cross-correlazione. In S5 la correlazione resta bassa (tx 0.59, tz 0.46) senza ritardi; torna a
+  0.98-0.99 con una media mobile di 300 ms: lo scarto è rumore veloce nella posizione, non nella velocità.
+
 Note per leggere le tabelle:
 - **originale (io.py)**: i notebook 02_new e 04_deep sulla sessione di riferimento, con i bin di io.py (una riga di
   sfasamento rispetto a FALCON). **rif. S1, S2, S5**: le repliche con i bin di FALCON, stessi iperparametri, senza sweep.
@@ -242,6 +252,22 @@ I primi tre angoli principali (gradi):
 
 **Attenzione:** il caso dalla covarianza è quasi uguale a quello uniforme, soprattutto per FA: la covarianza dei conteggi z-scorati a 20 ms è quasi piatta (domina il rumore di Poisson). Il confronto che conta qui è quello con le due metà della stessa sessione.
 
+### 4b. Diagnosi del caso dalla covarianza (`rep/angles_diag.py`)
+
+Per ogni sessione, la covarianza da cui il caso campiona (nel caso si usa la media delle due sessioni confrontate). Preprocessing, uguale per il caso e per i sottospazi: PCA, bin FALCON da 20 ms, smoothing σ = 50 ms, z-score, tutti i bin; FA, conteggi grezzi z-scorati, tutti i bin; GPFA, radice dei conteggi nelle 119 finestre da 1 s, senza z-score. Campionamento (`angles.py`, righe 122-127): autovalori e autovettori della covarianza media, M = U S^1/2, K vettori M r con r gaussiano, ortonormalizzati con QR, 500 coppie. L'errore relativo dei 20000 vettori è quello atteso dal campionamento finito.
+
+| metodo | sessione | canali | PR | primi 10 (%) | primi 15 (%) | primi 25 (%) | differenza massima con la covarianza dei sottospazi | errore relativo, covarianza di 20000 vettori campionati |
+|---|---|---|---|---|---|---|---|---|
+| PCA | rif. S1 | 155 | 102.1 | 20.0 |  | 34.9 | 0 | 0.071 |
+| PCA | S2 | 155 | 96.2 | 21.1 |  | 35.9 | 0 | 0.069 |
+| PCA | S5 | 155 | 87.3 | 23.1 |  | 37.4 | 0 | 0.066 |
+| FA | rif. S1 | 155 | 144.9 | 11.0 | 15.0 | 22.4 | 0 | 0.085 |
+| FA | S2 | 155 | 145.5 | 10.9 | 14.8 | 22.3 | 0 | 0.085 |
+| FA | S5 | 155 | 143.9 | 11.2 | 15.2 | 22.6 | 0 | 0.085 |
+| GPFA | rif. S1 | 155 | 97.4 | 18.0 |  | 35.9 | 0 | 0.070 |
+| GPFA | S2 | 155 | 97.4 | 18.0 |  | 35.8 | 0 | 0.070 |
+| GPFA | S5 | 155 | 98.3 | 17.7 |  | 35.6 | 0 | 0.070 |
+
 ## 5. Controllo sul riconoscimento delle fasi (04, sessione di riferimento, bin di io.py)
 
 Mappe rilette dalla cache del 04, nessun allenamento (`rep/fasi`).
@@ -292,6 +318,36 @@ Originale, poi le tre repliche.
 | `04_time_chain.png` | <img src="../../figures/04_time_chain.png" width="260"> | <img src="../19250108T110520/figures/04_time_chain.png" width="260"> | <img src="../19250113T120811/figures/04_time_chain.png" width="260"> | <img src="../19250120T115044/figures/04_time_chain.png" width="260"> |
 | `04_trajectories.png` | <img src="../../figures/04_trajectories.png" width="260"> | <img src="../19250108T110520/figures/04_trajectories.png" width="260"> | <img src="../19250113T120811/figures/04_trajectories.png" width="260"> | <img src="../19250120T115044/figures/04_trajectories.png" width="260"> |
 | `04_twin_maps.png` | <img src="../../figures/04_twin_maps.png" width="260"> | <img src="../19250108T110520/figures/04_twin_maps.png" width="260"> | <img src="../19250113T120811/figures/04_twin_maps.png" width="260"> | <img src="../19250120T115044/figures/04_twin_maps.png" width="260"> |
+
+## 7. Cinematica: variazione della posizione contro velocità (`rep/kin_check.py`)
+
+dkin[k] = (posizione[k+1] - posizione[k]) / 20 ms contro la velocità del file (target di FALCON). Tutti i campioni: come nel §1 del 04. Dentro i trial e in eval_mask: solo coppie di campioni consecutivi dello stesso trial, entrambi in eval_mask. Ritardo: quello che massimizza la correlazione tra -10 e +10 campioni (negativo: la velocità anticipa). Velocità ed eval_mask uguali a quelle di `load_nwb`; la posizione viene dallo stesso NWB.
+
+| sessione | grado | r, tutti i campioni (come il 04) | r, dentro i trial e eval_mask (L = 0) | ritardo migliore (campioni da 20 ms) | r al ritardo migliore | r, media mobile 100 ms | r, media mobile 300 ms | pendenza dkin ~ vel | sd(dkin) / sd(vel) |
+|---|---|---|---|---|---|---|---|---|---|
+| rif. S1 | tx | 0.905 | 0.905 | -1 | 0.907 | 0.984 | 0.995 | 51.862 | 57.279 |
+| rif. S1 | ty | 0.881 | 0.881 | -1 | 0.883 | 0.98 | 0.994 | 52.35 | 59.419 |
+| rif. S1 | tz | 0.88 | 0.88 | -1 | 0.882 | 0.978 | 0.994 | 52.019 | 59.09 |
+| rif. S1 | rx | 0.911 | 0.911 | -1 | 0.912 | 0.987 | 0.996 | 51.526 | 56.565 |
+| rif. S1 | g1 | 0.729 | 0.736 | -2 | 0.739 | 0.945 | 0.988 | 53.348 | 72.464 |
+| rif. S1 | g2 | 0.812 | 0.813 | -1 | 0.815 | 0.943 | 0.984 | 54.006 | 66.46 |
+| rif. S1 | g3 | 0.875 | 0.875 | -1 | 0.878 | 0.972 | 0.988 | 55.37 | 63.27 |
+| S2 | tx | 0.905 | 0.906 | -1 | 0.907 | 0.982 | 0.995 | 51.969 | 57.376 |
+| S2 | ty | 0.911 | 0.911 | -1 | 0.912 | 0.983 | 0.996 | 51.736 | 56.781 |
+| S2 | tz | 0.92 | 0.92 | -1 | 0.921 | 0.98 | 0.994 | 51.961 | 56.508 |
+| S2 | rx | 0.922 | 0.921 | -1 | 0.922 | 0.987 | 0.996 | 51.451 | 55.847 |
+| S2 | g1 | 0.843 | 0.846 | -2 | 0.849 | 0.964 | 0.99 | 53.202 | 62.894 |
+| S2 | g2 | 0.807 | 0.808 | -1 | 0.81 | 0.944 | 0.984 | 54.347 | 67.238 |
+| S2 | g3 | 0.908 | 0.908 | -1 | 0.911 | 0.976 | 0.988 | 55.453 | 61.089 |
+| S5 | tx | 0.59 | 0.59 | -3 | 0.591 | 0.932 | 0.989 | 51.848 | 87.822 |
+| S5 | ty | 0.764 | 0.764 | -1 | 0.765 | 0.972 | 0.994 | 51.745 | 67.728 |
+| S5 | tz | 0.46 | 0.46 | -4 | 0.463 | 0.882 | 0.981 | 51.896 | 112.757 |
+| S5 | rx | 0.763 | 0.764 | -2 | 0.766 | 0.974 | 0.995 | 51.529 | 67.487 |
+| S5 | g1 | 0.696 | 0.696 | -1 | 0.698 | 0.944 | 0.987 | 53.3 | 76.551 |
+| S5 | g2 | 0.678 | 0.679 | -1 | 0.681 | 0.923 | 0.982 | 54.111 | 79.699 |
+| S5 | g3 | 0.863 | 0.863 | -1 | 0.866 | 0.973 | 0.987 | 55.479 | 64.282 |
+
+<img src="../kin/kin_lag.png" width="820">
 
 Angoli principali:
 
