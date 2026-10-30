@@ -1,0 +1,38 @@
+====================================================================================================
+Valutazione minival del modello finale   2026-10-30 13:05
+modello        : models/ridge_h50.npz  md5 e9f6979c4d4fa673de87ba4ed0e9874d
+storia         : H = 50 bin = 1000 ms; alpha 10^4.5 (commit 5a45607); allenata su tutto il calib held-in
+falcon_challenge: 1.0.2  (/Users/valerio/tesi_h1_work/falcon-challenge/falcon_challenge)
+batch size     : streaming con [4, 1] (4 = BATCH_SIZE dell'immagine Docker)
+riferimento    : storia 600 ms (H = 30), minival R² 0.3831, commit c8fbd9b
+----------------------------------------------------------------------------------------------------
+[blocco, nostro evaluator] 13 file
+  R² medio sui giorni: 0.4483   (0.448332)
+  per giorno: S0 0.5207, S1 0.4390, S2 0.4614, S3 0.4454, S4 0.4488, S5 0.3747
+  per DoF (media giorni): tx 0.2985, ty 0.1362, tz 0.3171, rx 0.4332, g1 0.5466, g2 0.4243, g3 0.3670
+!! esecuzione interrotta: lo script leggeva male il valore restituito da evaluate() (KeyError); il risultato ufficiale stampato era Held In R2 Mean 0.448332. Corretta la sola lettura, rilancio sotto con lo stesso modello.
+====================================================================================================
+Valutazione minival del modello finale   2026-10-30 13:05
+modello        : models/ridge_h50.npz  md5 e9f6979c4d4fa673de87ba4ed0e9874d
+storia         : H = 50 bin = 1000 ms; alpha 10^4.5 (commit 5a45607); allenata su tutto il calib held-in
+falcon_challenge: 1.0.2  (/Users/valerio/tesi_h1_work/falcon-challenge/falcon_challenge)
+batch size     : streaming con [4, 1] (4 = BATCH_SIZE dell'immagine Docker)
+riferimento    : storia 600 ms (H = 30), minival R² 0.3831, commit c8fbd9b
+----------------------------------------------------------------------------------------------------
+[blocco, nostro evaluator] 13 file
+  R² medio sui giorni: 0.4483   (0.448332)
+  per giorno: S0 0.5207, S1 0.4390, S2 0.4614, S3 0.4454, S4 0.4488, S5 0.3747
+  per DoF (media giorni): tx 0.2985, ty 0.1362, tz 0.3171, rx 0.4332, g1 0.5466, g2 0.4243, g3 0.3670
+[streaming, evaluator ufficiale FALCON, batch 4] 1 s
+  risultato ufficiale: {'Normalized Latency': np.float64(0.0009117630198170533), 'Held In R2 Mean': np.float64(0.44833211972674114), 'Held In R2 Std.': np.float64(0.04267811741741909)}
+  R² medio ufficiale : 0.4483   (0.448332)
+  nostro evaluator sulle predizioni in streaming: 0.4483; per DoF: tx 0.2985, ty 0.1362, tz 0.3171, rx 0.4332, g1 0.5466, g2 0.4243, g3 0.3670
+  streaming - blocco, differenza massima delle predizioni: tutti i bin 5.61e-10, bin valutati 5.61e-10
+  coincidono con il blocco (R² alla 4a cifra, diff < 1e-4): SÌ
+[streaming, evaluator ufficiale FALCON, batch 1] 2 s
+  risultato ufficiale: {'Normalized Latency': np.float64(0.002598623472691494), 'Held In R2 Mean': np.float64(0.4483321197267412), 'Held In R2 Std.': np.float64(0.04267811741741925)}
+  R² medio ufficiale : 0.4483   (0.448332)
+  nostro evaluator sulle predizioni in streaming: 0.4483; per DoF: tx 0.2985, ty 0.1362, tz 0.3171, rx 0.4332, g1 0.5466, g2 0.4243, g3 0.3670
+  streaming - blocco, differenza massima delle predizioni: tutti i bin 5.61e-10, bin valutati 5.61e-10
+  coincidono con il blocco (R² alla 4a cifra, diff < 1e-4): SÌ
+tempo totale 3 s
