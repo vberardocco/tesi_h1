@@ -74,3 +74,5 @@
 2026-10-31 15:31:30 [re_c1] FINE   re_CEBRA_s2
 2026-10-31 15:31:30 [re_c1] corsia terminata
 2026-10-31 15:32:17 [re_c2] INIZIO re_commit (tentativo 1)
+2026-10-31 15:32:22 [re_c2] FINE   re_commit
+2026-10-31 15:32:22 [re_c2] corsia terminata
