@@ -1,0 +1,17 @@
+[16:10:57] xs_run LFADS d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[16:10:57] diagnosi LFADS d = 25 seme 0: 13 sessioni held-in da fare
+[16:10:57] LFADS d = 25 seme 0 (heldin): modello riletto da LFADS_d25_heldin_s0.pkl
+[16:11:14] diagnosi LFADS S0_set_1: no_adapt 0.271, recenter 0.273, align 0.229
+[16:11:21] diagnosi LFADS S0_set_2: no_adapt 0.193, recenter 0.193, align 0.114
+[16:11:37] diagnosi LFADS S1_set_1: no_adapt 0.210, recenter 0.208, align 0.187
+[16:11:43] diagnosi LFADS S1_set_2: no_adapt 0.226, recenter 0.231, align 0.194
+[16:11:50] diagnosi LFADS S1_set_3: no_adapt 0.198, recenter 0.202, align 0.145
+[16:12:06] diagnosi LFADS S2_set_1: no_adapt 0.235, recenter 0.230, align 0.200
+[16:12:22] diagnosi LFADS S2_set_2: no_adapt 0.188, recenter 0.177, align 0.133
+[16:12:35] diagnosi LFADS S3_set_1: no_adapt 0.211, recenter 0.210, align 0.171
+[16:12:51] diagnosi LFADS S3_set_2: no_adapt 0.235, recenter 0.236, align 0.218
+[16:13:08] diagnosi LFADS S4_set_1: no_adapt 0.189, recenter 0.191, align 0.197
+[16:13:24] diagnosi LFADS S4_set_2: no_adapt 0.247, recenter 0.240, align 0.219
+[16:13:41] diagnosi LFADS S5_set_1: no_adapt 0.236, recenter 0.231, align 0.194
+[16:13:57] diagnosi LFADS S5_set_2: no_adapt 0.234, recenter 0.229, align 0.207
+[16:13:57] fine (3.0 min)

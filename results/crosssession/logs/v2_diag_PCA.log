@@ -1,0 +1,17 @@
+[17:05:05] xs_run PCA d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[17:05:05] diagnosi PCA d = 25 seme 0: 13 sessioni held-in da fare
+[17:05:07] PCA d = 25 seme 0 (heldin): modello riletto da PCA_d25_heldin_s0.pkl
+[17:05:18] diagnosi PCA S0_set_1: no_adapt 0.279, recenter 0.274, align 0.250
+[17:05:23] diagnosi PCA S0_set_2: no_adapt 0.256, recenter 0.266, align 0.225
+[17:05:38] diagnosi PCA S1_set_1: no_adapt 0.241, recenter 0.241, align 0.239
+[17:05:43] diagnosi PCA S1_set_2: no_adapt 0.225, recenter 0.232, align 0.199
+[17:05:48] diagnosi PCA S1_set_3: no_adapt 0.224, recenter 0.222, align 0.178
+[17:06:01] diagnosi PCA S2_set_1: no_adapt 0.237, recenter 0.232, align 0.216
+[17:06:13] diagnosi PCA S2_set_2: no_adapt 0.192, recenter 0.187, align 0.176
+[17:06:25] diagnosi PCA S3_set_1: no_adapt 0.201, recenter 0.202, align 0.173
+[17:06:39] diagnosi PCA S3_set_2: no_adapt 0.229, recenter 0.232, align 0.228
+[17:06:54] diagnosi PCA S4_set_1: no_adapt 0.214, recenter 0.217, align 0.213
+[17:07:10] diagnosi PCA S4_set_2: no_adapt 0.291, recenter 0.286, align 0.280
+[17:07:23] diagnosi PCA S5_set_1: no_adapt 0.220, recenter 0.222, align 0.218
+[17:07:36] diagnosi PCA S5_set_2: no_adapt 0.236, recenter 0.234, align 0.225
+[17:07:36] fine (2.5 min)

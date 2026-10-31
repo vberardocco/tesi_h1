@@ -1,0 +1,32 @@
+[16:49:23] xs_run CEBRA d = 25 seme 2 stage main [crosssession]; codice c6efc91
+[16:49:24] CEBRA d = 25 seme 2 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:50:23] CEBRA d = 25 seme 2 (heldin): stimato in 1.0 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[16:51:39] CEBRA d = 25 seme 2 S6_set_1: zero_shot -0.002, recenter -0.001, align -0.002, fewshot_gain -0.024, fewshot 0.003, scratch -0.018
+[16:51:39]    (1 sessioni in 1.3 min; 1/14)
+[16:52:48] CEBRA d = 25 seme 2 S6_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.063, fewshot 0.006, scratch -0.024
+[16:52:48]    (1 sessioni in 1.1 min; 2/14)
+[16:54:11] CEBRA d = 25 seme 2 S7_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.058, fewshot 0.001, scratch -0.009
+[16:54:11]    (1 sessioni in 1.4 min; 3/14)
+[16:55:34] CEBRA d = 25 seme 2 S7_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.030, fewshot -0.002, scratch -0.005
+[16:55:34]    (1 sessioni in 1.4 min; 4/14)
+[16:56:54] CEBRA d = 25 seme 2 S8_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.065, fewshot 0.000, scratch -0.015
+[16:56:54]    (1 sessioni in 1.3 min; 5/14)
+[16:58:17] CEBRA d = 25 seme 2 S8_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.046, fewshot -0.008, scratch -0.027
+[16:58:17]    (1 sessioni in 1.4 min; 6/14)
+[16:59:32] CEBRA d = 25 seme 2 S9_set_1: zero_shot -0.001, recenter -0.001, align -0.002, fewshot_gain -0.026, fewshot 0.000, scratch -0.028
+[16:59:32]    (1 sessioni in 1.2 min; 7/14)
+[17:00:57] CEBRA d = 25 seme 2 S9_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.079, fewshot 0.000, scratch -0.017
+[17:00:57]    (1 sessioni in 1.4 min; 8/14)
+[17:02:19] CEBRA d = 25 seme 2 S10_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.057, fewshot -0.010, scratch -0.005
+[17:02:19]    (1 sessioni in 1.4 min; 9/14)
+[17:03:41] CEBRA d = 25 seme 2 S10_set_2: zero_shot -0.001, recenter -0.002, align -0.002, fewshot_gain -0.028, fewshot -0.000, scratch -0.020
+[17:03:41]    (1 sessioni in 1.4 min; 10/14)
+[17:04:54] CEBRA d = 25 seme 2 S11_set_1: zero_shot -0.002, recenter -0.001, align -0.002, fewshot_gain -0.024, fewshot -0.003, scratch 0.023
+[17:04:54]    (1 sessioni in 1.2 min; 11/14)
+[17:06:05] CEBRA d = 25 seme 2 S11_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.073, fewshot -0.004, scratch -0.027
+[17:06:05]    (1 sessioni in 1.2 min; 12/14)
+[17:07:22] CEBRA d = 25 seme 2 S12_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.020, fewshot 0.001, scratch 0.050
+[17:07:22]    (1 sessioni in 1.3 min; 13/14)
+[17:08:35] CEBRA d = 25 seme 2 S12_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.033, fewshot 0.005, scratch 0.006
+[17:08:35]    (1 sessioni in 1.2 min; 14/14)
+[17:08:35] fine (19.2 min)

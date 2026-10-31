@@ -1,0 +1,34 @@
+[16:05:52] xs_run PCA d = 25 seme 0 stage all [crosssession]; codice 95122b6
+[16:05:53] PCA d = 25 seme 0 (pseudo): modello riletto da PCA_d25_pseudo_s0.pkl
+[16:06:47] pseudo-few-shot PCA (d = 25): zero_shot 0.0994, recenter 0.1886, align 0.2129, fewshot_gain 0.1251, fewshot 0.2129 (lam 3.16e+06), scratch 0.0225 (alpha 3.16e+04)
+[16:06:47] PCA d = 25 seme 0 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:06:47] PCA d = 25 seme 0 (heldin): modello riletto da PCA_d25_heldin_s0.pkl
+[16:06:52] PCA d = 25 seme 0 S6_set_1: zero_shot 0.121, recenter 0.137, align 0.160, fewshot_gain 0.115, fewshot 0.160, scratch 0.015
+[16:06:52]    (1 sessioni in 0.1 min; 1/14)
+[16:06:56] PCA d = 25 seme 0 S6_set_2: zero_shot 0.129, recenter 0.137, align 0.152, fewshot_gain 0.040, fewshot 0.152, scratch -0.002
+[16:06:56]    (1 sessioni in 0.1 min; 2/14)
+[16:07:00] PCA d = 25 seme 0 S7_set_1: zero_shot 0.096, recenter 0.114, align 0.055, fewshot_gain -0.187, fewshot 0.054, scratch -0.045
+[16:07:00]    (1 sessioni in 0.1 min; 3/14)
+[16:07:05] PCA d = 25 seme 0 S7_set_2: zero_shot 0.042, recenter 0.066, align 0.058, fewshot_gain -0.091, fewshot 0.061, scratch -0.068
+[16:07:05]    (1 sessioni in 0.1 min; 4/14)
+[16:07:09] PCA d = 25 seme 0 S8_set_1: zero_shot 0.086, recenter 0.108, align 0.109, fewshot_gain 0.082, fewshot 0.109, scratch -0.029
+[16:07:09]    (1 sessioni in 0.1 min; 5/14)
+[16:07:13] PCA d = 25 seme 0 S8_set_2: zero_shot 0.080, recenter 0.080, align 0.057, fewshot_gain -0.059, fewshot 0.056, scratch -0.046
+[16:07:13]    (1 sessioni in 0.1 min; 6/14)
+[16:07:17] PCA d = 25 seme 0 S9_set_1: zero_shot 0.067, recenter 0.055, align 0.020, fewshot_gain -0.109, fewshot 0.021, scratch -0.141
+[16:07:17]    (1 sessioni in 0.1 min; 7/14)
+[16:07:22] PCA d = 25 seme 0 S9_set_2: zero_shot 0.055, recenter 0.078, align 0.084, fewshot_gain 0.017, fewshot 0.085, scratch -0.057
+[16:07:22]    (1 sessioni in 0.1 min; 8/14)
+[16:07:26] PCA d = 25 seme 0 S10_set_1: zero_shot 0.098, recenter 0.168, align 0.168, fewshot_gain 0.026, fewshot 0.168, scratch 0.029
+[16:07:26]    (1 sessioni in 0.1 min; 9/14)
+[16:07:30] PCA d = 25 seme 0 S10_set_2: zero_shot 0.137, recenter 0.151, align 0.161, fewshot_gain 0.069, fewshot 0.162, scratch -0.015
+[16:07:30]    (1 sessioni in 0.1 min; 10/14)
+[16:07:35] PCA d = 25 seme 0 S11_set_1: zero_shot 0.078, recenter 0.144, align 0.104, fewshot_gain 0.045, fewshot 0.103, scratch -0.051
+[16:07:35]    (1 sessioni in 0.1 min; 11/14)
+[16:07:39] PCA d = 25 seme 0 S11_set_2: zero_shot 0.031, recenter 0.168, align 0.163, fewshot_gain 0.064, fewshot 0.162, scratch -0.028
+[16:07:39]    (1 sessioni in 0.1 min; 12/14)
+[16:07:43] PCA d = 25 seme 0 S12_set_1: zero_shot 0.010, recenter 0.092, align 0.107, fewshot_gain 0.023, fewshot 0.107, scratch 0.034
+[16:07:43]    (1 sessioni in 0.1 min; 13/14)
+[16:07:47] PCA d = 25 seme 0 S12_set_2: zero_shot 0.055, recenter 0.122, align 0.132, fewshot_gain 0.018, fewshot 0.133, scratch 0.008
+[16:07:47]    (1 sessioni in 0.1 min; 14/14)
+[16:07:47] fine (1.9 min)

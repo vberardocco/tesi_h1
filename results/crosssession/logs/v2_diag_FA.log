@@ -1,0 +1,17 @@
+[17:07:37] xs_run FA d = 15 seme 0 stage diag [crosssession]; codice c6efc91
+[17:07:38] diagnosi FA d = 15 seme 0: 13 sessioni held-in da fare
+[17:07:40] FA d = 15 seme 0 (heldin): modello riletto da FA_d15_heldin_s0.pkl
+[17:07:48] diagnosi FA S0_set_1: no_adapt 0.173, recenter 0.173, align 0.171
+[17:07:52] diagnosi FA S0_set_2: no_adapt 0.092, recenter 0.119, align 0.119
+[17:08:03] diagnosi FA S1_set_1: no_adapt 0.103, recenter 0.103, align 0.103
+[17:08:07] diagnosi FA S1_set_2: no_adapt 0.142, recenter 0.144, align 0.145
+[17:08:11] diagnosi FA S1_set_3: no_adapt 0.099, recenter 0.100, align 0.097
+[17:08:21] diagnosi FA S2_set_1: no_adapt 0.095, recenter 0.098, align 0.100
+[17:08:31] diagnosi FA S2_set_2: no_adapt 0.061, recenter 0.061, align 0.060
+[17:08:37] diagnosi FA S3_set_1: no_adapt 0.094, recenter 0.098, align 0.100
+[17:08:44] diagnosi FA S3_set_2: no_adapt 0.094, recenter 0.096, align 0.097
+[17:08:50] diagnosi FA S4_set_1: no_adapt 0.088, recenter 0.089, align 0.092
+[17:08:57] diagnosi FA S4_set_2: no_adapt 0.098, recenter 0.097, align 0.098
+[17:09:04] diagnosi FA S5_set_1: no_adapt 0.093, recenter 0.097, align 0.100
+[17:09:10] diagnosi FA S5_set_2: no_adapt 0.092, recenter 0.094, align 0.095
+[17:09:10] fine (1.5 min)

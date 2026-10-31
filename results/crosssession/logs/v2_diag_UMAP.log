@@ -1,0 +1,17 @@
+[17:15:55] xs_run UMAP d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[17:15:55] diagnosi UMAP d = 25 seme 0: 13 sessioni held-in da fare
+[17:16:05] UMAP d = 25 seme 0 (heldin): modello riletto da UMAP_d25_heldin_s0.pkl
+[17:16:36] diagnosi UMAP S0_set_1: no_adapt 0.022, recenter 0.022, align -0.254
+[17:16:49] diagnosi UMAP S0_set_2: no_adapt 0.024, recenter 0.024, align 0.014
+[17:17:18] diagnosi UMAP S1_set_1: no_adapt 0.018, recenter 0.019, align 0.018
+[17:17:31] diagnosi UMAP S1_set_2: no_adapt 0.028, recenter 0.029, align 0.037
+[17:17:44] diagnosi UMAP S1_set_3: no_adapt 0.023, recenter 0.024, align 0.025
+[17:18:13] diagnosi UMAP S2_set_1: no_adapt 0.017, recenter 0.017, align -0.003
+[17:18:47] diagnosi UMAP S2_set_2: no_adapt 0.013, recenter 0.013, align 0.010
+[17:19:12] diagnosi UMAP S3_set_1: no_adapt 0.021, recenter 0.022, align 0.017
+[17:19:47] diagnosi UMAP S3_set_2: no_adapt 0.020, recenter 0.019, align 0.005
+[17:20:18] diagnosi UMAP S4_set_1: no_adapt 0.011, recenter 0.012, align -0.148
+[17:20:49] diagnosi UMAP S4_set_2: no_adapt 0.015, recenter 0.015, align 0.008
+[17:21:26] diagnosi UMAP S5_set_1: no_adapt 0.010, recenter 0.010, align 0.007
+[17:21:58] diagnosi UMAP S5_set_2: no_adapt 0.010, recenter 0.010, align 0.005
+[17:21:58] fine (6.1 min)

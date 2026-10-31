@@ -1,0 +1,23 @@
+[16:59:50] xs_run UMAP d = 3 seme 1 stage main [crosssession_d3]; codice c6efc91
+[16:59:50] UMAP d = 3 seme 1 [crosssession_d3]: 0 sessioni già nel registro, 14 da fare
+[17:00:01] UMAP d = 3 seme 1 (heldin): modello riletto da UMAP_d3_heldin_s1.pkl
+[17:00:44] UMAP d = 3 seme 1 S6_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.012, fewshot 0.010, scratch -0.006
+[17:00:49] UMAP d = 3 seme 1 S6_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.035, fewshot 0.003, scratch -0.023
+[17:00:53] UMAP d = 3 seme 1 S7_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.028, fewshot -0.001, scratch -0.018
+[17:00:53]    (3 sessioni in 0.9 min; 3/14)
+[17:01:10] UMAP d = 3 seme 1 S7_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.018, fewshot -0.005, scratch -0.001
+[17:01:15] UMAP d = 3 seme 1 S8_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.044, fewshot -0.003, scratch -0.044
+[17:01:20] UMAP d = 3 seme 1 S8_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.044, fewshot 0.000, scratch -0.007
+[17:01:20]    (3 sessioni in 0.5 min; 6/14)
+[17:01:37] UMAP d = 3 seme 1 S9_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.047, fewshot -0.002, scratch -0.044
+[17:01:42] UMAP d = 3 seme 1 S9_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.148, fewshot -0.001, scratch -0.019
+[17:01:47] UMAP d = 3 seme 1 S10_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.038, fewshot -0.001, scratch -0.051
+[17:01:47]    (3 sessioni in 0.5 min; 9/14)
+[17:02:04] UMAP d = 3 seme 1 S10_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.030, fewshot -0.004, scratch -0.025
+[17:02:08] UMAP d = 3 seme 1 S11_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot_gain -0.050, fewshot -0.010, scratch -0.017
+[17:02:13] UMAP d = 3 seme 1 S11_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.045, fewshot 0.005, scratch -0.039
+[17:02:13]    (3 sessioni in 0.4 min; 12/14)
+[17:02:28] UMAP d = 3 seme 1 S12_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.034, fewshot -0.001, scratch -0.012
+[17:02:33] UMAP d = 3 seme 1 S12_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot_gain -0.026, fewshot 0.001, scratch -0.047
+[17:02:33]    (2 sessioni in 0.3 min; 14/14)
+[17:02:33] fine (2.7 min)

@@ -67,10 +67,10 @@ più semi si fa prima la media sui semi. Unità statistica: la sessione (n = 14)
 - **Bin di adattamento**: per sessione e fold, bin dei 2 trial (tutti e con eval_mask) rispetto ai 170 canali, alla
   dimensione latente e al numero di pesi del readout (H × dim + 1).
 
-## Deviazioni e aggiunte (1/11/2026, richieste dopo i risultati del 31/10, commit 48ca831)
+## Deviazioni e aggiunte (seconda tornata, 31/10/2026 pomeriggio, richieste dopo i risultati della mattina, commit 48ca831)
 
 Scritte prima di vedere i risultati della seconda tornata (codice: commit 95122b6). Tutto ciò che segue è un'aggiunta
-al piano del 31/10; i confronti nuovi sono marcati `added_20261101` nelle tabelle.
+al piano della mattina del 31/10; i confronti nuovi sono marcati `added_v2` nelle tabelle.
 
 1. **Scelta di λ: era già senza la pseudo-sessione.** Verificato nel codice (`tune`, `fit_bundle(..., "pseudo")`):
    per tutti e 7 i metodi, CEBRA e LFADS compresi, il metodo (manifold) e il readout dello pseudo-few-shot sono
@@ -113,3 +113,37 @@ al piano del 31/10; i confronti nuovi sono marcati `added_20261101` nelle tabell
    percentile di |v| del pool held-in), varianza della velocità rispetto al pool. Si confrontano held-out,
    pseudo-sessioni e blocchi della diagnosi. In più, esplorativo: Δ align − recenter per fold, separando i fold con i
    2 trial della stessa versione.
+
+### Note dopo l'esecuzione della seconda tornata (31/10/2026 sera)
+
+Tutti i run della seconda tornata sono finiti senza fallimenti (code v2, 16:01-17:38; codice 95122b6 per
+ridge_channels, c6efc91 per il resto: differiscono solo in `xs_analysis.py` e in questo file). I risultati di PCA, FA,
+GPFA e LFADS alle condizioni della mattina sono identici al bit (stesso λ per PCA e GPFA), tranne fewshot di FA e LFADS,
+dove λ passa da 10^9 a 10^15 (entrambi all'asintoto) e l'R² cambia al più di 4·10^-5.
+
+8. **La data delle aggiunte era sbagliata.** Nelle prime versioni di questo file, del codice e delle tabelle le
+   aggiunte erano datate "1/11" e marcate `added_20261101`; sono del 31/10 pomeriggio (log delle code). Corretto in
+   `added_v2` e "seconda tornata"; nessun numero cambia.
+9. **Griglia di λ, esito della regola del punto 2.** FA e LFADS hanno l'ottimo all'estremo alto anche con la griglia
+   fino a 10^15, con la curva che sale in modo monotono verso l'asintoto: per la regola, fewshot = align. Per tutti gli
+   altri l'ottimo è interno (PCA 10^6.5, GPFA 10^7, Isomap 25 10^4.5, UMAP 25 10^5.5, CEBRA 25 10^6, mappe a d = 3
+   10^5-10^5.5, ridge_channels 10^5).
+10. **Due correzioni grafiche, nessun numero cambia.** Figura A: il limite inferiore dell'asse y tagliava lo zero-shot
+    di ridge_channels nei giorni 6 e 20; ora comprende tutti i punti. Figura C: il marcatore del λ scelto mancava per
+    PCA, Isomap 25, UMAP 25 e CEBRA 3 (i λ a mezzo decennio): le chiavi della curva nel JSON sono arrotondate a 4 cifre
+    ("3162") e il confronto con il λ scelto era esatto; ora la tolleranza relativa è 10^-3 (due punti vicini della
+    griglia differiscono di un fattore 3.16). Nella figura C l'asse y è tagliato a −0.08,
+    ed è scritto sotto l'asse.
+11. **Controlli esplorativi aggiunti DOPO aver visto i risultati** (`scripts/xs_checks.py`, commit 81f5a1a; non nel
+    piano, nessun test d'ipotesi). Due risultati andavano spiegati prima di scriverne:
+    a) fewshot_gain peggiora align in quasi tutte le sessioni e in tutti i metodi. Scomposizione sulle held-out (seme 0,
+       dimensioni principali, stessi fold): solo guadagno, solo offset, e un guadagno stimato sul trial di test stesso
+       (limite superiore, non una condizione); in più il guadagno stimato su ogni trial da solo.
+    b) UMAP e CEBRA restano a R² ≈ 0 anche a d = 25. Nelle 13 sessioni held-in, con il modello held-in: decodifica
+       dentro la sessione (readout sui trial tranne gli ultimi 3, α leave-one-trial-out, test sugli ultimi 3) e quota
+       della varianza dei latenti spiegata dall'identità della sessione.
+    File: `check_gain_decomposition.csv`, `check_gain_per_trial.csv`, `check_within_session.csv`,
+    `check_session_variance.csv`; sezione finale di `report.md`.
+12. **Limite della diagnosi del moment matching per UMAP e CEBRA.** Il readout della diagnosi usa l'α held-in scalato
+    per il numero di bin (punto 6); per UMAP e CEBRA quell'α è all'estremo alto della griglia (il readout held-in predice
+    la media), quindi dentro la sessione partono da R² ≈ 0.01-0.02 e la diagnosi dice poco su di loro.

@@ -1,0 +1,36 @@
+[16:28:34] xs_run Isomap d = 25 seme 0 stage all [crosssession]; codice c6efc91
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/scipy/sparse/_index.py:174: SparseEfficiencyWarning: Changing the sparsity structure of a csr_matrix is expensive. lil and dok are more efficient.
+  self._set_intXint(row, col, x.flat[0])
+[16:29:09] Isomap d = 25 seme 0 (pseudo): stimato in 0.6 min; readout α = 1e+08, R² leave-one-day-out = -0.001 (α AL BORDO)
+[16:31:07] pseudo-few-shot Isomap (d = 25): zero_shot 0.0047, recenter 0.0056, align 0.0031, fewshot_gain 0.0299, fewshot 0.0512 (lam 3.16e+04), scratch 0.0249 (alpha 3.16e+04)
+[16:31:07] Isomap d = 25 seme 0 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:32:20] Isomap d = 25 seme 0 (heldin): stimato in 1.2 min; readout α = 1e+07, R² leave-one-day-out = 0.005
+[16:32:29] Isomap d = 25 seme 0 S6_set_1: zero_shot 0.018, recenter 0.026, align 0.027, fewshot_gain 0.026, fewshot 0.043, scratch -0.016
+[16:32:29]    (1 sessioni in 0.1 min; 1/14)
+[16:32:38] Isomap d = 25 seme 0 S6_set_2: zero_shot 0.013, recenter 0.028, align 0.026, fewshot_gain 0.035, fewshot 0.070, scratch -0.023
+[16:32:38]    (1 sessioni in 0.2 min; 2/14)
+[16:32:50] Isomap d = 25 seme 0 S7_set_1: zero_shot 0.023, recenter 0.020, align 0.013, fewshot_gain -0.099, fewshot -0.011, scratch -0.034
+[16:32:50]    (1 sessioni in 0.2 min; 3/14)
+[16:33:02] Isomap d = 25 seme 0 S7_set_2: zero_shot 0.004, recenter 0.015, align 0.010, fewshot_gain -0.065, fewshot 0.051, scratch -0.065
+[16:33:02]    (1 sessioni in 0.2 min; 4/14)
+[16:33:15] Isomap d = 25 seme 0 S8_set_1: zero_shot 0.010, recenter 0.029, align 0.027, fewshot_gain 0.057, fewshot -0.010, scratch -0.038
+[16:33:15]    (1 sessioni in 0.2 min; 5/14)
+[16:33:28] Isomap d = 25 seme 0 S8_set_2: zero_shot 0.004, recenter 0.017, align 0.016, fewshot_gain 0.021, fewshot -0.036, scratch 0.006
+[16:33:28]    (1 sessioni in 0.2 min; 6/14)
+[16:33:41] Isomap d = 25 seme 0 S9_set_1: zero_shot 0.002, recenter 0.010, align 0.004, fewshot_gain -0.037, fewshot -0.096, scratch -0.074
+[16:33:41]    (1 sessioni in 0.2 min; 7/14)
+[16:33:52] Isomap d = 25 seme 0 S9_set_2: zero_shot -0.001, recenter 0.015, align 0.015, fewshot_gain -0.066, fewshot 0.003, scratch -0.053
+[16:33:52]    (1 sessioni in 0.2 min; 8/14)
+[16:34:02] Isomap d = 25 seme 0 S10_set_1: zero_shot 0.019, recenter 0.026, align 0.030, fewshot_gain -0.090, fewshot 0.032, scratch 0.019
+[16:34:02]    (1 sessioni in 0.2 min; 9/14)
+[16:34:14] Isomap d = 25 seme 0 S10_set_2: zero_shot 0.025, recenter 0.030, align 0.037, fewshot_gain 0.048, fewshot 0.088, scratch -0.011
+[16:34:14]    (1 sessioni in 0.2 min; 10/14)
+[16:34:26] Isomap d = 25 seme 0 S11_set_1: zero_shot 0.032, recenter 0.033, align 0.042, fewshot_gain -0.233, fewshot 0.059, scratch -0.024
+[16:34:26]    (1 sessioni in 0.2 min; 11/14)
+[16:34:38] Isomap d = 25 seme 0 S11_set_2: zero_shot 0.051, recenter 0.053, align 0.047, fewshot_gain 0.045, fewshot 0.026, scratch -0.037
+[16:34:38]    (1 sessioni in 0.2 min; 12/14)
+[16:34:50] Isomap d = 25 seme 0 S12_set_1: zero_shot 0.010, recenter 0.022, align 0.020, fewshot_gain -0.067, fewshot 0.023, scratch -0.020
+[16:34:50]    (1 sessioni in 0.2 min; 13/14)
+[16:35:02] Isomap d = 25 seme 0 S12_set_2: zero_shot 0.001, recenter 0.024, align 0.020, fewshot_gain -0.029, fewshot 0.016, scratch -0.006
+[16:35:02]    (1 sessioni in 0.2 min; 14/14)
+[16:35:03] fine (6.5 min)

@@ -1,0 +1,34 @@
+[16:07:48] xs_run FA d = 15 seme 0 stage all [crosssession]; codice c6efc91
+[16:07:50] FA d = 15 seme 0 (pseudo): modello riletto da FA_d15_pseudo_s0.pkl
+[16:10:42] pseudo-few-shot FA (d = 15): zero_shot 0.0760, recenter 0.0947, align 0.1001, fa_native 0.0711, fewshot_gain 0.0530, fewshot 0.1001 (lam 1e+15 AL BORDO), scratch 0.0091 (alpha 3.16e+04)
+[16:10:43] FA d = 15 seme 0 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:10:43] FA d = 15 seme 0 (heldin): modello riletto da FA_d15_heldin_s0.pkl
+[16:10:57] FA d = 15 seme 0 S6_set_1: zero_shot 0.039, recenter 0.042, align 0.051, fewshot_gain 0.006, fewshot 0.051, fa_native 0.019, scratch 0.011
+[16:10:57]    (1 sessioni in 0.2 min; 1/14)
+[16:11:11] FA d = 15 seme 0 S6_set_2: zero_shot 0.049, recenter 0.055, align 0.067, fewshot_gain -0.005, fewshot 0.067, fa_native 0.062, scratch 0.011
+[16:11:11]    (1 sessioni in 0.2 min; 2/14)
+[16:11:28] FA d = 15 seme 0 S7_set_1: zero_shot 0.056, recenter 0.068, align 0.061, fewshot_gain -0.023, fewshot 0.061, fa_native 0.037, scratch 0.006
+[16:11:28]    (1 sessioni in 0.3 min; 3/14)
+[16:11:50] FA d = 15 seme 0 S7_set_2: zero_shot 0.039, recenter 0.042, align 0.048, fewshot_gain 0.004, fewshot 0.048, fa_native 0.012, scratch -0.018
+[16:11:50]    (1 sessioni in 0.4 min; 4/14)
+[16:12:08] FA d = 15 seme 0 S8_set_1: zero_shot 0.021, recenter 0.037, align 0.037, fewshot_gain -0.004, fewshot 0.037, fa_native 0.022, scratch -0.012
+[16:12:08]    (1 sessioni in 0.3 min; 5/14)
+[16:12:24] FA d = 15 seme 0 S8_set_2: zero_shot 0.031, recenter 0.041, align 0.046, fewshot_gain -0.008, fewshot 0.046, fa_native 0.036, scratch -0.021
+[16:12:24]    (1 sessioni in 0.3 min; 6/14)
+[16:12:39] FA d = 15 seme 0 S9_set_1: zero_shot 0.018, recenter 0.019, align 0.027, fewshot_gain -0.061, fewshot 0.027, fa_native -0.006, scratch -0.041
+[16:12:39]    (1 sessioni in 0.2 min; 7/14)
+[16:12:55] FA d = 15 seme 0 S9_set_2: zero_shot 0.012, recenter 0.031, align 0.039, fewshot_gain -0.061, fewshot 0.039, fa_native 0.027, scratch -0.018
+[16:12:55]    (1 sessioni in 0.3 min; 8/14)
+[16:13:16] FA d = 15 seme 0 S10_set_1: zero_shot 0.020, recenter 0.042, align 0.058, fewshot_gain -0.081, fewshot 0.058, fa_native -0.004, scratch -0.034
+[16:13:16]    (1 sessioni in 0.4 min; 9/14)
+[16:13:29] FA d = 15 seme 0 S10_set_2: zero_shot 0.033, recenter 0.051, align 0.074, fewshot_gain -0.026, fewshot 0.074, fa_native 0.032, scratch -0.012
+[16:13:29]    (1 sessioni in 0.2 min; 10/14)
+[16:13:44] FA d = 15 seme 0 S11_set_1: zero_shot 0.026, recenter 0.045, align 0.048, fewshot_gain -0.003, fewshot 0.048, fa_native 0.023, scratch -0.003
+[16:13:44]    (1 sessioni in 0.2 min; 11/14)
+[16:14:08] FA d = 15 seme 0 S11_set_2: zero_shot 0.064, recenter 0.071, align 0.073, fewshot_gain -0.006, fewshot 0.073, fa_native 0.030, scratch -0.018
+[16:14:08]    (1 sessioni in 0.4 min; 12/14)
+[16:14:25] FA d = 15 seme 0 S12_set_1: zero_shot 0.053, recenter 0.053, align 0.058, fewshot_gain -0.071, fewshot 0.058, fa_native 0.031, scratch -0.021
+[16:14:25]    (1 sessioni in 0.3 min; 13/14)
+[16:14:50] FA d = 15 seme 0 S12_set_2: zero_shot 0.035, recenter 0.037, align 0.042, fewshot_gain -0.021, fewshot 0.042, fa_native 0.022, scratch -0.018
+[16:14:50]    (1 sessioni in 0.4 min; 14/14)
+[16:14:50] fine (7.0 min)

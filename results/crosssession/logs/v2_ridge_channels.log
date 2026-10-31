@@ -1,0 +1,32 @@
+[16:01:02] xs_run ridge_channels d = None seme 0 stage all [crosssession]; codice 95122b6
+[16:04:58] pseudo-few-shot ridge_channels (d = None): zero_shot 0.0285, recenter 0.2743, fewshot_gain 0.2118, fewshot 0.2827 (lam 1e+05)
+[16:04:58] ridge_channels d = None seme 0 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:05:02] ridge_channels d = None seme 0 S6_set_1: zero_shot -0.279, recenter 0.225, fewshot_gain 0.146, fewshot 0.235
+[16:05:02]    (1 sessioni in 0.1 min; 1/14)
+[16:05:06] ridge_channels d = None seme 0 S6_set_2: zero_shot -0.139, recenter 0.290, fewshot_gain 0.239, fewshot 0.293
+[16:05:06]    (1 sessioni in 0.1 min; 2/14)
+[16:05:10] ridge_channels d = None seme 0 S7_set_1: zero_shot -0.047, recenter 0.030, fewshot_gain 0.021, fewshot -0.067
+[16:05:10]    (1 sessioni in 0.1 min; 3/14)
+[16:05:14] ridge_channels d = None seme 0 S7_set_2: zero_shot -0.026, recenter 0.056, fewshot_gain -0.021, fewshot 0.060
+[16:05:14]    (1 sessioni in 0.1 min; 4/14)
+[16:05:18] ridge_channels d = None seme 0 S8_set_1: zero_shot -0.070, recenter 0.125, fewshot_gain 0.075, fewshot 0.118
+[16:05:18]    (1 sessioni in 0.1 min; 5/14)
+[16:05:21] ridge_channels d = None seme 0 S8_set_2: zero_shot -0.076, recenter 0.095, fewshot_gain 0.067, fewshot 0.065
+[16:05:21]    (1 sessioni in 0.1 min; 6/14)
+[16:05:25] ridge_channels d = None seme 0 S9_set_1: zero_shot -0.208, recenter 0.140, fewshot_gain 0.043, fewshot 0.103
+[16:05:25]    (1 sessioni in 0.1 min; 7/14)
+[16:05:29] ridge_channels d = None seme 0 S9_set_2: zero_shot -0.161, recenter 0.100, fewshot_gain 0.070, fewshot 0.132
+[16:05:29]    (1 sessioni in 0.1 min; 8/14)
+[16:05:32] ridge_channels d = None seme 0 S10_set_1: zero_shot 0.102, recenter 0.176, fewshot_gain 0.103, fewshot 0.235
+[16:05:32]    (1 sessioni in 0.1 min; 9/14)
+[16:05:36] ridge_channels d = None seme 0 S10_set_2: zero_shot 0.095, recenter 0.203, fewshot_gain 0.179, fewshot 0.228
+[16:05:36]    (1 sessioni in 0.1 min; 10/14)
+[16:05:39] ridge_channels d = None seme 0 S11_set_1: zero_shot 0.107, recenter 0.167, fewshot_gain 0.101, fewshot 0.188
+[16:05:39]    (1 sessioni in 0.1 min; 11/14)
+[16:05:43] ridge_channels d = None seme 0 S11_set_2: zero_shot 0.082, recenter 0.244, fewshot_gain 0.156, fewshot 0.237
+[16:05:43]    (1 sessioni in 0.1 min; 12/14)
+[16:05:48] ridge_channels d = None seme 0 S12_set_1: zero_shot -0.282, recenter 0.034, fewshot_gain 0.074, fewshot 0.043
+[16:05:48]    (1 sessioni in 0.1 min; 13/14)
+[16:05:52] ridge_channels d = None seme 0 S12_set_2: zero_shot -0.162, recenter 0.152, fewshot_gain 0.111, fewshot 0.168
+[16:05:52]    (1 sessioni in 0.1 min; 14/14)
+[16:05:52] fine (4.8 min)

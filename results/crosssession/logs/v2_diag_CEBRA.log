@@ -1,0 +1,17 @@
+[17:27:55] xs_run CEBRA d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[17:27:55] diagnosi CEBRA d = 25 seme 0: 13 sessioni held-in da fare
+[17:28:41] CEBRA d = 25 seme 0 (heldin): stimato in 0.8 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[17:28:52] diagnosi CEBRA S0_set_1: no_adapt 0.011, recenter 0.011, align 0.012
+[17:28:57] diagnosi CEBRA S0_set_2: no_adapt 0.010, recenter 0.011, align 0.012
+[17:29:13] diagnosi CEBRA S1_set_1: no_adapt 0.012, recenter 0.013, align 0.014
+[17:29:18] diagnosi CEBRA S1_set_2: no_adapt 0.016, recenter 0.017, align 0.019
+[17:29:25] diagnosi CEBRA S1_set_3: no_adapt 0.012, recenter 0.012, align 0.014
+[17:29:39] diagnosi CEBRA S2_set_1: no_adapt 0.011, recenter 0.011, align 0.014
+[17:29:55] diagnosi CEBRA S2_set_2: no_adapt 0.007, recenter 0.007, align 0.008
+[17:30:06] diagnosi CEBRA S3_set_1: no_adapt 0.007, recenter 0.008, align 0.009
+[17:30:20] diagnosi CEBRA S3_set_2: no_adapt 0.008, recenter 0.009, align 0.010
+[17:30:37] diagnosi CEBRA S4_set_1: no_adapt 0.008, recenter 0.008, align 0.009
+[17:30:52] diagnosi CEBRA S4_set_2: no_adapt 0.012, recenter 0.012, align 0.014
+[17:31:07] diagnosi CEBRA S5_set_1: no_adapt 0.009, recenter 0.009, align 0.011
+[17:31:21] diagnosi CEBRA S5_set_2: no_adapt 0.011, recenter 0.011, align 0.013
+[17:31:21] fine (3.4 min)

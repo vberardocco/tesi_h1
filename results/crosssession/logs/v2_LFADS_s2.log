@@ -1,0 +1,32 @@
+[16:09:24] xs_run LFADS d = 25 seme 2 stage main [crosssession]; codice c6efc91
+[16:09:24] LFADS d = 25 seme 2 [crosssession]: 0 sessioni già nel registro, 14 da fare
+[16:09:24] LFADS d = 25 seme 2 (heldin): modello riletto da LFADS_d25_heldin_s2.pkl
+[16:09:34] LFADS d = 25 seme 2 S6_set_1: zero_shot 0.133, recenter 0.132, align 0.116, fewshot_gain 0.033, fewshot 0.116
+[16:09:34]    (1 sessioni in 0.2 min; 1/14)
+[16:09:40] LFADS d = 25 seme 2 S6_set_2: zero_shot 0.148, recenter 0.139, align 0.114, fewshot_gain 0.045, fewshot 0.114
+[16:09:40]    (1 sessioni in 0.1 min; 2/14)
+[16:09:47] LFADS d = 25 seme 2 S7_set_1: zero_shot 0.135, recenter 0.131, align 0.108, fewshot_gain -0.096, fewshot 0.108
+[16:09:47]    (1 sessioni in 0.1 min; 3/14)
+[16:09:53] LFADS d = 25 seme 2 S7_set_2: zero_shot 0.067, recenter 0.071, align 0.083, fewshot_gain 0.005, fewshot 0.083
+[16:09:53]    (1 sessioni in 0.1 min; 4/14)
+[16:09:59] LFADS d = 25 seme 2 S8_set_1: zero_shot 0.116, recenter 0.126, align 0.099, fewshot_gain 0.030, fewshot 0.099
+[16:09:59]    (1 sessioni in 0.1 min; 5/14)
+[16:10:05] LFADS d = 25 seme 2 S8_set_2: zero_shot 0.051, recenter 0.089, align 0.025, fewshot_gain -0.041, fewshot 0.025
+[16:10:05]    (1 sessioni in 0.1 min; 6/14)
+[16:10:12] LFADS d = 25 seme 2 S9_set_1: zero_shot 0.090, recenter 0.097, align 0.090, fewshot_gain -0.030, fewshot 0.090
+[16:10:12]    (1 sessioni in 0.1 min; 7/14)
+[16:10:18] LFADS d = 25 seme 2 S9_set_2: zero_shot 0.097, recenter 0.101, align 0.082, fewshot_gain -0.014, fewshot 0.082
+[16:10:18]    (1 sessioni in 0.1 min; 8/14)
+[16:10:24] LFADS d = 25 seme 2 S10_set_1: zero_shot 0.133, recenter 0.163, align 0.138, fewshot_gain -0.059, fewshot 0.138
+[16:10:24]    (1 sessioni in 0.1 min; 9/14)
+[16:10:30] LFADS d = 25 seme 2 S10_set_2: zero_shot 0.124, recenter 0.148, align 0.147, fewshot_gain 0.013, fewshot 0.147
+[16:10:30]    (1 sessioni in 0.1 min; 10/14)
+[16:10:37] LFADS d = 25 seme 2 S11_set_1: zero_shot 0.096, recenter 0.133, align 0.083, fewshot_gain -0.011, fewshot 0.083
+[16:10:37]    (1 sessioni in 0.1 min; 11/14)
+[16:10:43] LFADS d = 25 seme 2 S11_set_2: zero_shot 0.087, recenter 0.191, align 0.195, fewshot_gain 0.076, fewshot 0.195
+[16:10:43]    (1 sessioni in 0.1 min; 12/14)
+[16:10:49] LFADS d = 25 seme 2 S12_set_1: zero_shot -0.007, recenter 0.139, align 0.151, fewshot_gain 0.043, fewshot 0.151
+[16:10:49]    (1 sessioni in 0.1 min; 13/14)
+[16:10:55] LFADS d = 25 seme 2 S12_set_2: zero_shot 0.036, recenter 0.114, align 0.129, fewshot_gain 0.066, fewshot 0.129
+[16:10:55]    (1 sessioni in 0.1 min; 14/14)
+[16:10:55] fine (1.5 min)

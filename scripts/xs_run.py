@@ -3,7 +3,7 @@
 Uso: python scripts/xs_run.py METODO [--seed S] [--dim D] [--experiment E] [--stage tune|main|all|diag]
                                      [--n-jobs N] [--sessions K1,K2] [--force] [--wait-tune ORE]
   METODO: PCA FA GPFA Isomap UMAP CEBRA LFADS, oppure rates (ridge_rates) o ridge_channels (decoder sui canali del 05)
-  --dim: dimensione latente (default: quella del metodo; Isomap, UMAP, CEBRA: 25 dal 1/11, vedi DIM_RULE)
+  --dim: dimensione latente (default: quella del metodo; Isomap, UMAP, CEBRA: 25 dalla seconda tornata (31/10), vedi DIM_RULE)
   --experiment: valore di "esperimento" nel registro (default "crosssession"; le mappe a d = 3: "crosssession_d3")
   tune  (solo seme 0): pseudo-few-shot sulle held-in -> XS/tune/METODO_dD.json; se c'è già si salta (--force rifà)
   main  : modello held-in sulle 13 sessioni, poi le 14 held-out; ogni sessione finita va subito nel registro e le

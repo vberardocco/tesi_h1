@@ -1,0 +1,4 @@
+[16:06:02] xs_run CEBRA d = 25 seme 0 stage tune [crosssession]; codice c6efc91
+[16:06:36] CEBRA d = 25 seme 0 (pseudo): stimato in 0.6 min; readout α = 1e+08, R² leave-one-day-out = 0.000 (α AL BORDO)
+[16:28:58] pseudo-few-shot CEBRA (d = 25): zero_shot -0.0009, recenter 0.0000, align -0.0007, fewshot_gain -0.0417, fewshot 0.0018 (lam 1e+06), scratch -0.0014 (alpha 3.16e+05)
+[16:28:58] fine (22.9 min)

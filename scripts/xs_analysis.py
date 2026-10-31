@@ -1,7 +1,7 @@
 """Analisi del protocollo cross-sessione (docs/crosssession_protocol.md): tabelle, test, figure.
 
 Legge il registro (results/h1_runs.csv, metrica r2) e fa la media sui semi per sessione (unità statistica = sessione).
-- esperimento "crosssession": i metodi alla dimensione principale (PCA 25, FA 15, GPFA 25, Isomap/UMAP/CEBRA 25 dal 1/11,
+- esperimento "crosssession": i metodi alla dimensione principale (PCA 25, FA 15, GPFA 25, Isomap/UMAP/CEBRA 25 dalla seconda tornata (31/10),
   LFADS 25) più i riferimenti ridge_channels e rates (ridge_rates); le righe delle mappe a d = 3 del 31/10 con
   esperimento "crosssession" sono superate da quelle di "crosssession_d3" e si escludono filtrando la dimensione;
 - esperimento "crosssession_d3": Isomap, UMAP, CEBRA a d = 3 (variante: tabella e confronti tra metodi rifatti con loro);
@@ -44,7 +44,7 @@ INK, INK2, GRID, RATES = "#0b0b0b", "#52514e", "#e4e3df", "#7a7975"
 
 
 def chain(m):
-    """Confronti tra condizioni consecutive (piano del 31/10) + quelli aggiunti il 1/11 (fewshot_gain, ridge_channels)."""
+    """Confronti tra condizioni consecutive (piano del 31/10) + quelli aggiunti nella seconda tornata (fewshot_gain, ridge_channels)."""
     if m == "ridge_channels":
         return [("zero_shot", "recenter"), ("recenter", "fewshot"), ("recenter", "fewshot_gain")]
     c = [("zero_shot", "recenter"), ("recenter", "align"), ("align", "fewshot")]
@@ -151,7 +151,7 @@ def stats_within(S, name):
         for c1, c2 in chain(m):
             a, b = paired(S, m, c1, m, c2)
             if len(a) >= 6:
-                fam.append(dict(method=m, from_=c1, to=c2, added_20261101=(c2 == "fewshot_gain" or m == "ridge_channels"),
+                fam.append(dict(method=m, from_=c1, to=c2, added_v2=(c2 == "fewshot_gain" or m == "ridge_channels"),
                                 **wilcoxon_paired(a, b)))
         if fam:
             for f, p in zip(fam, multipletests([f["p"] for f in fam], method="holm")[1]):
@@ -174,7 +174,7 @@ def stats_between(S, name, conds=("align", "fewshot", "fewshot_gain")):
         n, k = M.shape
         ranks = M.rank(axis=1).mean()
         fr.append(dict(condition=c, methods=",".join(complete), n=n, k=k, chi2=float(chi2), p=float(p),
-                       kendall_W=float(chi2 / (n * (k - 1))), added_20261101=(c == "fewshot_gain"),
+                       kendall_W=float(chi2 / (n * (k - 1))), added_v2=(c == "fewshot_gain"),
                        **{f"meanrank_{m}": float(ranks[m]) for m in complete}))
         fam = []
         for i, m1 in enumerate(complete):
@@ -233,7 +233,7 @@ def tuning_table():
         rows.append(r)
         for lam, v in f.get("grid", {}).items():
             curves.append(dict(method=m, dim=d, lam=float(lam), mean_r2=v, asymptote_r2=f.get("asymptote_r2"),
-                               chosen=float(lam) == float(f.get("lam"))))
+                               chosen=bool(np.isclose(float(lam), float(f.get("lam")), rtol=1e-3))))   # chiavi del JSON a 4 cifre
     T, Cv = pd.DataFrame(rows), pd.DataFrame(curves)
     T.to_csv(OUT / "tuning.csv", index=False)
     Cv.to_csv(OUT / "lambda_curves.csv", index=False)
@@ -372,7 +372,8 @@ def figures(S, Cv, MD):
     if S.empty:
         return
     rates = S[(S.method == "rates") & (S.condition == "ridge_rates")]
-    ylim = (min(-0.2, np.nanpercentile(S.r2, 1) - 0.02), max(0.45, S.r2.max() + 0.03))
+    shown = S[S.condition.isin(list(COND_STYLE) + ["ridge_rates"])].r2      # tutti i punti della figura A visibili
+    ylim = (min(-0.2, float(shown.min()) - 0.02), max(0.45, float(shown.max()) + 0.03))
     panels = METHODS + ["ridge_channels"]
     name = {"ridge_channels": "ridge on channels (05 decoder)"}
     # Figura A: un pannello per metodo (+ ridge_channels), una curva per condizione
@@ -455,7 +456,8 @@ def figures(S, Cv, MD):
         top = float((Cv.mean_r2 - Cv.asymptote_r2).max())
         ax.set_ylim(-0.08, max(0.02, top + 0.005))
         ax.legend(handles=handles, frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(1.01, 1))
-        ax.set_xlabel("λ (pull towards the held-in readout)", fontsize=9, color=INK2)
+        ax.set_xlabel("λ (pull towards the held-in readout); y axis cut at −0.08: at small λ the curves go far below",
+                      fontsize=9, color=INK2)
         ax.set_ylabel("R²(λ) − R²(λ → ∞)", fontsize=9, color=INK2)
         ax.set_title("fewshot on the 20 held-in pseudo-sessions, relative to align (ridge on channels: to recenter); "
                      "marker = chosen λ", fontsize=9, color=INK, loc="left")
@@ -533,8 +535,8 @@ def main():
            "## Mediana [IQR] (n) per metodo × condizione\n\n", md,
            "\n## Mappe a d = 3 (esperimento crosssession_d3)\n\n", md3,
            "\n## Wilcoxon tra condizioni consecutive (Holm dentro ogni metodo)\n\n",
-           "Differenze = to − from; r_rb > 0 e n_better = sessioni in cui `to` è migliore. added_20261101 = confronto "
-           "aggiunto il 1/11 (non nel piano del 31/10).\n\n", md_table(W, wcols + ["added_20261101"]),
+           "Differenze = to − from; r_rb > 0 e n_better = sessioni in cui `to` è migliore. added_v2 = confronto "
+           "aggiunto nella seconda tornata (non nel piano della mattina del 31/10).\n\n", md_table(W, wcols + ["added_v2"]),
            "\nMappe a d = 3:\n\n", md_table(W3, wcols),
            "\n## Friedman tra metodi\n\n", md_table(Fr, fcols), "\nCon le mappe a d = 3:\n\n", md_table(Fr3, fcols),
            "\n## Wilcoxon tra metodi a coppie (Holm dentro ogni condizione)\n\n",
@@ -562,7 +564,7 @@ def main():
                          "directions_min", "var_ratio_median"]),
            "\nΔ = R²(align) − R²(recenter) sul trial di test, per numero di versioni nei 2 trial (esplorativo):\n\n",
            md_table(AV, ["method", "where", "n_versions", "folds", "delta_median", "delta_mean", "n_better"]),
-           "\n## Diagnosi del moment matching (esplorativa, aggiunta il 1/11)\n\n",
+           "\n## Diagnosi del moment matching (esplorativa, aggiunta nella seconda tornata)\n\n",
            "Dentro ogni sessione held-in: sorgente = gli altri trial della stessa sessione, blocchi di 3 trial con la stessa "
            "rotazione delle held-out (nessuna deriva tra giorni). Wilcoxon align vs recenter; Holm sui 7 metodi (solo "
            "dentro la sessione).\n\n",
@@ -570,9 +572,63 @@ def main():
                           "p_holm", "r_rb"]),
            "\n## Verifica sui latenti a 3 dimensioni dentro una sessione (31/10, esplorativa)\n\n",
            (open(OUT / "diag_3d_within_session.csv").read().replace("# ", "") if (OUT / "diag_3d_within_session.csv").exists()
-            else "(non presente)\n")]
+            else "(non presente)\n"),
+           checks_section()]
     (OUT / "report.md").write_text("".join(rep))
     print(f"scritto {OUT}")
+
+
+def checks_section():
+    """Controlli esplorativi dopo la seconda tornata (scripts/xs_checks.py), se presenti: scomposizione di fewshot_gain, guadagno di ogni
+    trial, decodifica dentro la sessione e quota di varianza dei latenti spiegata dalla sessione."""
+    out = ["\n## Controlli esplorativi dopo la seconda tornata (scripts/xs_checks.py; seme 0, dimensioni principali)\n\n"]
+    p = OUT / "check_gain_decomposition.csv"
+    if p.exists():
+        G = pd.read_csv(p)
+        cols = ["base", "gain_offset", "gain_only", "offset_only", "oracle_test"]
+        T = G.groupby("method", sort=False)[cols].median().reset_index()
+        T["n"] = G.groupby("method", sort=False).size().values
+        T["gain_offset_worse"] = G.assign(w=G.gain_offset < G.base).groupby("method", sort=False).w.sum().values
+        out += ["**Da dove viene il calo di fewshot_gain.** Mediana sulle 14 held-out dell'R² concatenato. base = align "
+                "(ridge_channels: recenter); gain_offset = fewshot_gain; gain_only = solo guadagno per DoF (offset = "
+                "intercetta held-in); offset_only = solo offset; oracle_test = guadagno e offset stimati sul trial di "
+                "test stesso (limite superiore, non una condizione). gain_offset_worse = sessioni in cui fewshot_gain è "
+                "sotto base.\n\n", md_table(T, ["method", "n"] + cols + ["gain_offset_worse"])]
+        q = OUT / "check_gain_per_trial.csv"
+        if q.exists():
+            P = pd.read_csv(q).drop_duplicates(["method", "session", "trial", "dof"])
+            V = (P.groupby(["method", "session", "dof"], sort=False).g.agg(["std", "mean"]).reset_index()
+                 .groupby("method", sort=False).agg(g_mean_median=("mean", "median"), g_sd_between_trials_median=("std", "median"))
+                 .reset_index())
+            F = pd.read_csv(q).drop_duplicates(["method", "session", "fold_test_trial", "dof"])
+            V = V.merge(F.groupby("method", sort=False).g_two_trials.agg(
+                g2_p5=lambda x: np.percentile(x, 5), g2_median="median", g2_p95=lambda x: np.percentile(x, 95)).reset_index())
+            out += ["\nGuadagno per DoF stimato su un trial alla volta: media e deviazione standard tra i 3 trial della "
+                    "stessa sessione (mediane su sessioni e DoF); g2 = guadagno stimato sui 2 trial di adattamento "
+                    "(percentili su fold e DoF).\n\n",
+                    md_table(V, ["method", "g_mean_median", "g_sd_between_trials_median", "g2_p5", "g2_median", "g2_p95"])]
+    p = OUT / "check_within_session.csv"
+    if p.exists():
+        W = pd.read_csv(p)
+        T = W.groupby(["method", "dim"], sort=False).agg(
+            n=("session", "size"), r2_within_median=("r2_within_session", "median"),
+            r2_within_min=("r2_within_session", "min"), r2_within_max=("r2_within_session", "max"),
+            alpha_at_edge=("alpha_at_edge", "sum")).reset_index()
+        q = OUT / "check_session_variance.csv"
+        if q.exists():
+            T = T.merge(pd.read_csv(q)[["method", "eta2_session", "lodo_r2_heldin"]], on="method", how="left")
+            ref = pd.read_csv(q)
+            ref = ref[ref.method.str.startswith("velocity")]
+        out += ["\n**Decodifica dentro la sessione e varianza tra sessioni dei latenti.** In ogni sessione held-in: "
+                "readout stimato sui trial tranne gli ultimi 3 (α leave-one-trial-out, griglia del readout held-in), R² "
+                "sugli ultimi 3. eta2_session = quota della varianza dei latenti standardizzati spiegata dalla sessione "
+                "(media sulle dimensioni); lodo_r2_heldin = readout held-in, leave-one-day-out. alpha_at_edge = sessioni "
+                "con α all'estremo della griglia.\n\n",
+                md_table(T, ["method", "dim", "n", "r2_within_median", "r2_within_min", "r2_within_max", "alpha_at_edge",
+                             "eta2_session", "lodo_r2_heldin"])]
+        if q.exists() and len(ref):
+            out.append(f"\nRiferimento: per la velocità la stessa quota è {ref.eta2_session.iloc[0]:.3f}.\n")
+    return "".join(out) if len(out) > 1 else ""
 
 
 if __name__ == "__main__":

@@ -1,0 +1,17 @@
+[17:09:11] xs_run GPFA d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[17:09:11] diagnosi GPFA d = 25 seme 0: 13 sessioni held-in da fare
+[17:09:11] GPFA d = 25 seme 0 (heldin): modello riletto da GPFA_d25_heldin_s0.pkl
+[17:09:53] diagnosi GPFA S0_set_1: no_adapt 0.287, recenter 0.288, align 0.221
+[17:09:54] diagnosi GPFA S0_set_2: no_adapt 0.219, recenter 0.221, align 0.042
+[17:09:57] diagnosi GPFA S1_set_1: no_adapt 0.247, recenter 0.246, align 0.206
+[17:09:58] diagnosi GPFA S1_set_2: no_adapt 0.239, recenter 0.243, align 0.153
+[17:09:59] diagnosi GPFA S1_set_3: no_adapt 0.215, recenter 0.202, align 0.098
+[17:10:02] diagnosi GPFA S2_set_1: no_adapt 0.242, recenter 0.234, align 0.169
+[17:10:52] diagnosi GPFA S2_set_2: no_adapt 0.191, recenter 0.178, align 0.129
+[17:10:54] diagnosi GPFA S3_set_1: no_adapt 0.232, recenter 0.230, align 0.138
+[17:10:57] diagnosi GPFA S3_set_2: no_adapt 0.229, recenter 0.236, align 0.201
+[17:11:00] diagnosi GPFA S4_set_1: no_adapt 0.185, recenter 0.187, align 0.164
+[17:11:03] diagnosi GPFA S4_set_2: no_adapt 0.269, recenter 0.262, align 0.204
+[17:11:05] diagnosi GPFA S5_set_1: no_adapt 0.236, recenter 0.229, align 0.164
+[17:11:26] diagnosi GPFA S5_set_2: no_adapt 0.265, recenter 0.255, align 0.219
+[17:11:26] fine (2.3 min)

@@ -1,0 +1,17 @@
+[17:11:27] xs_run Isomap d = 25 seme 0 stage diag [crosssession]; codice c6efc91
+[17:11:27] diagnosi Isomap d = 25 seme 0: 13 sessioni held-in da fare
+[17:12:09] Isomap d = 25 seme 0 (heldin): stimato in 0.7 min; readout α = 1e+07, R² leave-one-day-out = 0.005
+[17:12:20] diagnosi Isomap S0_set_1: no_adapt 0.082, recenter 0.086, align 0.010
+[17:12:25] diagnosi Isomap S0_set_2: no_adapt 0.068, recenter 0.082, align 0.087
+[17:12:39] diagnosi Isomap S1_set_1: no_adapt 0.075, recenter 0.075, align 0.077
+[17:12:46] diagnosi Isomap S1_set_2: no_adapt 0.118, recenter 0.118, align 0.121
+[17:12:53] diagnosi Isomap S1_set_3: no_adapt 0.072, recenter 0.073, align 0.070
+[17:13:18] diagnosi Isomap S2_set_1: no_adapt 0.122, recenter 0.123, align 0.126
+[17:13:40] diagnosi Isomap S2_set_2: no_adapt 0.083, recenter 0.081, align 0.085
+[17:14:01] diagnosi Isomap S3_set_1: no_adapt 0.120, recenter 0.125, align 0.130
+[17:14:25] diagnosi Isomap S3_set_2: no_adapt 0.102, recenter 0.103, align 0.115
+[17:14:46] diagnosi Isomap S4_set_1: no_adapt 0.105, recenter 0.106, align 0.113
+[17:15:09] diagnosi Isomap S4_set_2: no_adapt 0.092, recenter 0.091, align 0.095
+[17:15:33] diagnosi Isomap S5_set_1: no_adapt 0.088, recenter 0.088, align 0.094
+[17:15:53] diagnosi Isomap S5_set_2: no_adapt 0.098, recenter 0.101, align 0.110
+[17:15:53] fine (4.4 min)

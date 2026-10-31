@@ -1,4 +1,4 @@
-"""Controlli esplorativi del 1/11 (non nel piano): spiegano due risultati della seconda tornata.
+"""Controlli esplorativi dopo la seconda tornata (31/10 sera, non nel piano): spiegano due risultati della seconda tornata.
 
 1. gain  — da dove viene il calo di fewshot_gain rispetto ad align (ridge_channels: rispetto a recenter). Sulle 14
    held-out, stesso fold e stesso modello held-in (seme 0, dimensione principale): guadagno + offset (= fewshot_gain),

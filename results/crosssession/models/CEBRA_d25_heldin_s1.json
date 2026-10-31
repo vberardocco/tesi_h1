@@ -1,0 +1,25 @@
+{
+ "fit_seconds": 20.745513200759888,
+ "total_seconds": 40.65727877616882,
+ "n_trials": 170,
+ "n_bins": 135991,
+ "dim": 25,
+ "sessions": [
+  "S0_set_1",
+  "S0_set_2",
+  "S1_set_1",
+  "S1_set_2",
+  "S1_set_3",
+  "S2_set_1",
+  "S2_set_2",
+  "S3_set_1",
+  "S3_set_2",
+  "S4_set_1",
+  "S4_set_2",
+  "S5_set_1",
+  "S5_set_2"
+ ],
+ "alpha": 100000000.0,
+ "alpha_at_edge": true,
+ "lodo_r2": -0.00022275787662418
+}

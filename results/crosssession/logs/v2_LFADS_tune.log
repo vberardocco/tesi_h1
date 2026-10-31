@@ -1,0 +1,4 @@
+[16:06:02] xs_run LFADS d = 25 seme 0 stage tune [crosssession]; codice c6efc91
+[16:06:02] LFADS d = 25 seme 0 (pseudo): modello riletto da LFADS_d25_pseudo_s0.pkl
+[16:06:40] pseudo-few-shot LFADS (d = 25): zero_shot 0.1673, recenter 0.1727, align 0.2068, fewshot_gain 0.0679, fewshot 0.2068 (lam 1e+15 AL BORDO)
+[16:06:40] fine (0.6 min)

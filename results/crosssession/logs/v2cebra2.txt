@@ -1,0 +1,5 @@
+v2_CEBRA25_s1|v2_ridge_channels|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --seed 1 --stage main --wait-tune 6
+v2_CEBRA25_s2|v2_CEBRA25_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --seed 2 --stage main
+v2_CEBRA3_s1|v2_CEBRA3_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --dim 3 --experiment crosssession_d3 --seed 1 --stage main
+v2_CEBRA3_s2|v2_CEBRA3_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --dim 3 --experiment crosssession_d3 --seed 2 --stage main
+#FINE

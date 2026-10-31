@@ -50,12 +50,12 @@ METHODS = ("PCA", "FA", "GPFA", "Isomap", "UMAP", "CEBRA", "LFADS")
 SEEDS = {"PCA": [0], "FA": [0], "GPFA": [0], "Isomap": [0], "UMAP": [0, 1, 2], "CEBRA": [0, 1, 2], "LFADS": [0, 1, 2]}
 CONDITIONS = ("zero_shot", "recenter", "align", "fewshot", "fewshot_gain", "scratch")
 NO_ADAPT = ("zero_shot", "no_adapt")    # condizioni senza trial di adattamento (k_shot = 0)
-DIM_RULE = 25                           # d delle mappe (Isomap, UMAP, CEBRA) dal 1/11: la regola di PCA e LFADS, cioè il
+DIM_RULE = 25                           # d delle mappe (Isomap, UMAP, CEBRA) dalla seconda tornata (31/10): la regola di PCA e LFADS, cioè il
                                         # d della GPFA scelto con la cross-validation (02_new §10); prima d = 3 (03, 04)
 RIDGE_H50 = Path(__file__).resolve().parents[2] / "models" / "ridge_h50.npz"   # decoder sui canali del 05 (b797b3e)
 
 ALPHA_SRC_GRID = 10.0 ** np.arange(-2, 8.01, 0.5)   # α del readout held-in (scelta leave-one-day-out sulle held-in)
-LAM_GRID = 10.0 ** np.arange(-2, 15.01, 0.5)        # λ del fewshot (verso i pesi held-in); fino a 1e15 (dal 1/11:
+LAM_GRID = 10.0 ** np.arange(-2, 15.01, 0.5)        # λ del fewshot (verso i pesi held-in); fino a 1e15 (seconda tornata, 31/10:
                                                     # la griglia fino a 1e9 aveva l'ottimo al bordo per FA e LFADS)
 ALPHA_GRID = 10.0 ** np.arange(-2, 8.01, 0.5)       # α di scratch e ridge_rates
 EPS_REL = 1e-8                                      # eps sulla diagonale delle covarianze, relativo all'autovalore medio
@@ -88,7 +88,7 @@ class Trial:
     @property
     def version(self):
         """Versione del task: i trial dispari e pari alternano due versioni (g3 in Grasp di segno opposto, 03 §9.2;
-        controllato su tutti i trial held-in e held-out il 1/11)."""
+        controllato su tutti i trial held-in e held-out il 31/10)."""
         return "odd" if self.num % 2 else "even"
 
     def __len__(self):
