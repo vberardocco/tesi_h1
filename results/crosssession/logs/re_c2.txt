@@ -1,0 +1,6 @@
+re_CEBRA_s1||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --seed 1 --stage main --force
+re_LFADS_s0||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py LFADS --seed 0 --stage main --force
+re_LFADS_s1||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py LFADS --seed 1 --stage main --force
+re_LFADS_s2||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py LFADS --seed 2 --stage main --force
+re_commit|re_CEBRA_s0,re_CEBRA_s1,re_CEBRA_s2,re_LFADS_s0,re_LFADS_s1,re_LFADS_s2||bash scripts/xs_commit.sh "Cross-sessione: CEBRA e LFADS rieseguiti con commit pulito (stesso codice)"
+#FINE

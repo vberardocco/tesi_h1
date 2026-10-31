@@ -56,3 +56,21 @@
 2026-10-31 15:07:17 [lfads1] FINE   commit_LFADS
 2026-10-31 15:07:17 [lfads1] corsia terminata
 2026-10-31 15:07:39 [cebra1] INIZIO commit_CEBRA (tentativo 1)
+2026-10-31 15:07:42 [cebra1] FINE   commit_CEBRA
+2026-10-31 15:07:42 [cebra1] corsia terminata
+2026-10-31 15:10:07 [re_c2] corsia avviata (pid 54248)
+2026-10-31 15:10:07 [re_c1] corsia avviata (pid 54247)
+2026-10-31 15:10:07 [re_c2] INIZIO re_CEBRA_s1 (tentativo 1)
+2026-10-31 15:10:07 [re_c1] INIZIO re_CEBRA_s0 (tentativo 1)
+2026-10-31 15:21:52 [re_c1] FINE   re_CEBRA_s0
+2026-10-31 15:21:52 [re_c2] FINE   re_CEBRA_s1
+2026-10-31 15:21:52 [re_c1] INIZIO re_CEBRA_s2 (tentativo 1)
+2026-10-31 15:21:52 [re_c2] INIZIO re_LFADS_s0 (tentativo 1)
+2026-10-31 15:23:00 [re_c2] FINE   re_LFADS_s0
+2026-10-31 15:23:00 [re_c2] INIZIO re_LFADS_s1 (tentativo 1)
+2026-10-31 15:24:08 [re_c2] FINE   re_LFADS_s1
+2026-10-31 15:24:08 [re_c2] INIZIO re_LFADS_s2 (tentativo 1)
+2026-10-31 15:25:17 [re_c2] FINE   re_LFADS_s2
+2026-10-31 15:31:30 [re_c1] FINE   re_CEBRA_s2
+2026-10-31 15:31:30 [re_c1] corsia terminata
+2026-10-31 15:32:17 [re_c2] INIZIO re_commit (tentativo 1)

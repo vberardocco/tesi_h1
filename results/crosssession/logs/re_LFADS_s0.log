@@ -1,0 +1,32 @@
+[15:21:53] xs_run LFADS seme 0 stage main; codice ead5774
+[15:21:53] LFADS seme 0: 0 sessioni già nel registro, 14 da fare
+[15:21:53] LFADS seme 0 (heldin): modello riletto da LFADS_heldin_s0.pkl
+[15:22:01] LFADS seme 0 S6_set_1: zero_shot 0.150, recenter 0.146, align 0.168, fewshot 0.168
+[15:22:01]    (1 sessioni in 0.1 min; 1/14)
+[15:22:06] LFADS seme 0 S6_set_2: zero_shot 0.167, recenter 0.159, align 0.142, fewshot 0.142
+[15:22:06]    (1 sessioni in 0.1 min; 2/14)
+[15:22:10] LFADS seme 0 S7_set_1: zero_shot 0.120, recenter 0.110, align 0.071, fewshot 0.071
+[15:22:10]    (1 sessioni in 0.1 min; 3/14)
+[15:22:15] LFADS seme 0 S7_set_2: zero_shot 0.069, recenter 0.071, align 0.085, fewshot 0.085
+[15:22:15]    (1 sessioni in 0.1 min; 4/14)
+[15:22:19] LFADS seme 0 S8_set_1: zero_shot 0.116, recenter 0.129, align 0.108, fewshot 0.108
+[15:22:19]    (1 sessioni in 0.1 min; 5/14)
+[15:22:23] LFADS seme 0 S8_set_2: zero_shot 0.062, recenter 0.087, align 0.005, fewshot 0.005
+[15:22:23]    (1 sessioni in 0.1 min; 6/14)
+[15:22:28] LFADS seme 0 S9_set_1: zero_shot 0.071, recenter 0.070, align 0.052, fewshot 0.052
+[15:22:28]    (1 sessioni in 0.1 min; 7/14)
+[15:22:32] LFADS seme 0 S9_set_2: zero_shot 0.108, recenter 0.104, align 0.068, fewshot 0.068
+[15:22:32]    (1 sessioni in 0.1 min; 8/14)
+[15:22:37] LFADS seme 0 S10_set_1: zero_shot 0.156, recenter 0.174, align 0.181, fewshot 0.181
+[15:22:37]    (1 sessioni in 0.1 min; 9/14)
+[15:22:41] LFADS seme 0 S10_set_2: zero_shot 0.140, recenter 0.148, align 0.131, fewshot 0.131
+[15:22:41]    (1 sessioni in 0.1 min; 10/14)
+[15:22:46] LFADS seme 0 S11_set_1: zero_shot 0.090, recenter 0.125, align 0.056, fewshot 0.056
+[15:22:46]    (1 sessioni in 0.1 min; 11/14)
+[15:22:50] LFADS seme 0 S11_set_2: zero_shot 0.125, recenter 0.199, align 0.203, fewshot 0.203
+[15:22:50]    (1 sessioni in 0.1 min; 12/14)
+[15:22:55] LFADS seme 0 S12_set_1: zero_shot -0.022, recenter 0.106, align 0.106, fewshot 0.106
+[15:22:55]    (1 sessioni in 0.1 min; 13/14)
+[15:22:59] LFADS seme 0 S12_set_2: zero_shot 0.047, recenter 0.116, align 0.112, fewshot 0.112
+[15:22:59]    (1 sessioni in 0.1 min; 14/14)
+[15:22:59] fine (1.1 min)

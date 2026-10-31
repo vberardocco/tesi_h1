@@ -1,0 +1,32 @@
+[15:21:53] xs_run CEBRA seme 2 stage main; codice ead5774
+[15:21:53] CEBRA seme 2: 0 sessioni già nel registro, 14 da fare
+[15:22:15] CEBRA seme 2 (heldin): stimato in 0.4 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[15:23:01] CEBRA seme 2 S6_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.002, scratch -0.017
+[15:23:01]    (1 sessioni in 0.8 min; 1/14)
+[15:23:47] CEBRA seme 2 S6_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.004, scratch -0.022
+[15:23:47]    (1 sessioni in 0.8 min; 2/14)
+[15:24:33] CEBRA seme 2 S7_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.002, scratch -0.011
+[15:24:33]    (1 sessioni in 0.8 min; 3/14)
+[15:25:19] CEBRA seme 2 S7_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch -0.010
+[15:25:19]    (1 sessioni in 0.8 min; 4/14)
+[15:25:52] CEBRA seme 2 S8_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.000, scratch -0.024
+[15:25:52]    (1 sessioni in 0.6 min; 5/14)
+[15:26:26] CEBRA seme 2 S8_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.006, scratch -0.020
+[15:26:26]    (1 sessioni in 0.6 min; 6/14)
+[15:27:04] CEBRA seme 2 S9_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.028
+[15:27:04]    (1 sessioni in 0.6 min; 7/14)
+[15:27:42] CEBRA seme 2 S9_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.000, scratch -0.025
+[15:27:42]    (1 sessioni in 0.6 min; 8/14)
+[15:28:21] CEBRA seme 2 S10_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.026
+[15:28:21]    (1 sessioni in 0.7 min; 9/14)
+[15:29:00] CEBRA seme 2 S10_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.004, scratch -0.019
+[15:29:00]    (1 sessioni in 0.6 min; 10/14)
+[15:29:38] CEBRA seme 2 S11_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.003, scratch -0.004
+[15:29:38]    (1 sessioni in 0.6 min; 11/14)
+[15:30:15] CEBRA seme 2 S11_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.030
+[15:30:15]    (1 sessioni in 0.6 min; 12/14)
+[15:30:52] CEBRA seme 2 S12_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch 0.007
+[15:30:52]    (1 sessioni in 0.6 min; 13/14)
+[15:31:29] CEBRA seme 2 S12_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.001, scratch -0.021
+[15:31:29]    (1 sessioni in 0.6 min; 14/14)
+[15:31:29] fine (9.6 min)

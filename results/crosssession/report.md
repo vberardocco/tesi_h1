@@ -12,6 +12,8 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | LFADS | 0.108 [0.075, 0.134] (14) | 0.125 [0.102, 0.143] (14) | 0.108 [0.082, 0.135] (14) | -- | 0.108 [0.082, 0.135] (14) | -- | -- |
 | rates | -- | -- | -- | -- | -- | -- | -0.016 [-0.038, 0.015] (14) |
 ## Wilcoxon tra condizioni consecutive (Holm dentro ogni metodo)
+Differenze = to − from; r_rb > 0 e n_better = sessioni in cui `to` è migliore.
+
 | method | from | to | n | W | p | p_holm | r_rb | median_diff | n_better |
 |---|---|---|---|---|---|---|---|---|---|
 | PCA | zero_shot | recenter | 14 | 3 | 0.00061 | 0.00183 | 0.943 | 0.0228 | 13 |
@@ -50,6 +52,8 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | fewshot | PCA,FA,GPFA,Isomap,UMAP,CEBRA,LFADS | 14 | 7 | 66.3 | 2.3e-12 | 0.79 |
 
 ## Wilcoxon tra metodi a coppie (Holm dentro ogni condizione)
+Differenze = method_b − method_a; r_rb > 0 e n_better = sessioni in cui method_b è migliore.
+
 | condition | method_a | method_b | n | W | p | p_holm | r_rb | median_diff | n_better |
 |---|---|---|---|---|---|---|---|---|---|
 | align | PCA | FA | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0635 | 2 |
@@ -120,6 +124,22 @@ Tutti i bin: min 1442, mediana 1647, max 1933; con eval_mask: min 1390, mediana 
 | CEBRA | 3 | 151 | 1390 | 9.21 |
 | LFADS | 25 | 1251 | 1390 | 1.11 |
 | rates | 170 | 8501 | 1390 | 0.164 |
+
+## Verifica sui latenti a 3 dimensioni (esplorativa, non nel piano)
+Diagnostic (exploratory, not pre-registered), 2026-10-31 14:20: is the near-zero held-in readout of the 3-D maps a bug?
+Within one held-in session: readout (H = 50 bins, ridge) trained on trials 1-12, tested on trials 13-15 (eval_mask),
+latents from the held-in models (Isomap refit with the same settings); alpha = best on the test trials (optimistic upper bound).
+session,latents,dim,r2_within_session,alpha
+S5_set_1,PCA,25,0.262,1e4
+S5_set_1,GPFA,25,0.302,1e4
+S5_set_1,UMAP,3,0.036,1e4
+S5_set_1,Isomap,3,0.023,1e4
+S5_set_1,PCA first 3 PCs,3,0.010,1e5
+S1_set_1,PCA,25,0.219,1e4
+S1_set_1,GPFA,25,0.221,1e5
+S1_set_1,UMAP,3,0.071,1e-1
+S1_set_1,Isomap,3,0.044,1e3
+S1_set_1,PCA first 3 PCs,3,0.019,1e5
 
 ## Pseudo-few-shot sulle held-in (scelte congelate)
 | method | heldin_alpha_src | heldin_lodo_r2 | pseudo_zero_shot | pseudo_recenter | pseudo_align | pseudo_fa_native | pseudo_fewshot | lam | lam_at_edge | pseudo_scratch | pseudo_ridge_rates | alpha_scratch | alpha_at_edge |
