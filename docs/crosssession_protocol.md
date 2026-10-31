@@ -66,3 +66,50 @@ più semi si fa prima la media sui semi. Unità statistica: la sessione (n = 14)
   e ρ di Spearman, per metodo.
 - **Bin di adattamento**: per sessione e fold, bin dei 2 trial (tutti e con eval_mask) rispetto ai 170 canali, alla
   dimensione latente e al numero di pesi del readout (H × dim + 1).
+
+## Deviazioni e aggiunte (1/11/2026, richieste dopo i risultati del 31/10, commit 48ca831)
+
+Scritte prima di vedere i risultati della seconda tornata (codice: commit 95122b6). Tutto ciò che segue è un'aggiunta
+al piano del 31/10; i confronti nuovi sono marcati `added_20261101` nelle tabelle.
+
+1. **Scelta di λ: era già senza la pseudo-sessione.** Verificato nel codice (`tune`, `fit_bundle(..., "pseudo")`):
+   per tutti e 7 i metodi, CEBRA e LFADS compresi, il metodo (manifold) e il readout dello pseudo-few-shot sono
+   stimati solo sui giorni S0-S3; le pseudo-sessioni vengono da S4 e S5, quindi ogni pseudo-sessione è esclusa da
+   entrambi. È più severo del leave-one-session-out (sono esclusi i due giorni interi). Nessuna correzione.
+2. **Griglia di λ allargata** da 10^-1 - 10^9 a 10^-2 - 10^15 (passo mezzo decennio). Si salva la curva R²(λ) di ogni
+   metodo (`tune/*.lambda_curve.csv`, `lambda_curves.csv`, figura C) e la si confronta con l'asintoto λ → ∞, che è
+   align (per ridge_channels: recenter). Regola: se l'ottimo resta all'estremo alto anche così, l'ottimo è λ → ∞ e
+   fewshot coincide con align; si riporta come risultato, non si allarga oltre. λ e α si scelgono di nuovo per tutti i
+   metodi (anche per quelli con l'ottimo già interno), con la griglia nuova; i risultati del 31/10 per PCA, FA, GPFA,
+   LFADS sono sostituiti nel registro (stesse chiavi: vale l'ultima riga).
+3. **fewshot_gain** (nuova condizione): sopra align, per ogni DoF dell'uscita y ≈ g·ŷ + o con i minimi quadrati sui bin
+   dei 2 trial di adattamento (2 parametri per DoF, nessun iperparametro). Test aggiunto in ogni metodo:
+   align→fewshot_gain (Holm dentro il metodo, insieme agli altri).
+4. **ridge_channels** (nuovo riferimento): il decoder ridge causale del 05 (`models/ridge_h50.npz`, commit b797b3e:
+   176 canali, z-score per canale con media e deviazione held-in, 1000 ms di storia, α 10^4.5, stimato su tutto il calib
+   held-in) con zero_shot, recenter (media dei 2 trial al posto di quella held-in), fewshot (recenter + ridge verso i
+   suoi pesi, λ scelto con lo pseudo-few-shot) e fewshot_gain (recenter + guadagno e offset). Per lo pseudo-few-shot
+   lo stesso decoder è ristimato con la stessa ricetta sui giorni S0-S3. Differenza dal 05: qui si applica trial per
+   trial come tutti gli altri (la storia riparte a ogni trial). Test: zero_shot→recenter, recenter→fewshot,
+   recenter→fewshot_gain; entra nei confronti tra metodi a fewshot e fewshot_gain (non ad align, che non ha).
+5. **Mappe a dimensione confrontabile.** Isomap, UMAP e CEBRA erano a d = 3 (scelta del 03/04 per riconoscere le fasi).
+   La regola usata per gli altri metodi senza una verosimiglianza da validare (PCA nel 03 §2, LFADS nel 04) è stata
+   prendere il d della GPFA scelto con la cross-validation sulle held-in (02_new §10): **d = 25**. FA ha la sua
+   cross-validation (K* = 15). Si applica la stessa regola alle tre mappe: d = 25, con tutti gli altri iperparametri
+   invariati. Le mappe a d = 3 si rifanno con λ, griglia e fewshot_gain nuovi e si registrano con esperimento
+   `crosssession_d3`; le loro righe del 31/10 (esperimento `crosssession`, latent_dim 3) restano nel registro ma
+   l'analisi le esclude filtrando la dimensione. Friedman e confronti a coppie si rifanno con le mappe a d = 25
+   (analisi principale) e, come variante, con quelle a d = 3.
+6. **Diagnosi del moment matching** (esplorativa). In ognuna delle 13 sessioni held-in, blocchi di 3 trial consecutivi
+   con la stessa rotazione delle held-out (2 trial adattano, 1 testa); sorgente = gli altri trial della stessa
+   sessione: readout ristimato su di loro (α held-in scalato per il numero di bin), momenti e media d'ingresso dai loro
+   latenti. Il metodo (manifold) resta quello held-in. Condizioni no_adapt, recenter, align; esperimento
+   `crosssession_mmdiag`, seme 0, dimensioni principali. Test: Wilcoxon align vs recenter (n = 13), Holm sui 7 metodi.
+   Regola fissata ora: se align peggiora anche dentro la sessione, dove non c'è deriva tra giorni, il calo sulle
+   held-out si attribuisce al contenuto comportamentale dei 2 trial e non alla deriva.
+7. **Copertura del comportamento** (descrittiva). Per ogni fold, nei 2 trial di adattamento: fasi di movimento (8),
+   condizioni fase × versione del task (16; la versione è la parità del trial, verificata dal segno di g3 in Grasp su
+   tutti i trial held-in e held-out), direzioni di movimento DoF × verso (14; coperta con almeno 10 bin oltre il 75°
+   percentile di |v| del pool held-in), varianza della velocità rispetto al pool. Si confrontano held-out,
+   pseudo-sessioni e blocchi della diagnosi. In più, esplorativo: Δ align − recenter per fold, separando i fold con i
+   2 trial della stessa versione.
