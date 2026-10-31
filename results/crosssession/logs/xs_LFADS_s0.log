@@ -1,0 +1,54 @@
+[14:26:25] xs_run LFADS seme 0 stage main; codice bd8c3ae
+[14:26:26] LFADS seme 0: 0 sessioni già nel registro, 14 da fare
+[14:28:10] LFADS seme 0: epoca 10/200, costo 0.5485, errore 0.5458 (9.9 s/epoca)
+[14:30:47] LFADS seme 0: epoca 20/200, costo 0.5466, errore 0.5432 (12.8 s/epoca)
+[14:33:09] LFADS seme 0: epoca 30/200, costo 0.5463, errore 0.5420 (13.3 s/epoca)
+[14:35:24] LFADS seme 0: epoca 40/200, costo 0.5464, errore 0.5414 (13.3 s/epoca)
+[14:37:31] LFADS seme 0: epoca 50/200, costo 0.5463, errore 0.5412 (13.2 s/epoca)
+[14:39:58] LFADS seme 0: epoca 60/200, costo 0.5466, errore 0.5412 (13.5 s/epoca)
+[14:42:17] LFADS seme 0: epoca 70/200, costo 0.5472, errore 0.5414 (13.5 s/epoca)
+[14:44:22] LFADS seme 0: epoca 80/200, costo 0.5473, errore 0.5409 (13.4 s/epoca)
+[14:46:34] LFADS seme 0: epoca 90/200, costo 0.5472, errore 0.5409 (13.4 s/epoca)
+[14:49:07] LFADS seme 0: epoca 100/200, costo 0.5472, errore 0.5407 (13.6 s/epoca)
+[14:51:09] LFADS seme 0: epoca 110/200, costo 0.5471, errore 0.5407 (13.4 s/epoca)
+[14:52:49] LFADS seme 0: epoca 120/200, costo 0.5469, errore 0.5406 (13.1 s/epoca)
+[14:54:28] LFADS seme 0: epoca 130/200, costo 0.5470, errore 0.5411 (12.9 s/epoca)
+[14:56:21] LFADS seme 0: epoca 140/200, costo 0.5469, errore 0.5406 (12.8 s/epoca)
+[14:57:54] LFADS seme 0: epoca 150/200, costo 0.5469, errore 0.5405 (12.6 s/epoca)
+[14:59:20] LFADS seme 0: epoca 160/200, costo 0.5466, errore 0.5405 (12.3 s/epoca)
+[15:00:46] LFADS seme 0: epoca 170/200, costo 0.5469, errore 0.5403 (12.1 s/epoca)
+[15:02:12] LFADS seme 0: epoca 180/200, costo 0.5471, errore 0.5405 (11.9 s/epoca)
+[15:03:38] LFADS seme 0: epoca 190/200, costo 0.5469, errore 0.5404 (11.7 s/epoca)
+[15:05:02] LFADS seme 0: epoca 200/200, costo 0.5468, errore 0.5404 (11.6 s/epoca)
+[15:05:24] LFADS seme 0 (heldin): stimato in 39.0 min; readout α = 1e+06, R² leave-one-day-out = 0.192
+[results] commit bd8c3ae-dirty: /Users/valerio/tesi_h1_work/_classes.py: _classes.py non è nel commit bd8c3ae
+[results] commit bd8c3ae-dirty: /Users/valerio/tesi_h1_work/_ops.py: _ops.py non è nel commit bd8c3ae
+[15:05:31] LFADS seme 0 S6_set_1: zero_shot 0.150, recenter 0.146, align 0.168, fewshot 0.168
+[15:05:31]    (1 sessioni in 0.1 min; 1/14)
+[15:05:38] LFADS seme 0 S6_set_2: zero_shot 0.167, recenter 0.159, align 0.142, fewshot 0.142
+[15:05:38]    (1 sessioni in 0.1 min; 2/14)
+[15:05:45] LFADS seme 0 S7_set_1: zero_shot 0.120, recenter 0.110, align 0.071, fewshot 0.071
+[15:05:45]    (1 sessioni in 0.1 min; 3/14)
+[15:05:52] LFADS seme 0 S7_set_2: zero_shot 0.069, recenter 0.071, align 0.085, fewshot 0.085
+[15:05:52]    (1 sessioni in 0.1 min; 4/14)
+[15:05:58] LFADS seme 0 S8_set_1: zero_shot 0.116, recenter 0.129, align 0.108, fewshot 0.108
+[15:05:58]    (1 sessioni in 0.1 min; 5/14)
+[15:06:03] LFADS seme 0 S8_set_2: zero_shot 0.062, recenter 0.087, align 0.005, fewshot 0.005
+[15:06:03]    (1 sessioni in 0.1 min; 6/14)
+[15:06:09] LFADS seme 0 S9_set_1: zero_shot 0.071, recenter 0.070, align 0.052, fewshot 0.052
+[15:06:09]    (1 sessioni in 0.1 min; 7/14)
+[15:06:15] LFADS seme 0 S9_set_2: zero_shot 0.108, recenter 0.104, align 0.068, fewshot 0.068
+[15:06:15]    (1 sessioni in 0.1 min; 8/14)
+[15:06:20] LFADS seme 0 S10_set_1: zero_shot 0.156, recenter 0.174, align 0.181, fewshot 0.181
+[15:06:20]    (1 sessioni in 0.1 min; 9/14)
+[15:06:26] LFADS seme 0 S10_set_2: zero_shot 0.140, recenter 0.148, align 0.131, fewshot 0.131
+[15:06:26]    (1 sessioni in 0.1 min; 10/14)
+[15:06:31] LFADS seme 0 S11_set_1: zero_shot 0.090, recenter 0.125, align 0.056, fewshot 0.056
+[15:06:31]    (1 sessioni in 0.1 min; 11/14)
+[15:06:37] LFADS seme 0 S11_set_2: zero_shot 0.125, recenter 0.199, align 0.203, fewshot 0.203
+[15:06:37]    (1 sessioni in 0.1 min; 12/14)
+[15:06:43] LFADS seme 0 S12_set_1: zero_shot -0.022, recenter 0.106, align 0.106, fewshot 0.106
+[15:06:43]    (1 sessioni in 0.1 min; 13/14)
+[15:06:49] LFADS seme 0 S12_set_2: zero_shot 0.047, recenter 0.116, align 0.112, fewshot 0.112
+[15:06:49]    (1 sessioni in 0.1 min; 14/14)
+[15:06:49] fine (40.4 min)

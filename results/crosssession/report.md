@@ -8,6 +8,8 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | GPFA | 0.030 [0.007, 0.046] (14) | 0.127 [0.110, 0.131] (14) | 0.071 [0.032, 0.097] (14) | -- | 0.072 [0.033, 0.097] (14) | -0.007 [-0.020, 0.000] (14) | -- |
 | Isomap | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.001, -0.001] (14) | -- | 0.000 [-0.001, 0.004] (14) | -0.033 [-0.046, -0.018] (14) | -- |
 | UMAP | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.002, -0.001] (14) | -- | -0.001 [-0.003, 0.001] (14) | -0.023 [-0.043, -0.020] (14) | -- |
+| CEBRA | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.002, -0.001] (14) | -0.001 [-0.002, -0.001] (14) | -- | -0.002 [-0.003, -0.001] (14) | -0.021 [-0.028, -0.010] (14) | -- |
+| LFADS | 0.108 [0.075, 0.134] (14) | 0.125 [0.102, 0.143] (14) | 0.108 [0.082, 0.135] (14) | -- | 0.108 [0.082, 0.135] (14) | -- | -- |
 | rates | -- | -- | -- | -- | -- | -- | -0.016 [-0.038, 0.015] (14) |
 ## Wilcoxon tra condizioni consecutive (Holm dentro ogni metodo)
 | method | from | to | n | W | p | p_holm | r_rb | median_diff | n_better |
@@ -33,36 +35,65 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | UMAP | recenter | align | 14 | 4 | 0.000854 | 0.00256 | -0.924 | -3.62e-06 | 2 |
 | UMAP | align | fewshot | 14 | 50 | 0.903 | 0.903 | 0.0476 | 7.29e-05 | 7 |
 | UMAP | fewshot | scratch | 14 | 0 | 0.000122 | 0.000488 | -1 | -0.0222 | 0 |
+| CEBRA | zero_shot | recenter | 14 | 52 | 1 | 1 | 0.00952 | -8.15e-07 | 6 |
+| CEBRA | recenter | align | 14 | 21.5 | 0.0516 | 0.155 | -0.59 | -8.94e-07 | 4 |
+| CEBRA | align | fewshot | 14 | 35 | 0.296 | 0.592 | -0.333 | -0.00103 | 5 |
+| CEBRA | fewshot | scratch | 14 | 1 | 0.000244 | 0.000977 | -0.981 | -0.0197 | 1 |
+| LFADS | zero_shot | recenter | 14 | 16 | 0.0203 | 0.0405 | 0.695 | 0.00855 | 9 |
+| LFADS | recenter | align | 14 | 19 | 0.0353 | 0.0405 | -0.638 | -0.0128 | 5 |
+| LFADS | align | fewshot | 14 | 14 | 0.0134 | 0.0403 | 0.733 | 2.59e-06 | 11 |
 
 ## Friedman tra metodi
 | condition | methods | n | k | chi2 | p | kendall_W |
 |---|---|---|---|---|---|---|
-| align | PCA,FA,GPFA,Isomap,UMAP | 14 | 5 | 41.4 | 2.25e-08 | 0.739 |
-| fewshot | PCA,FA,GPFA,Isomap,UMAP | 14 | 5 | 41.4 | 2.25e-08 | 0.739 |
+| align | PCA,FA,GPFA,Isomap,UMAP,CEBRA,LFADS | 14 | 7 | 66.1 | 2.58e-12 | 0.787 |
+| fewshot | PCA,FA,GPFA,Isomap,UMAP,CEBRA,LFADS | 14 | 7 | 66.3 | 2.3e-12 | 0.79 |
 
 ## Wilcoxon tra metodi a coppie (Holm dentro ogni condizione)
 | condition | method_a | method_b | n | W | p | p_holm | r_rb | median_diff | n_better |
 |---|---|---|---|---|---|---|---|---|---|
-| align | PCA | FA | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0635 | 2 |
-| align | PCA | GPFA | 14 | 6 | 0.00171 | 0.00366 | -0.886 | -0.0439 | 2 |
-| align | PCA | Isomap | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.109 | 0 |
-| align | PCA | UMAP | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.109 | 0 |
-| align | FA | GPFA | 14 | 40 | 0.463 | 0.463 | 0.238 | 0.00715 | 8 |
-| align | FA | Isomap | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.0512 | 0 |
-| align | FA | UMAP | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.0512 | 0 |
-| align | GPFA | Isomap | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0728 | 2 |
-| align | GPFA | UMAP | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0728 | 2 |
-| align | Isomap | UMAP | 14 | 5 | 0.00122 | 0.00366 | -0.905 | -6.62e-05 | 2 |
-| fewshot | PCA | FA | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0637 | 2 |
-| fewshot | PCA | GPFA | 14 | 7 | 0.00232 | 0.00696 | -0.867 | -0.0444 | 2 |
-| fewshot | PCA | Isomap | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.111 | 0 |
-| fewshot | PCA | UMAP | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.111 | 0 |
-| fewshot | FA | GPFA | 14 | 39 | 0.426 | 0.426 | 0.257 | 0.00749 | 8 |
-| fewshot | FA | Isomap | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.0498 | 0 |
-| fewshot | FA | UMAP | 14 | 0 | 0.000122 | 0.00122 | -1 | -0.0522 | 0 |
-| fewshot | GPFA | Isomap | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0717 | 2 |
-| fewshot | GPFA | UMAP | 14 | 3 | 0.00061 | 0.00366 | -0.943 | -0.0748 | 2 |
-| fewshot | Isomap | UMAP | 14 | 12 | 0.00854 | 0.0171 | -0.771 | -0.00312 | 2 |
+| align | PCA | FA | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0635 | 2 |
+| align | PCA | GPFA | 14 | 6 | 0.00171 | 0.00854 | -0.886 | -0.0439 | 2 |
+| align | PCA | Isomap | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.109 | 0 |
+| align | PCA | UMAP | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.109 | 0 |
+| align | PCA | CEBRA | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.109 | 0 |
+| align | PCA | LFADS | 14 | 49 | 0.855 | 1 | 0.0667 | -0.0156 | 5 |
+| align | FA | GPFA | 14 | 40 | 0.463 | 1 | 0.238 | 0.00715 | 8 |
+| align | FA | Isomap | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0512 | 0 |
+| align | FA | UMAP | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0512 | 0 |
+| align | FA | CEBRA | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0512 | 0 |
+| align | FA | LFADS | 14 | 1 | 0.000244 | 0.00293 | 0.981 | 0.0582 | 13 |
+| align | GPFA | Isomap | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0728 | 2 |
+| align | GPFA | UMAP | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0728 | 2 |
+| align | GPFA | CEBRA | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0728 | 2 |
+| align | GPFA | LFADS | 14 | 1 | 0.000244 | 0.00293 | 0.981 | 0.0449 | 13 |
+| align | Isomap | UMAP | 14 | 5 | 0.00122 | 0.00732 | -0.905 | -6.62e-05 | 2 |
+| align | Isomap | CEBRA | 14 | 6 | 0.00171 | 0.00854 | -0.886 | -6.97e-05 | 3 |
+| align | Isomap | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.11 | 14 |
+| align | UMAP | CEBRA | 14 | 37 | 0.358 | 1 | 0.295 | 4.99e-06 | 9 |
+| align | UMAP | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.11 | 14 |
+| align | CEBRA | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.11 | 14 |
+| fewshot | PCA | FA | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0637 | 2 |
+| fewshot | PCA | GPFA | 14 | 7 | 0.00232 | 0.0139 | -0.867 | -0.0444 | 2 |
+| fewshot | PCA | Isomap | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.111 | 0 |
+| fewshot | PCA | UMAP | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.111 | 0 |
+| fewshot | PCA | CEBRA | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.109 | 0 |
+| fewshot | PCA | LFADS | 14 | 48 | 0.808 | 1 | 0.0857 | -0.0161 | 5 |
+| fewshot | FA | GPFA | 14 | 39 | 0.426 | 1 | 0.257 | 0.00749 | 8 |
+| fewshot | FA | Isomap | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0498 | 0 |
+| fewshot | FA | UMAP | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0522 | 0 |
+| fewshot | FA | CEBRA | 14 | 0 | 0.000122 | 0.00256 | -1 | -0.0519 | 0 |
+| fewshot | FA | LFADS | 14 | 1 | 0.000244 | 0.00293 | 0.981 | 0.0582 | 13 |
+| fewshot | GPFA | Isomap | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0717 | 2 |
+| fewshot | GPFA | UMAP | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0748 | 2 |
+| fewshot | GPFA | CEBRA | 14 | 3 | 0.00061 | 0.0061 | -0.943 | -0.0747 | 2 |
+| fewshot | GPFA | LFADS | 14 | 1 | 0.000244 | 0.00293 | 0.981 | 0.0446 | 13 |
+| fewshot | Isomap | UMAP | 14 | 12 | 0.00854 | 0.0342 | -0.771 | -0.00312 | 2 |
+| fewshot | Isomap | CEBRA | 14 | 9 | 0.00403 | 0.0201 | -0.829 | -0.0028 | 2 |
+| fewshot | Isomap | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.107 | 14 |
+| fewshot | UMAP | CEBRA | 14 | 48 | 0.808 | 1 | -0.0857 | -0.000155 | 7 |
+| fewshot | UMAP | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.11 | 14 |
+| fewshot | CEBRA | LFADS | 14 | 0 | 0.000122 | 0.00256 | 1 | 0.109 | 14 |
 
 ## Zero-shot contro i giorni (descrittivo)
 | method | condition | n | slope_per_day | ci_low | ci_high | spearman_rho | spearman_p | r2_first_day | r2_last_day |
@@ -72,6 +103,8 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | GPFA | zero_shot | 14 | 0.00309 | -0.00349 | 0.00968 | 0.292 | 0.31 | -0.0427 | 0.0263 |
 | Isomap | zero_shot | 14 | 1.24e-05 | -2.96e-05 | 5.44e-05 | 0.0886 | 0.763 | -0.00127 | -0.00111 |
 | UMAP | zero_shot | 14 | 1.15e-05 | -3.05e-05 | 5.35e-05 | 0.0797 | 0.786 | -0.00129 | -0.00112 |
+| CEBRA | zero_shot | 14 | 1.25e-05 | -2.89e-05 | 5.39e-05 | 0.0797 | 0.786 | -0.00129 | -0.00111 |
+| LFADS | zero_shot | 14 | -0.0041 | -0.00887 | 0.000677 | -0.399 | 0.158 | 0.144 | 0.0278 |
 | rates | ridge_rates | 14 | 9.02e-05 | -0.00615 | 0.00633 | 0.0177 | 0.952 | 0.0468 | 0.00604 |
 
 ## Bin dei 2 trial di adattamento (canali attivi: 170)
@@ -96,4 +129,6 @@ Tutti i bin: min 1442, mediana 1647, max 1933; con eval_mask: min 1390, mediana 
 | GPFA | 1e+06 | 0.205 | 0.108 | 0.205 | 0.206 | nan | 0.206 | 1e+07 | False | 0.0113 | nan | 1e+05 | False |
 | Isomap | 1e+08 | -7.02e-05 | -0.00188 | -0.00188 | -0.00188 | nan | -0.000172 | 1e+05 | False | -0.00739 | nan | 3.16e+04 | False |
 | UMAP | 1e+08 | -6.83e-05 | -0.00182 | -0.00183 | -0.00182 | nan | 6.75e-05 | 1e+05 | False | -0.00716 | nan | 3.16e+04 | False |
+| CEBRA | 1e+08 | -6.07e-05 | -0.00191 | -0.00191 | -0.00191 | nan | -0.00117 | 3.16e+05 | False | -0.0171 | nan | 1e+05 | False |
+| LFADS | 1e+06 | 0.192 | 0.167 | 0.173 | 0.207 | nan | 0.207 | 1e+09 | True | nan | nan | nan | None |
 | rates | nan | nan | nan | nan | nan | nan | nan | nan | None | nan | 0.0383 | 1e+05 | False |

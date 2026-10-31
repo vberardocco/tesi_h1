@@ -30,3 +30,26 @@
 2026-10-31 14:11:49 [cpu] INIZIO xs_UMAP_s2 (tentativo 1)
 2026-10-31 14:13:29 [cpu] FINE   xs_UMAP_s2
 2026-10-31 14:13:29 [cpu] INIZIO commit_UMAP (tentativo 1)
+2026-10-31 14:13:35 [cpu] FINE   commit_UMAP
+2026-10-31 14:13:35 [cpu] corsia terminata
+2026-10-31 14:14:25 [cebra2] INIZIO xs_CEBRA_s1 (tentativo 1)
+2026-10-31 14:14:25 [cebra1] INIZIO xs_CEBRA_tune (tentativo 1)
+2026-10-31 14:25:40 [cebra1] FINE   xs_CEBRA_tune
+2026-10-31 14:25:40 [cebra1] INIZIO xs_CEBRA_s0 (tentativo 1)
+2026-10-31 14:26:25 [lfads2] INIZIO xs_LFADS_s0 (tentativo 1)
+2026-10-31 14:26:25 [lfads3] INIZIO xs_LFADS_s1 (tentativo 1)
+2026-10-31 14:26:25 [lfads4] INIZIO xs_LFADS_s2 (tentativo 1)
+2026-10-31 14:26:26 [lfads1] INIZIO xs_LFADS_tune (tentativo 1)
+2026-10-31 14:50:19 [cebra2] FINE   xs_CEBRA_s1
+2026-10-31 14:50:19 [cebra2] INIZIO xs_CEBRA_s2 (tentativo 1)
+2026-10-31 14:50:38 [cebra1] FINE   xs_CEBRA_s0
+2026-10-31 14:56:12 [lfads1] FINE   xs_LFADS_tune
+2026-10-31 15:05:53 [lfads4] FINE   xs_LFADS_s2
+2026-10-31 15:05:53 [lfads4] corsia terminata
+2026-10-31 15:06:50 [lfads2] FINE   xs_LFADS_s0
+2026-10-31 15:06:50 [lfads2] corsia terminata
+2026-10-31 15:06:50 [lfads3] FINE   xs_LFADS_s1
+2026-10-31 15:06:50 [lfads3] corsia terminata
+2026-10-31 15:07:07 [cebra2] FINE   xs_CEBRA_s2
+2026-10-31 15:07:07 [cebra2] corsia terminata
+2026-10-31 15:07:13 [lfads1] INIZIO commit_LFADS (tentativo 1)

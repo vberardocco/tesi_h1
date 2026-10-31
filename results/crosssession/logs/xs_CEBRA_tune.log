@@ -1,0 +1,4 @@
+[14:14:26] xs_run CEBRA seme 0 stage tune; codice bd8c3ae
+[14:14:48] CEBRA seme 0 (pseudo): stimato in 0.4 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[14:25:38] pseudo-few-shot CEBRA: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.001 (lam 3.16e+05), scratch -0.017 (alpha 1e+05)
+[14:25:38] fine (11.2 min)
