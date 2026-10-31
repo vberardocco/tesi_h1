@@ -1,0 +1,14 @@
+xs_rates||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py rates --stage all
+xs_PCA||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py PCA --stage all
+commit_PCA|xs_rates,xs_PCA||bash scripts/xs_commit.sh "Cross-sessione: PCA e ridge_rates completati"
+xs_FA||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py FA --stage all
+commit_FA|xs_FA||bash scripts/xs_commit.sh "Cross-sessione: FA completata"
+xs_GPFA||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py GPFA --stage all --n-jobs 6
+commit_GPFA|xs_GPFA||bash scripts/xs_commit.sh "Cross-sessione: GPFA completata"
+xs_Isomap||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py Isomap --stage all
+commit_Isomap|xs_Isomap||bash scripts/xs_commit.sh "Cross-sessione: Isomap completato"
+xs_UMAP_s0||OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py UMAP --seed 0 --stage all --n-jobs 3
+xs_UMAP_s1|xs_UMAP_s0|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py UMAP --seed 1 --stage main --n-jobs 3
+xs_UMAP_s2|xs_UMAP_s0|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py UMAP --seed 2 --stage main --n-jobs 3
+commit_UMAP|xs_UMAP_s0,xs_UMAP_s1,xs_UMAP_s2||bash scripts/xs_commit.sh "Cross-sessione: UMAP completato (3 semi)"
+#FINE

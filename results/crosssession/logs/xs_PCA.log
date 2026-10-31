@@ -1,0 +1,34 @@
+[13:39:26] xs_run PCA seme 0 stage all; codice 7845e7e
+[13:39:35] PCA seme 0 (pseudo): stimato in 0.1 min; readout α = 1e+06, R² leave-one-day-out = 0.194
+[13:40:14] pseudo-few-shot PCA: zero_shot 0.099, recenter 0.189, align 0.213, fewshot 0.213 (lam 3.16e+06), scratch 0.022 (alpha 3.16e+04)
+[13:40:14] PCA seme 0: 0 sessioni già nel registro, 14 da fare
+[13:40:26] PCA seme 0 (heldin): stimato in 0.2 min; readout α = 1e+06, R² leave-one-day-out = 0.199
+[13:40:29] PCA seme 0 S6_set_1: zero_shot 0.121, recenter 0.137, align 0.160, fewshot 0.160, scratch 0.015
+[13:40:29]    (1 sessioni in 0.1 min; 1/14)
+[13:40:33] PCA seme 0 S6_set_2: zero_shot 0.129, recenter 0.137, align 0.152, fewshot 0.152, scratch -0.002
+[13:40:33]    (1 sessioni in 0.1 min; 2/14)
+[13:40:36] PCA seme 0 S7_set_1: zero_shot 0.096, recenter 0.114, align 0.055, fewshot 0.054, scratch -0.045
+[13:40:36]    (1 sessioni in 0.1 min; 3/14)
+[13:40:39] PCA seme 0 S7_set_2: zero_shot 0.042, recenter 0.066, align 0.058, fewshot 0.061, scratch -0.068
+[13:40:39]    (1 sessioni in 0.1 min; 4/14)
+[13:40:43] PCA seme 0 S8_set_1: zero_shot 0.086, recenter 0.108, align 0.109, fewshot 0.109, scratch -0.029
+[13:40:43]    (1 sessioni in 0.1 min; 5/14)
+[13:40:46] PCA seme 0 S8_set_2: zero_shot 0.080, recenter 0.080, align 0.057, fewshot 0.056, scratch -0.046
+[13:40:46]    (1 sessioni in 0.1 min; 6/14)
+[13:40:49] PCA seme 0 S9_set_1: zero_shot 0.067, recenter 0.055, align 0.020, fewshot 0.021, scratch -0.141
+[13:40:49]    (1 sessioni in 0.1 min; 7/14)
+[13:40:52] PCA seme 0 S9_set_2: zero_shot 0.055, recenter 0.078, align 0.084, fewshot 0.085, scratch -0.057
+[13:40:52]    (1 sessioni in 0.1 min; 8/14)
+[13:40:55] PCA seme 0 S10_set_1: zero_shot 0.098, recenter 0.168, align 0.168, fewshot 0.168, scratch 0.029
+[13:40:55]    (1 sessioni in 0.1 min; 9/14)
+[13:40:59] PCA seme 0 S10_set_2: zero_shot 0.137, recenter 0.151, align 0.161, fewshot 0.162, scratch -0.015
+[13:40:59]    (1 sessioni in 0.1 min; 10/14)
+[13:41:02] PCA seme 0 S11_set_1: zero_shot 0.078, recenter 0.144, align 0.104, fewshot 0.103, scratch -0.051
+[13:41:02]    (1 sessioni in 0.1 min; 11/14)
+[13:41:05] PCA seme 0 S11_set_2: zero_shot 0.031, recenter 0.168, align 0.163, fewshot 0.162, scratch -0.028
+[13:41:05]    (1 sessioni in 0.1 min; 12/14)
+[13:41:08] PCA seme 0 S12_set_1: zero_shot 0.010, recenter 0.092, align 0.107, fewshot 0.107, scratch 0.034
+[13:41:08]    (1 sessioni in 0.1 min; 13/14)
+[13:41:11] PCA seme 0 S12_set_2: zero_shot 0.055, recenter 0.122, align 0.132, fewshot 0.133, scratch 0.008
+[13:41:11]    (1 sessioni in 0.1 min; 14/14)
+[13:41:11] fine (1.8 min)

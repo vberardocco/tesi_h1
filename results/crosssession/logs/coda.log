@@ -1,0 +1,12 @@
+2026-10-31 13:37:24 [cebra1] corsia avviata (pid 18885)
+2026-10-31 13:37:24 [lfads4] corsia avviata (pid 18890)
+2026-10-31 13:37:24 [lfads2] corsia avviata (pid 18888)
+2026-10-31 13:37:24 [lfads1] corsia avviata (pid 18887)
+2026-10-31 13:37:24 [cpu] corsia avviata (pid 18884)
+2026-10-31 13:37:24 [cebra2] corsia avviata (pid 18886)
+2026-10-31 13:37:24 [lfads3] corsia avviata (pid 18889)
+2026-10-31 13:37:24 [cpu] INIZIO xs_rates (tentativo 1)
+2026-10-31 13:39:25 [cpu] FINE   xs_rates
+2026-10-31 13:39:25 [cpu] INIZIO xs_PCA (tentativo 1)
+2026-10-31 13:41:11 [cpu] FINE   xs_PCA
+2026-10-31 13:41:11 [cpu] INIZIO commit_PCA (tentativo 1)

@@ -1,0 +1,3 @@
+xs_LFADS_tune|xs_CEBRA_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py LFADS --stage tune
+commit_LFADS|xs_LFADS_tune,xs_LFADS_s0,xs_LFADS_s1,xs_LFADS_s2||bash scripts/xs_commit.sh "Cross-sessione: LFADS completato (3 semi)"
+#FINE

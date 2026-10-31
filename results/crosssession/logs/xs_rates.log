@@ -1,0 +1,32 @@
+[13:37:24] xs_run rates seme 0 stage all; codice 7845e7e
+[13:38:43] pseudo-few-shot rates: ridge_rates 0.038 (alpha 1e+05)
+[13:38:44] rates seme 0: 0 sessioni già nel registro, 14 da fare
+[13:38:46] rates seme 0 S6_set_1: ridge_rates 0.061
+[13:38:46]    (1 sessioni in 0.0 min; 1/14)
+[13:38:49] rates seme 0 S6_set_2: ridge_rates 0.033
+[13:38:49]    (1 sessioni in 0.0 min; 2/14)
+[13:38:52] rates seme 0 S7_set_1: ridge_rates -0.064
+[13:38:52]    (1 sessioni in 0.0 min; 3/14)
+[13:38:55] rates seme 0 S7_set_2: ridge_rates -0.073
+[13:38:55]    (1 sessioni in 0.1 min; 4/14)
+[13:38:59] rates seme 0 S8_set_1: ridge_rates -0.024
+[13:38:59]    (1 sessioni in 0.1 min; 5/14)
+[13:39:01] rates seme 0 S8_set_2: ridge_rates -0.021
+[13:39:01]    (1 sessioni in 0.0 min; 6/14)
+[13:39:04] rates seme 0 S9_set_1: ridge_rates -0.137
+[13:39:04]    (1 sessioni in 0.0 min; 7/14)
+[13:39:07] rates seme 0 S9_set_2: ridge_rates -0.014
+[13:39:07]    (1 sessioni in 0.1 min; 8/14)
+[13:39:10] rates seme 0 S10_set_1: ridge_rates 0.009
+[13:39:10]    (1 sessioni in 0.0 min; 9/14)
+[13:39:12] rates seme 0 S10_set_2: ridge_rates 0.019
+[13:39:12]    (1 sessioni in 0.0 min; 10/14)
+[13:39:15] rates seme 0 S11_set_1: ridge_rates -0.043
+[13:39:15]    (1 sessioni in 0.0 min; 11/14)
+[13:39:18] rates seme 0 S11_set_2: ridge_rates -0.018
+[13:39:18]    (1 sessioni in 0.0 min; 12/14)
+[13:39:22] rates seme 0 S12_set_1: ridge_rates -0.005
+[13:39:22]    (1 sessioni in 0.1 min; 13/14)
+[13:39:25] rates seme 0 S12_set_2: ridge_rates 0.017
+[13:39:25]    (1 sessioni in 0.1 min; 14/14)
+[13:39:25] fine (2.0 min)

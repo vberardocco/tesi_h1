@@ -1,0 +1,4 @@
+xs_CEBRA_tune|commit_UMAP|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --stage tune
+xs_CEBRA_s0|xs_CEBRA_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py CEBRA --seed 0 --stage main
+commit_CEBRA|xs_CEBRA_s0,xs_CEBRA_s1,xs_CEBRA_s2||bash scripts/xs_commit.sh "Cross-sessione: CEBRA completato (3 semi)"
+#FINE

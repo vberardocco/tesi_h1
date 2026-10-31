@@ -1,0 +1,2 @@
+xs_LFADS_s0|xs_CEBRA_tune|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMBA_THREADING_LAYER=workqueue PYTHONUNBUFFERED=1|/opt/miniconda3/envs/tesi-manifolds/bin/python scripts/xs_run.py LFADS --seed 0 --stage main --wait-tune 12
+#FINE
