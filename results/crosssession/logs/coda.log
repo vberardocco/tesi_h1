@@ -14,3 +14,7 @@
 2026-10-31 13:41:15 [cpu] INIZIO xs_FA (tentativo 1)
 2026-10-31 13:47:03 [cpu] FINE   xs_FA
 2026-10-31 13:47:03 [cpu] INIZIO commit_FA (tentativo 1)
+2026-10-31 13:47:07 [cpu] FINE   commit_FA
+2026-10-31 13:47:07 [cpu] INIZIO xs_GPFA (tentativo 1)
+2026-10-31 14:06:11 [cpu] FINE   xs_GPFA
+2026-10-31 14:06:11 [cpu] INIZIO commit_GPFA (tentativo 1)

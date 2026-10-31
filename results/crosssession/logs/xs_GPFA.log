@@ -1,0 +1,41 @@
+[13:47:08] xs_run GPFA seme 0 stage all; codice f92b9a1
+[13:50:27] GPFA seme 0 (pseudo): stimato in 3.3 min; readout α = 1e+06, R² leave-one-day-out = 0.189
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+[13:56:16] pseudo-few-shot GPFA: zero_shot 0.108, recenter 0.205, align 0.206, fewshot 0.206 (lam 1e+07), scratch 0.011 (alpha 1e+05)
+[13:56:16] GPFA seme 0: 0 sessioni già nel registro, 14 da fare
+[14:01:22] GPFA seme 0 (heldin): stimato in 5.1 min; readout α = 1e+06, R² leave-one-day-out = 0.205
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+[14:02:53] GPFA seme 0 S6_set_1: zero_shot -0.031, recenter 0.130, align 0.102, fewshot 0.103, scratch 0.000
+[14:02:55] GPFA seme 0 S6_set_2: zero_shot -0.054, recenter 0.132, align 0.048, fewshot 0.049, scratch -0.000
+[14:02:56] GPFA seme 0 S7_set_1: zero_shot 0.105, recenter 0.128, align 0.070, fewshot 0.069, scratch -0.020
+[14:02:58] GPFA seme 0 S7_set_2: zero_shot -0.007, recenter 0.107, align 0.034, fewshot 0.035, scratch 0.004
+[14:02:59] GPFA seme 0 S8_set_1: zero_shot 0.050, recenter 0.117, align 0.077, fewshot 0.077, scratch -0.006
+[14:03:01] GPFA seme 0 S8_set_2: zero_shot 0.073, recenter 0.100, align -0.022, fewshot -0.022, scratch -0.011
+[14:03:01]    (6 sessioni in 1.6 min; 6/14)
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+/opt/miniconda3/envs/tesi-manifolds/lib/python3.11/site-packages/sklearn/decomposition/_factor_analysis.py:287: RuntimeWarning: divide by zero encountered in log
+  ll += unexp_var + np.sum(np.log(psi))
+[14:05:06] GPFA seme 0 S9_set_1: zero_shot 0.032, recenter 0.054, align -0.015, fewshot -0.016, scratch -0.048
+[14:05:07] GPFA seme 0 S9_set_2: zero_shot 0.032, recenter 0.100, align 0.032, fewshot 0.033, scratch -0.008
+[14:05:09] GPFA seme 0 S10_set_1: zero_shot 0.003, recenter 0.129, align 0.073, fewshot 0.074, scratch -0.021
+[14:05:10] GPFA seme 0 S10_set_2: zero_shot 0.019, recenter 0.120, align 0.080, fewshot 0.081, scratch -0.002
+[14:05:12] GPFA seme 0 S11_set_1: zero_shot 0.028, recenter 0.127, align 0.021, fewshot 0.022, scratch -0.028
+[14:05:14] GPFA seme 0 S11_set_2: zero_shot 0.164, recenter 0.222, align 0.157, fewshot 0.157, scratch -0.022
+[14:05:14]    (6 sessioni in 2.2 min; 12/14)
+[14:06:09] GPFA seme 0 S12_set_1: zero_shot 0.034, recenter 0.132, align 0.112, fewshot 0.113, scratch 0.023
+[14:06:11] GPFA seme 0 S12_set_2: zero_shot 0.019, recenter 0.145, align 0.130, fewshot 0.130, scratch 0.034
+[14:06:11]    (2 sessioni in 1.0 min; 14/14)
+[14:06:11] fine (19.1 min)

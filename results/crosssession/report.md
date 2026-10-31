@@ -5,6 +5,7 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 |---|---|---|---|---|---|---|---|
 | PCA | 0.079 [0.055, 0.098] (14) | 0.118 [0.083, 0.142] (14) | 0.108 [0.065, 0.158] (14) | -- | 0.108 [0.067, 0.158] (14) | -0.028 [-0.050, 0.006] (14) | -- |
 | FA | 0.034 [0.023, 0.047] (14) | 0.042 [0.038, 0.053] (14) | 0.050 [0.043, 0.061] (14) | 0.025 [0.020, 0.032] (14) | 0.050 [0.043, 0.061] (14) | -0.018 [-0.020, -0.005] (14) | -- |
+| GPFA | 0.030 [0.007, 0.046] (14) | 0.127 [0.110, 0.131] (14) | 0.071 [0.032, 0.097] (14) | -- | 0.072 [0.033, 0.097] (14) | -0.007 [-0.020, 0.000] (14) | -- |
 | rates | -- | -- | -- | -- | -- | -- | -0.016 [-0.038, 0.015] (14) |
 ## Wilcoxon tra condizioni consecutive (Holm dentro ogni metodo)
 | method | from | to | n | W | p | p_holm | r_rb | median_diff | n_better |
@@ -18,18 +19,33 @@ Registro: /Users/valerio/tesi_h1_work/results/h1_runs.csv. R² concatenato sui 3
 | FA | align | fewshot | 14 | 42 | 0.807 | 0.807 | 0.0769 | 1.19e-07 | 7 |
 | FA | fewshot | scratch | 14 | 0 | 0.000122 | 0.00061 | -1 | -0.0631 | 0 |
 | FA | align | fa_native | 14 | 0 | 0.000122 | 0.00061 | -1 | -0.0264 | 0 |
+| GPFA | zero_shot | recenter | 14 | 0 | 0.000122 | 0.000488 | 1 | 0.0988 | 14 |
+| GPFA | recenter | align | 14 | 0 | 0.000122 | 0.000488 | -1 | -0.0615 | 0 |
+| GPFA | align | fewshot | 14 | 21 | 0.0494 | 0.0494 | 0.6 | 0.000565 | 11 |
+| GPFA | fewshot | scratch | 14 | 1 | 0.000244 | 0.000488 | -0.981 | -0.0828 | 1 |
 
 ## Friedman tra metodi
-(vuoto)
+| condition | methods | n | k | chi2 | p | kendall_W |
+|---|---|---|---|---|---|---|
+| align | PCA,FA,GPFA | 14 | 3 | 10.9 | 0.00439 | 0.388 |
+| fewshot | PCA,FA,GPFA | 14 | 3 | 10.9 | 0.00439 | 0.388 |
 
 ## Wilcoxon tra metodi a coppie (Holm dentro ogni condizione)
-(vuoto)
+| condition | method_a | method_b | n | W | p | p_holm | r_rb | median_diff | n_better |
+|---|---|---|---|---|---|---|---|---|---|
+| align | PCA | FA | 14 | 3 | 0.00061 | 0.00183 | -0.943 | -0.0635 | 2 |
+| align | PCA | GPFA | 14 | 6 | 0.00171 | 0.00342 | -0.886 | -0.0439 | 2 |
+| align | FA | GPFA | 14 | 40 | 0.463 | 0.463 | 0.238 | 0.00715 | 8 |
+| fewshot | PCA | FA | 14 | 3 | 0.00061 | 0.00183 | -0.943 | -0.0637 | 2 |
+| fewshot | PCA | GPFA | 14 | 7 | 0.00232 | 0.00464 | -0.867 | -0.0444 | 2 |
+| fewshot | FA | GPFA | 14 | 39 | 0.426 | 0.426 | 0.257 | 0.00749 | 8 |
 
 ## Zero-shot contro i giorni (descrittivo)
 | method | condition | n | slope_per_day | ci_low | ci_high | spearman_rho | spearman_p | r2_first_day | r2_last_day |
 |---|---|---|---|---|---|---|---|---|---|
 | PCA | zero_shot | 14 | -0.0041 | -0.00801 | -0.000201 | -0.532 | 0.0504 | 0.125 | 0.0321 |
 | FA | zero_shot | 14 | -4.29e-05 | -0.002 | 0.00191 | -0.0709 | 0.81 | 0.0438 | 0.0437 |
+| GPFA | zero_shot | 14 | 0.00309 | -0.00349 | 0.00968 | 0.292 | 0.31 | -0.0427 | 0.0263 |
 | rates | ridge_rates | 14 | 9.02e-05 | -0.00615 | 0.00633 | 0.0177 | 0.952 | 0.0468 | 0.00604 |
 
 ## Bin dei 2 trial di adattamento (canali attivi: 170)
@@ -51,4 +67,5 @@ Tutti i bin: min 1442, mediana 1647, max 1933; con eval_mask: min 1390, mediana 
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | PCA | 1e+06 | 0.199 | 0.0994 | 0.189 | 0.213 | nan | 0.213 | 3.16e+06 | False | 0.0225 | nan | 3.16e+04 | False |
 | FA | 1e+06 | 0.0709 | 0.076 | 0.0947 | 0.1 | 0.0711 | 0.1 | 1e+09 | True | 0.00913 | nan | 3.16e+04 | False |
+| GPFA | 1e+06 | 0.205 | 0.108 | 0.205 | 0.206 | nan | 0.206 | 1e+07 | False | 0.0113 | nan | 1e+05 | False |
 | rates | nan | nan | nan | nan | nan | nan | nan | nan | None | nan | 0.0383 | 1e+05 | False |
