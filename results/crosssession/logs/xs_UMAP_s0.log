@@ -1,0 +1,25 @@
+[14:07:35] xs_run UMAP seme 0 stage all; codice f8c2ae3
+[14:08:07] UMAP seme 0 (pseudo): stimato in 0.5 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[14:08:53] pseudo-few-shot UMAP: zero_shot -0.002, recenter -0.002, align -0.002, fewshot 0.000 (lam 1e+05), scratch -0.007 (alpha 3.16e+04)
+[14:08:53] UMAP seme 0: 0 sessioni già nel registro, 14 da fare
+[14:09:16] UMAP seme 0 (heldin): stimato in 0.4 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[14:09:23] UMAP seme 0 S6_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.004, scratch -0.009
+[14:09:25] UMAP seme 0 S6_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.001, scratch -0.019
+[14:09:27] UMAP seme 0 S7_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.007, scratch -0.025
+[14:09:27]    (3 sessioni in 0.2 min; 3/14)
+[14:09:34] UMAP seme 0 S7_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.002, scratch 0.002
+[14:09:36] UMAP seme 0 S8_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch -0.044
+[14:09:38] UMAP seme 0 S8_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.004, scratch -0.034
+[14:09:38]    (3 sessioni in 0.2 min; 6/14)
+[14:09:45] UMAP seme 0 S9_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.045
+[14:09:46] UMAP seme 0 S9_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.003, scratch -0.027
+[14:09:48] UMAP seme 0 S10_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch -0.067
+[14:09:48]    (3 sessioni in 0.2 min; 9/14)
+[14:09:55] UMAP seme 0 S10_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.002, scratch -0.022
+[14:09:57] UMAP seme 0 S11_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.006, scratch -0.025
+[14:09:58] UMAP seme 0 S11_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.049
+[14:09:58]    (3 sessioni in 0.2 min; 12/14)
+[14:10:05] UMAP seme 0 S12_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.001, scratch -0.001
+[14:10:07] UMAP seme 0 S12_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.001, scratch -0.036
+[14:10:07]    (2 sessioni in 0.1 min; 14/14)
+[14:10:07] fine (2.5 min)

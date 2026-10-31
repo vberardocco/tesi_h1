@@ -1,0 +1,23 @@
+[14:11:49] xs_run UMAP seme 2 stage main; codice f8c2ae3
+[14:11:49] UMAP seme 2: 0 sessioni già nel registro, 14 da fare
+[14:12:27] UMAP seme 2 (heldin): stimato in 0.6 min; readout α = 1e+08, R² leave-one-day-out = -0.000 (α AL BORDO)
+[14:12:44] UMAP seme 2 S6_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.003, scratch -0.019
+[14:12:46] UMAP seme 2 S6_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch -0.018
+[14:12:48] UMAP seme 2 S7_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.005, scratch -0.018
+[14:12:48]    (3 sessioni in 0.3 min; 3/14)
+[14:12:55] UMAP seme 2 S7_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.000, scratch -0.013
+[14:12:57] UMAP seme 2 S8_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.002, scratch -0.043
+[14:12:58] UMAP seme 2 S8_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.007, scratch -0.028
+[14:12:58]    (3 sessioni in 0.2 min; 6/14)
+[14:13:05] UMAP seme 2 S9_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.006, scratch -0.045
+[14:13:07] UMAP seme 2 S9_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.005, scratch -0.020
+[14:13:09] UMAP seme 2 S10_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot -0.003, scratch -0.052
+[14:13:09]    (3 sessioni in 0.2 min; 9/14)
+[14:13:16] UMAP seme 2 S10_set_2: zero_shot -0.002, recenter -0.002, align -0.002, fewshot 0.001, scratch -0.029
+[14:13:17] UMAP seme 2 S11_set_1: zero_shot -0.002, recenter -0.002, align -0.002, fewshot -0.004, scratch -0.018
+[14:13:19] UMAP seme 2 S11_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.000, scratch -0.045
+[14:13:19]    (3 sessioni in 0.2 min; 12/14)
+[14:13:26] UMAP seme 2 S12_set_1: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.005, scratch -0.008
+[14:13:28] UMAP seme 2 S12_set_2: zero_shot -0.001, recenter -0.001, align -0.001, fewshot 0.002, scratch -0.036
+[14:13:28]    (2 sessioni in 0.1 min; 14/14)
+[14:13:28] fine (1.6 min)

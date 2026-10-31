@@ -22,3 +22,11 @@
 2026-10-31 14:06:16 [cpu] INIZIO xs_Isomap (tentativo 1)
 2026-10-31 14:07:30 [cpu] FINE   xs_Isomap
 2026-10-31 14:07:30 [cpu] INIZIO commit_Isomap (tentativo 1)
+2026-10-31 14:07:35 [cpu] FINE   commit_Isomap
+2026-10-31 14:07:35 [cpu] INIZIO xs_UMAP_s0 (tentativo 1)
+2026-10-31 14:10:08 [cpu] FINE   xs_UMAP_s0
+2026-10-31 14:10:08 [cpu] INIZIO xs_UMAP_s1 (tentativo 1)
+2026-10-31 14:11:49 [cpu] FINE   xs_UMAP_s1
+2026-10-31 14:11:49 [cpu] INIZIO xs_UMAP_s2 (tentativo 1)
+2026-10-31 14:13:29 [cpu] FINE   xs_UMAP_s2
+2026-10-31 14:13:29 [cpu] INIZIO commit_UMAP (tentativo 1)
