@@ -48,10 +48,15 @@ PSEUDO_TRAIN_DAYS = ("S0", "S1", "S2", "S3")   # pseudo-few-shot: modello su que
 PSEUDO_TEST_DAYS = ("S4", "S5")                # ...pseudo-sessioni di 3 trial da questi
 METHODS = ("PCA", "FA", "GPFA", "Isomap", "UMAP", "CEBRA", "LFADS")
 SEEDS = {"PCA": [0], "FA": [0], "GPFA": [0], "Isomap": [0], "UMAP": [0, 1, 2], "CEBRA": [0, 1, 2], "LFADS": [0, 1, 2]}
-CONDITIONS = ("zero_shot", "recenter", "align", "fewshot", "scratch")
+CONDITIONS = ("zero_shot", "recenter", "align", "fewshot", "fewshot_gain", "scratch")
+NO_ADAPT = ("zero_shot", "no_adapt")    # condizioni senza trial di adattamento (k_shot = 0)
+DIM_RULE = 25                           # d delle mappe (Isomap, UMAP, CEBRA) dal 1/11: la regola di PCA e LFADS, cioè il
+                                        # d della GPFA scelto con la cross-validation (02_new §10); prima d = 3 (03, 04)
+RIDGE_H50 = Path(__file__).resolve().parents[2] / "models" / "ridge_h50.npz"   # decoder sui canali del 05 (b797b3e)
 
 ALPHA_SRC_GRID = 10.0 ** np.arange(-2, 8.01, 0.5)   # α del readout held-in (scelta leave-one-day-out sulle held-in)
-LAM_GRID = 10.0 ** np.arange(-1, 9.01, 0.5)         # λ del fewshot (verso i pesi held-in)
+LAM_GRID = 10.0 ** np.arange(-2, 15.01, 0.5)        # λ del fewshot (verso i pesi held-in); fino a 1e15 (dal 1/11:
+                                                    # la griglia fino a 1e9 aveva l'ottimo al bordo per FA e LFADS)
 ALPHA_GRID = 10.0 ** np.arange(-2, 8.01, 0.5)       # α di scratch e ridge_rates
 EPS_REL = 1e-8                                      # eps sulla diagonale delle covarianze, relativo all'autovalore medio
 
@@ -77,6 +82,14 @@ class Trial:
     mask: np.ndarray          # bin, eval_mask
     mov: np.ndarray           # bin, vero nelle 8 fasi di movimento
     windows: list             # finestre da 1 s all'inizio delle fasi di movimento, (inizio, fine) dentro il trial
+    counts_all: np.ndarray = None   # bin × 176 canali (per il decoder sui canali, ridge_channels)
+    phases: list = None             # fasi di movimento presenti nel trial
+
+    @property
+    def version(self):
+        """Versione del task: i trial dispari e pari alternano due versioni (g3 in Grasp di segno opposto, 03 §9.2;
+        controllato su tutti i trial held-in e held-out il 1/11)."""
+        return "odd" if self.num % 2 else "even"
 
     def __len__(self):
         return len(self.counts)
@@ -95,13 +108,15 @@ def _load_file(path, group):
     from falcon_challenge.config import FalconConfig, FalconTask
     s = io.load_session(path, bins="falcon")                       # bin di FALCON (= load_nwb)
     key = FalconConfig(FalconTask.h1).hash_dataset(Path(path).stem)
-    mov = np.isin(io.phase_per_bin(s), io.MOVEMENT_PHASES)
+    ph = io.phase_per_bin(s)
+    mov = np.isin(ph, io.MOVEMENT_PHASES)
     wins = io.phase_windows(s, win_s=1.0, align="start")           # 02_new §10: finestre da 1 s, fasi di movimento
     trials = []
     for a, b in io.trial_slices(s):
         tw = [(w["start"] - a, w["stop"] - a) for w in wins if w["start"] >= a and w["stop"] <= b]
         trials.append(Trial(int(s.trial_num[a]), s.spikes[a:b], s.vel[a:b].astype(np.float64),
-                            s.eval_mask[a:b].astype(bool), mov[a:b], tw))
+                            s.eval_mask[a:b].astype(bool), mov[a:b], tw, s.spikes[a:b].copy(),
+                            sorted(set(ph[a:b]) & set(io.MOVEMENT_PHASES))))
     return Sess(key, key.split("_")[0], s.session_id, group, trials)
 
 
@@ -110,7 +125,9 @@ def load_data(refresh=False):
     cache = XS / "data.pkl"
     if cache.exists() and not refresh:
         with open(cache, "rb") as f:
-            return pickle.load(f)
+            out = pickle.load(f)
+        if getattr(next(iter(out["sessions"].values())).trials[0], "counts_all", None) is not None:
+            return out                                              # cache del 31/10 senza counts_all: si rifà
     sessions = {}
     for group, split in (("held_in", "held-in-calib"), ("held_out", "held-out-calib")):
         for p in sorted(DATA.glob(f"sub-HumanPitt-{split}/*.nwb")):
@@ -175,8 +192,9 @@ def zstats(X):
 class Method:
     name, rep, dim, cacheable = "", "", 0, True
 
-    def __init__(self, seed=0):
+    def __init__(self, seed=0, dim=None):
         self.seed = seed
+        self.dim = type(self).dim if dim is None else int(dim)
 
     def fit(self, trials):
         raise NotImplementedError
@@ -345,7 +363,7 @@ class CEBRAm(Method):
     def fit(self, trials):
         self.pc = PCAm().fit(trials)
         X = np.concatenate(self.pc.encode([rep(t, "rates") for t in trials])).astype(np.float32)
-        self.model = _cebra_fit(X, CEBRA_CFG, self.seed)
+        self.model = _cebra_fit(X, dict(CEBRA_CFG, output_dimension=self.dim), self.seed)
         return self
 
     def encode(self, Xs):
@@ -525,8 +543,12 @@ class LFADSm(Method):
 METHOD_CLASS = {"PCA": PCAm, "FA": FAm, "GPFA": GPFAm, "Isomap": IsomapM, "UMAP": UMAPm, "CEBRA": CEBRAm, "LFADS": LFADSm}
 
 
-def make_method(name, seed=0):
-    return METHOD_CLASS[name](seed=seed)
+def make_method(name, seed=0, dim=None):
+    return METHOD_CLASS[name](seed=seed, dim=dim)
+
+
+def default_dim(name):
+    return DIM_RULE if name in ("Isomap", "UMAP", "CEBRA") else METHOD_CLASS[name].dim
 
 
 # ============================================================================================
@@ -678,17 +700,18 @@ class Bundle:
     info: dict
 
 
-def bundle_path(method, seed, tag):
-    return XS / "models" / f"{method}_{tag}_s{seed}.pkl"
+def bundle_path(method, seed, tag, dim):
+    return XS / "models" / f"{method}_d{dim}_{tag}_s{seed}.pkl"
 
 
-def fit_bundle(method, seed, sessions, tag, use_cache=True):
-    p = bundle_path(method, seed, tag)
-    M = make_method(method, seed)
+def fit_bundle(method, seed, sessions, tag, use_cache=True, dim=None):
+    M = make_method(method, seed, dim)
+    p = bundle_path(method, seed, tag, M.dim)
     if use_cache and M.cacheable and p.exists():
         with open(p, "rb") as f:
             b = pickle.load(f)
-        log(f"{method} seme {seed} ({tag}): modello riletto da {p.name}")
+        assert b.model.dim == M.dim and b.seed == seed, f"{p.name}: modello in cache diverso da quello chiesto"
+        log(f"{method} d = {M.dim} seme {seed} ({tag}): modello riletto da {p.name}")
         return b
     trials = [t for s in sessions for t in s.trials]
     days = [s.day for s in sessions for _ in s.trials]
@@ -703,13 +726,14 @@ def fit_bundle(method, seed, sessions, tag, use_cache=True):
     sd = np.sqrt(np.diag(lat_C))
     rd = fit_readout_lodo(Readout(lat_mu, np.where(sd > 1e-12, sd, 1.0)), Zs, trials, days)
     info = dict(fit_seconds=t_fit, total_seconds=time.time() - t0, n_trials=len(trials), n_bins=int(sum(len(t) for t in trials)),
+                dim=M.dim,
                 sessions=[s.key for s in sessions], alpha=rd.alpha, alpha_at_edge=rd.alpha_at_edge,
                 lodo_r2=rd.cv[rd.alpha])
     for k in ("n_points", "n_windows", "best_epoch", "n_segments", "seconds"):
         if hasattr(M, k):
             info[k] = getattr(M, k)
     b = Bundle(method, seed, tag, M, mu_rep, lat_mu, lat_C, rd, info)
-    log(f"{method} seme {seed} ({tag}): stimato in {info['total_seconds'] / 60:.1f} min; readout α = {rd.alpha:.3g}, "
+    log(f"{method} d = {M.dim} seme {seed} ({tag}): stimato in {info['total_seconds'] / 60:.1f} min; readout α = {rd.alpha:.3g}, "
         f"R² leave-one-day-out = {info['lodo_r2']:.3f}{' (α AL BORDO)' if rd.alpha_at_edge else ''}")
     if M.cacheable:
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -731,6 +755,7 @@ class Adapter:
     mu_a: np.ndarray = None           # media d'ingresso dei 2 trial (recenter)
     f: MomentMatch = None             # moment matching (align)
     fewshot: dict = None              # {λ: (W, b)}
+    gain: tuple = None                # fewshot_gain: (guadagno, offset) per DoF sopra align
     fa_native: tuple = None           # (FA dei 2 trial, rotazione di Procrustes, media)
     scratch: tuple = None             # (metodo stimato sui 2 trial, readout, {α: (W, b)})
     rates: tuple = None               # (readout sui rate, {α: (W, b)})
@@ -749,13 +774,14 @@ def adapt(b: Bundle, tad, lams, alphas, scratch=True):
     X, Y = b.readout.train_rows([A.f(z) for z in lat], tad)         # fewshot: ridge verso i pesi held-in
     B0 = np.vstack([b.readout.W, b.readout.b[None, :]])
     A.fewshot = ridge_solve(X, Y, lams, B0, intercept="prior")
+    A.gain = fit_gain(X @ b.readout.W + b.readout.b, Y)            # fewshot_gain: guadagno e offset per DoF
     if M.name == "FA":                                              # fa_native: FA dei 2 trial, Procrustes sulle loadings
         from sklearn.decomposition import FactorAnalysis
         fa = FactorAnalysis(M.dim, svd_method="lapack", random_state=0).fit((np.concatenate(reps) - A.mu_a) / M.sd)
         U, _, Vt = np.linalg.svd(fa.components_ @ M.fa.components_.T)   # L_newᵀ L_src (K × K)
         A.fa_native = (fa, U @ Vt)
     if scratch:                                                     # scratch: metodo e readout solo sui 2 trial
-        M2 = make_method(M.name, M.seed).fit(tad)
+        M2 = make_method(M.name, M.seed, M.dim).fit(tad)
         lz = M2.encode([rep(t, M.rep) for t in tad])
         rd2 = Readout(*zstats(np.concatenate(lz)))
         X2, _ = rd2.train_rows(lz, tad)
@@ -774,6 +800,7 @@ def predict_trial(b: Bundle, A: Adapter, trial, z0=None):
     out[("recenter", None)] = b.readout.predict(z)
     za = A.f(z)
     out[("align", None)] = b.readout.predict(za)
+    out[("fewshot_gain", None)] = out[("align", None)] * A.gain[0] + A.gain[1]
     Xte = b.readout.feats(za)
     for lam, (W, c) in A.fewshot.items():
         out[("fewshot", lam)] = Xte @ W + c
@@ -786,6 +813,15 @@ def predict_trial(b: Bundle, A: Adapter, trial, z0=None):
         for a, (W, c) in sol.items():
             out[("scratch", a)] = X2 @ W + c
     return out
+
+
+def fit_gain(yhat, y):
+    """fewshot_gain: per ogni DoF, y ≈ g · ŷ + o con i minimi quadrati sui bin dei 2 trial (2 parametri per DoF)."""
+    g, o = np.empty(y.shape[1]), np.empty(y.shape[1])
+    for j in range(y.shape[1]):
+        A = np.column_stack([yhat[:, j], np.ones(len(y))])
+        g[j], o[j] = np.linalg.lstsq(A, y[:, j], rcond=None)[0]
+    return g, o
 
 
 def folds(sess):
@@ -821,8 +857,8 @@ def eval_rates(sess: Sess, alphas):
 
 
 def concat_r2(sess, preds):
-    y = np.concatenate([t.vel[t.mask] for t in sess.trials])
-    yh = np.concatenate([p[t.mask] for p, t in zip(preds, sess.trials)])
+    y = np.concatenate([t.vel[t.mask] for p, t in zip(preds, sess.trials) if p is not None])
+    yh = np.concatenate([p[t.mask] for p, t in zip(preds, sess.trials) if p is not None])
     return float(r2_vw(y, yh))
 
 
@@ -836,8 +872,8 @@ def adapt_bins(sess):
 # ============================================================================================
 # Pseudo-few-shot sulle held-in: scelta di λ e α
 # ============================================================================================
-def tune_path(method):
-    return XS / "tune" / f"{method}.json"
+def tune_path(method, dim=None):
+    return XS / "tune" / (f"{method}.json" if dim is None else f"{method}_d{dim}.json")
 
 
 def _pick(scores):
@@ -846,27 +882,34 @@ def _pick(scores):
     return best, best in (vals[0], vals[-1])
 
 
-def tune(method, data, seed=0, n_jobs=1):
-    """Modello e readout sui giorni S0-S3, poi le condizioni sulle pseudo-sessioni (S4, S5) con tutte le griglie.
-    λ e α = media più alta dell'R² concatenato sulle pseudo-sessioni."""
+def tune(method, data, seed=0, n_jobs=1, dim=None):
+    """Pseudo-few-shot sulle held-in: metodo e readout (o decoder sui canali) stimati sui giorni S0-S3, poi le condizioni
+    sulle 20 pseudo-sessioni (blocchi di 3 trial di S4 e S5) con tutte le griglie. Ogni pseudo-sessione è esclusa dalla
+    stima del metodo e del readout (anzi lo sono interi i giorni S4 e S5: più severo del leave-one-session-out).
+    λ e α = media più alta dell'R² concatenato; per λ si salva tutta la curva e la si confronta con l'asintoto
+    (λ -> ∞ = align; per ridge_channels = recenter)."""
     ps = pseudo_sessions(data)
     t0 = time.time()
+    b = None
     if method == "rates":
         res = _par(n_jobs, lambda s: eval_rates(s, ALPHA_GRID), ps)
-        b = None
+    elif method == "ridge_channels":
+        dec = ChannelDecoder.fit(heldin(data, PSEUDO_TRAIN_DAYS))
+        res = _par(n_jobs, lambda s: eval_channels(dec, s, LAM_GRID), ps)
     else:
-        b = fit_bundle(method, seed, heldin(data, PSEUDO_TRAIN_DAYS), "pseudo")
+        b = fit_bundle(method, seed, heldin(data, PSEUDO_TRAIN_DAYS), "pseudo", dim=dim)
+        dim = b.model.dim
         res = _par(n_jobs, lambda s: eval_session(b, s, LAM_GRID, ALPHA_GRID, scratch=method != "LFADS"), ps)
     per = {}
     for s, r in zip(ps, res):
         for key, preds in r.items():
             per.setdefault(key, []).append(concat_r2(s, preds))
     mean = {k: float(np.mean(v)) for k, v in per.items()}
-    out = dict(method=method, seed=seed, pseudo_train_days=PSEUDO_TRAIN_DAYS, pseudo_sessions=[s.key for s in ps],
+    out = dict(method=method, dim=dim, seed=seed, pseudo_train_days=PSEUDO_TRAIN_DAYS, pseudo_sessions=[s.key for s in ps],
                seconds=time.time() - t0)
     if b is not None:
         out["bundle"] = {k: v for k, v in b.info.items() if k != "sessions"}
-    for cond in ("zero_shot", "recenter", "align", "fa_native"):
+    for cond in ("zero_shot", "recenter", "align", "fa_native", "fewshot_gain"):
         if (cond, None) in mean:
             out[cond] = dict(mean_r2=mean[(cond, None)], per_session=per[(cond, None)])
     for cond, grid_name in (("fewshot", "lam"), ("scratch", "alpha"), ("ridge_rates", "alpha")):
@@ -875,13 +918,144 @@ def tune(method, data, seed=0, n_jobs=1):
             best, edge = _pick(sc)
             out[cond] = {grid_name: best, "at_edge": edge, "mean_r2": sc[best], "per_session": per[(cond, best)],
                          "grid": {f"{g:.4g}": v for g, v in sorted(sc.items())}}
-    p = tune_path(method)
+    if "fewshot" in out:                                            # asintoto: λ -> ∞ riporta al readout held-in
+        ref = "recenter" if method == "ridge_channels" else "align"
+        f = out["fewshot"]
+        f["asymptote"] = ref
+        f["asymptote_r2"] = mean[(ref, None)]
+        f["gain_over_asymptote"] = f["mean_r2"] - mean[(ref, None)]
+        f["interior"] = not f["at_edge"]
+    name = method if method in ("rates", "ridge_channels") else method
+    p = tune_path(name, None if method in ("rates", "ridge_channels") else dim)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(out, indent=1))
-    log(f"pseudo-few-shot {method}: " + ", ".join(
-        f"{c} {out[c]['mean_r2']:.3f}" + (f" ({g} {out[c][g]:.3g}{' AL BORDO' if out[c]['at_edge'] else ''})" if g else "")
-        for c, g in (("zero_shot", None), ("recenter", None), ("align", None), ("fa_native", None),
+    if "fewshot" in out:                                            # la curva R²(λ), anche in CSV
+        with open(p.with_suffix(".lambda_curve.csv"), "w") as fh:
+            fh.write("lam,mean_r2\n" + "".join(f"{float(k)!r},{v!r}\n" for k, v in out["fewshot"]["grid"].items()))
+    log(f"pseudo-few-shot {method} (d = {dim}): " + ", ".join(
+        f"{c} {out[c]['mean_r2']:.4f}" + (f" ({g} {out[c][g]:.3g}{' AL BORDO' if out[c]['at_edge'] else ''})" if g else "")
+        for c, g in (("zero_shot", None), ("recenter", None), ("align", None), ("fa_native", None), ("fewshot_gain", None),
                      ("fewshot", "lam"), ("scratch", "alpha"), ("ridge_rates", "alpha")) if c in out))
+    return out
+
+
+# ============================================================================================
+# Riferimento: il decoder ridge causale sui canali (05), stessa scala di condizioni
+# ============================================================================================
+class ChannelDecoder:
+    """Decoder ridge causale sui 176 canali del 05 (models/ridge_h50.npz, commit b797b3e): z-score per canale con media
+    e deviazione held-in, storia di H = 50 bin, W e b. Allenato sui file interi; qui si applica trial per trial (la storia
+    riparte a ogni trial), come tutti gli altri metodi. Condizioni: zero_shot, recenter (media dei 2 trial al posto di
+    quella held-in), fewshot (recenter + ridge verso i pesi held-in), fewshot_gain (recenter + guadagno e offset)."""
+
+    def __init__(self, W, b, mu, sd, H):
+        self.W, self.b, self.mu, self.sd, self.H = W, b, mu, sd, int(H)
+
+    @classmethod
+    def load(cls, path=RIDGE_H50):
+        m = np.load(path)
+        return cls(m["W"], m["b"], m["mu"], m["sd"], int(m["H"]))
+
+    @classmethod
+    def fit(cls, sessions, H=50, alpha=10 ** 4.5):
+        """Stessa ricetta di scripts/05_ridge_fit_final.py (file interi = trial in fila, scaler su tutti i bin, stima sui
+        bin con eval_mask, α 10^4.5); serve per lo pseudo-few-shot (giorni S0-S3)."""
+        import scipy.linalg
+        files = [np.concatenate([t.counts_all for t in s.trials]).astype(np.float32) for s in sessions]
+        vels = [np.concatenate([t.vel for t in s.trials]) for s in sessions]
+        masks = [np.concatenate([t.mask for t in s.trials]) for s in sessions]
+        allc = np.concatenate(files)
+        mu, sd = allc.mean(0), allc.std(0)
+        sd[sd == 0] = 1.0
+        del allc
+        p = files[0].shape[1] * H
+        G, g, sx, sy, n = np.zeros((p, p)), np.zeros((p, 7)), np.zeros(p), np.zeros(7), 0
+        for c, v, m in zip(files, vels, masks):
+            X = lagged((c - mu) / sd, H)
+            rows = np.flatnonzero(m)
+            for i in range(0, len(rows), 2000):
+                r = rows[i:i + 2000]
+                Xc, y = X[r].astype(np.float64), v[r]
+                G += Xc.T @ Xc; g += Xc.T @ y; sx += Xc.sum(0); sy += y.sum(0); n += len(r)
+            del X
+        mx, my = sx / n, sy / n
+        G -= n * np.outer(mx, mx)
+        G[np.diag_indices(p)] += alpha
+        W = scipy.linalg.solve(G, g - n * np.outer(mx, my), assume_a="pos", overwrite_a=True)
+        return cls(W, my - mx @ W, mu.astype(np.float64), sd.astype(np.float64), H)
+
+    def feats(self, counts_all, mu=None):
+        z = (counts_all.astype(np.float64) - (self.mu if mu is None else mu)) / self.sd
+        return lagged(z.astype(np.float32), self.H).astype(np.float64)
+
+    def predict(self, counts_all, mu=None):
+        return self.feats(counts_all, mu) @ self.W + self.b
+
+
+def eval_channels(dec: ChannelDecoder, sess: Sess, lams):
+    tr = sess.trials
+    out = {}
+
+    def put(key, k, y):
+        out.setdefault(key, [None] * len(tr))[k] = y
+
+    for k, ad in folds(sess):
+        tad = [tr[j] for j in ad]                                   # adattamento: solo i 2 trial
+        mu_a = np.concatenate([t.counts_all for t in tad]).astype(np.float64).mean(0)
+        X = np.concatenate([dec.feats(t.counts_all, mu_a)[t.mask] for t in tad])
+        Y = np.concatenate([t.vel[t.mask] for t in tad])
+        few = ridge_solve(X, Y, lams, np.vstack([dec.W, dec.b[None, :]]), intercept="prior")
+        gain = fit_gain(X @ dec.W + dec.b, Y)
+        del X
+        t = tr[k]                                                   # test
+        put(("zero_shot", None), k, dec.predict(t.counts_all))
+        Xt = dec.feats(t.counts_all, mu_a)
+        rec = Xt @ dec.W + dec.b
+        put(("recenter", None), k, rec)
+        put(("fewshot_gain", None), k, rec * gain[0] + gain[1])
+        for lam, (W, c) in few.items():
+            put(("fewshot", lam), k, Xt @ W + c)
+    return out
+
+
+# ============================================================================================
+# Diagnosi del moment matching senza deriva tra giorni (sessioni held-in)
+# ============================================================================================
+def diag_within(b: Bundle, sess: Sess, block=3):
+    """In una sessione held-in, per ogni blocco di 3 trial consecutivi: sorgente = gli ALTRI trial della stessa sessione
+    (readout ristimato su di loro con α held-in scalato con il numero di bin; momenti dei loro latenti; media d'ingresso),
+    rotazione leave-one-trial-out dentro il blocco come sulle held-out (2 trial adattano, 1 testa). Il metodo (manifold)
+    resta quello held-in. Condizioni: no_adapt, recenter, align. Fra sorgente e blocco non c'è deriva tra giorni:
+    se align peggiora qui, il calo non viene dalla deriva ma da come i 2 trial rappresentano la sessione."""
+    M = b.model
+    tr = sess.trials
+    n = len(tr)
+    reps = [rep(t, M.rep) for t in tr]
+    lat = M.encode(reps)
+    out = {}
+
+    def put(key, k, y):
+        out.setdefault(key, [None] * n)[k] = y
+
+    for j in range(n // block):
+        blk = list(range(block * j, block * (j + 1)))
+        rest = [i for i in range(n) if i not in blk]
+        Zr = [lat[i] for i in rest]
+        mu_s, C_s = moments(np.concatenate(Zr))
+        sd = np.sqrt(np.diag(C_s))
+        rd = Readout(mu_s, np.where(sd > 1e-12, sd, 1.0))
+        X, Y = rd.train_rows(Zr, [tr[i] for i in rest])
+        alpha = b.readout.alpha * sum(len(tr[i]) for i in rest) / b.info["n_bins"]
+        rd.W, rd.b = ridge_solve(X, Y, [alpha])[alpha]
+        mu_rep_s = np.concatenate([reps[i] for i in rest]).mean(0)
+        for k in blk:
+            ad = [i for i in blk if i != k]
+            put(("no_adapt", None), k, rd.predict(lat[k]))
+            mu_a = np.concatenate([reps[i] for i in ad]).mean(0)
+            z = M.encode([reps[i] - mu_a + mu_rep_s for i in ad + [k]])
+            put(("recenter", None), k, rd.predict(z[-1]))
+            f = MomentMatch(np.concatenate(z[:-1]), mu_s, C_s)
+            put(("align", None), k, rd.predict(f(z[-1])))
     return out
 
 
@@ -895,28 +1069,32 @@ def _par(n_jobs, fn, items):
 # ============================================================================================
 # Registro: chiavi, run già fatti, scrittura
 # ============================================================================================
-def run_keys(method, dim, session, condition, seed, fold=None):
-    return dict(esperimento=EXPERIMENT, method=method, latent_dim=dim, decoder=DECODER, session=session, bins=BINS,
-                split=SPLIT, condition=condition, fold=fold, k_shot=0 if condition == "zero_shot" else K_SHOT,
+def run_keys(method, dim, session, condition, seed, fold=None, experiment=EXPERIMENT, split=SPLIT, decoder=DECODER):
+    return dict(esperimento=experiment, method=method, latent_dim=dim, decoder=decoder, session=session, bins=BINS,
+                split=split, condition=condition, fold=fold, k_shot=0 if condition in NO_ADAPT else K_SHOT,
                 H_ms=H_MS, seed=seed)
 
 
 def expected_conditions(method):
     if method == "rates":
         return ["ridge_rates"]
-    c = ["zero_shot", "recenter", "align", "fewshot"] + (["scratch"] if method != "LFADS" else [])
+    if method == "ridge_channels":
+        return ["zero_shot", "recenter", "fewshot", "fewshot_gain"]
+    c = ["zero_shot", "recenter", "align", "fewshot", "fewshot_gain"] + (["scratch"] if method != "LFADS" else [])
     return c + (["fa_native"] if method == "FA" else [])
 
 
-def done_runs(path=None):
-    """{(method, seed, session, condition)} con la riga concat dell'R² già nel registro."""
+def done_runs(path=None, experiment=EXPERIMENT, dim="any"):
+    """{(method, seed, session, condition)} con la riga concat dell'R² già nel registro (esperimento e, se dato, d)."""
     import pandas as pd
     from . import results as res
     p = Path(path or res.RUNS)
     if not p.exists():
         return set()
     df = res.load_runs(p)
-    df = df[(df.esperimento == EXPERIMENT) & (df.fold == "concat") & (df.metrica == "r2")]
+    df = df[(df.esperimento == experiment) & (df.fold == "concat") & (df.metrica == "r2")]
+    if dim != "any":
+        df = df[df.latent_dim.isna()] if dim is None else df[df.latent_dim == dim]
     return {(str(m), None if pd.isna(s) else int(s), str(ss), str(c))
             for m, s, ss, c in zip(df.method, df.seed, df.session, df.condition)}
 
@@ -924,18 +1102,22 @@ def done_runs(path=None):
 HP_NAME = {"fewshot": "lam", "scratch": "alpha", "ridge_rates": "alpha"}
 
 
-def log_session(method, dim, sess, preds, seed, alpha_src=None):
-    """Registra 3 fold + concat per ogni condizione. Negli iperparametri (metriche in più del fold): λ, α, α held-in."""
+def log_session(method, dim, sess, preds, seed, alpha_src=None, experiment=EXPERIMENT, split=SPLIT, decoder=DECODER):
+    """Registra i fold (quelli con una previsione) + concat per ogni condizione. Negli iperparametri (metriche in più
+    del fold): λ, α, α held-in."""
     from . import results as res
     for (cond, hp), yh in preds.items():
         extra = {HP_NAME[cond]: hp} if hp is not None else {}
         if alpha_src is not None and cond != "ridge_rates":
             extra["alpha_src"] = alpha_src
-        for k, (t, y) in enumerate(zip(sess.trials, yh)):
-            res.log_fold(t.vel, y, t.mask, extra=extra or None, **run_keys(method, dim, sess.key, cond, seed, fold=k))
-        kk = run_keys(method, dim, sess.key, cond, seed)
+        kw = dict(experiment=experiment, split=split, decoder=decoder)
+        done = [k for k, y in enumerate(yh) if y is not None]
+        for k in done:
+            t = sess.trials[k]
+            res.log_fold(t.vel, yh[k], t.mask, extra=extra or None, **run_keys(method, dim, sess.key, cond, seed, fold=k, **kw))
+        kk = run_keys(method, dim, sess.key, cond, seed, **kw)
         kk.pop("fold")
-        res.log_concat(list(range(len(sess.trials))), **kk)
+        res.log_concat(done, **kk)
 
 
 def code_hash(*objs):

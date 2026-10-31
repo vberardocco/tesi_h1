@@ -132,6 +132,47 @@ check("6. ...ma entra negli altri fold (dove è un trial di adattamento)",
       not np.array_equal(p1[("fewshot", 10.0)][0], p3[("fewshot", 10.0)][0]))
 check("6. condizioni attese per PCA", sorted({k[0] for k in p1}) == sorted(xs.expected_conditions("PCA")))
 
+# 7. fewshot_gain: guadagno e offset per DoF con i minimi quadrati
+yh7 = rng.normal(size=(500, 7))
+g_true, o_true = rng.uniform(0.5, 2, 7), rng.normal(size=7)
+g7, o7 = xs.fit_gain(yh7, yh7 * g_true + o_true)
+check("7. fit_gain ritrova guadagno e offset", np.allclose(g7, g_true) and np.allclose(o7, o_true))
+A7 = xs.adapt(b, [tr[0], tr[1]], [10.0], [10.0])
+pr7 = xs.predict_trial(b, A7, tr[2])
+check("7. fewshot_gain = align × guadagno + offset", np.allclose(pr7[("fewshot_gain", None)],
+                                                                 pr7[("align", None)] * A7.gain[0] + A7.gain[1]))
+
+# 8. decoder sui canali: la stima di ChannelDecoder.fit = la ricetta del 05 (RidgeHistory), con H piccolo
+from tesi_h1 import decoding as dec_mod  # noqa: E402
+for t in train + tr + [alt, tr_v]:
+    t.counts_all = t.counts
+H8 = 3
+cd = xs.ChannelDecoder.fit(sess_like, H=H8, alpha=10.0)
+files = [np.concatenate([t.counts for t in s_.trials]).astype(np.float32) for s_ in sess_like]
+N_CH0 = dec_mod.N_CH
+dec_mod.N_CH = C                                                  # la ricetta del 05 è scritta per 176 canali
+rh = dec_mod.RidgeHistory(H8).fit_scaler(files)
+rh.accumulate(files, [np.concatenate([t.vel for t in s_.trials]) for s_ in sess_like],
+              [np.concatenate([t.mask for t in s_.trials]) for s_ in sess_like])
+(W8, b8), = rh.solve(H8, [10.0]).values()
+dec_mod.N_CH = N_CH0
+check("8. ChannelDecoder.fit = RidgeHistory del 05", np.allclose(cd.W, W8, atol=1e-8) and np.allclose(cd.b, b8, atol=1e-8)
+      and np.allclose(cd.mu, rh.mu) and np.allclose(cd.sd, rh.sd))
+pc1 = xs.eval_channels(cd, s1, [10.0, 1e12])
+pc3 = xs.eval_channels(cd, xs.Sess("S9_set_1", "S9", "x", "held_out", [tr[0], tr[1], tr_v]), [10.0, 1e12])
+check("8. ridge_channels: la cinematica del trial di test non entra nelle sue previsioni",
+      all(np.array_equal(pc1[k][2], pc3[k][2]) for k in pc1))
+check("8. ridge_channels: λ -> ∞ = recenter", np.allclose(pc1[("fewshot", 1e12)][2], pc1[("recenter", None)][2], atol=1e-6))
+check("8. condizioni attese per ridge_channels",
+      sorted({k[0] for k in pc1}) == sorted(xs.expected_conditions("ridge_channels")))
+
+# 9. diagnosi dentro la sessione: solo i trial dei blocchi, tre condizioni
+sess9 = xs.Sess("S1_set_1", "S1", "x", "held_in", [fake_trial(200 + i) for i in range(8)])
+d9 = xs.diag_within(b, sess9)
+check("9. diag_within: no_adapt, recenter, align sui 6 trial dei 2 blocchi",
+      sorted(k[0] for k in d9) == ["align", "no_adapt", "recenter"]
+      and all([y is not None for y in v] == [True] * 6 + [False] * 2 for v in d9.values()))
+
 print()
 shutil.rmtree(TMP, ignore_errors=True)
 if FAIL:
