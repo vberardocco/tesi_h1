@@ -321,10 +321,12 @@ def main():
            f"Registro: {res.RUNS}. R² concatenato sui 3 fold, media sui semi; unità = sessione.\n",
            "## Mediana [IQR] (n) per metodo × condizione\n", md + "\n",
            "## Wilcoxon tra condizioni consecutive (Holm dentro ogni metodo)\n",
+           "Differenze = to − from; r_rb > 0 e n_better = sessioni in cui `to` è migliore.\n\n",
            md_table(W, ["method", "from", "to", "n", "W", "p", "p_holm", "r_rb", "median_diff", "n_better"]) if len(W) else "(vuoto)\n",
            "\n## Friedman tra metodi\n",
            md_table(F, ["condition", "methods", "n", "k", "chi2", "p", "kendall_W"]) if len(F) else "(vuoto)\n",
            "\n## Wilcoxon tra metodi a coppie (Holm dentro ogni condizione)\n",
+           "Differenze = method_b − method_a; r_rb > 0 e n_better = sessioni in cui method_b è migliore.\n\n",
            md_table(B, ["condition", "method_a", "method_b", "n", "W", "p", "p_holm", "r_rb", "median_diff", "n_better"]) if len(B) else "(vuoto)\n",
            "\n## Zero-shot contro i giorni (descrittivo)\n",
            md_table(Z, ["method", "condition", "n", "slope_per_day", "ci_low", "ci_high", "spearman_rho", "spearman_p",
@@ -333,6 +335,9 @@ def main():
            f"Tutti i bin: min {A.bins.min()}, mediana {A.bins.median():.0f}, max {A.bins.max()}; con eval_mask: "
            f"min {A.bins_mask.min()}, mediana {A.bins_mask.median():.0f}, max {A.bins_mask.max()} (42 fold).\n\n",
            md_table(summ, ["method", "latent_dim", "readout_weights_per_dof", "bins_mask_min", "ratio_min"]),
+           "\n## Verifica sui latenti a 3 dimensioni (esplorativa, non nel piano)\n",
+           (open(OUT / "diag_3d_within_session.csv").read().replace("# ", "") if (OUT / "diag_3d_within_session.csv").exists()
+            else "(non presente)\n"),
            "\n## Pseudo-few-shot sulle held-in (scelte congelate)\n",
            md_table(TU, [c for c in ["method", "heldin_alpha_src", "heldin_lodo_r2", "pseudo_zero_shot", "pseudo_recenter",
                                      "pseudo_align", "pseudo_fa_native", "pseudo_fewshot", "lam", "lam_at_edge",
