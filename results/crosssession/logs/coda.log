@@ -53,3 +53,6 @@
 2026-10-31 15:07:07 [cebra2] FINE   xs_CEBRA_s2
 2026-10-31 15:07:07 [cebra2] corsia terminata
 2026-10-31 15:07:13 [lfads1] INIZIO commit_LFADS (tentativo 1)
+2026-10-31 15:07:17 [lfads1] FINE   commit_LFADS
+2026-10-31 15:07:17 [lfads1] corsia terminata
+2026-10-31 15:07:39 [cebra1] INIZIO commit_CEBRA (tentativo 1)
