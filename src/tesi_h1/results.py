@@ -168,6 +168,8 @@ def running_files() -> list[Path]:
     for f in cands:
         if not f or not str(f).endswith(".py"):
             continue
+        if not Path(f).is_absolute():                # nomi finti senza file (torch._classes, torch._ops: "_classes.py")
+            continue
         p = Path(f).resolve()
         if any(_inside(p, r) for r in roots) and not any(_inside(p, e) for e in excl):
             out.add(p)

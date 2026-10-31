@@ -187,6 +187,16 @@ c, pr = res.code_version([TMP / "fuori.py"], start=time.time() + 10)
 check("7. file fuori da work e git -> -dirty", c.endswith("-dirty") and "fuori da" in pr[0], f"{c} {pr}")
 head = subprocess.run(["git", "-C", str(res.GIT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
 check("7. l'hash è quello di HEAD in ~/tesi_h1_git", c.split("-")[0] == head, f"{c} vs {head}")
+import types  # noqa: E402
+fake = types.ModuleType("finto_ops")
+fake.__file__ = "_ops.py"                                  # come torch._ops / torch._classes: nome relativo, nessun file
+sys.modules["finto_ops"] = fake
+_cwd = os.getcwd()
+os.chdir(res.WORK)                                         # il caso vero: i run partono da ~/tesi_h1_work
+check("7. modulo con __file__ relativo (torch._ops) ignorato", all(p.name != "_ops.py" for p in res.running_files()),
+      str([str(p) for p in res.running_files()]))
+os.chdir(_cwd)
+del sys.modules["finto_ops"]
 
 # 8. giorni dall'ultima sessione held-in, da sessions.csv
 shutil.copy2(res.WORK / "results/sessions.csv", TMP / "sessions.csv")
