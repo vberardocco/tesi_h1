@@ -18,3 +18,7 @@
 2026-10-31 13:47:07 [cpu] INIZIO xs_GPFA (tentativo 1)
 2026-10-31 14:06:11 [cpu] FINE   xs_GPFA
 2026-10-31 14:06:11 [cpu] INIZIO commit_GPFA (tentativo 1)
+2026-10-31 14:06:16 [cpu] FINE   commit_GPFA
+2026-10-31 14:06:16 [cpu] INIZIO xs_Isomap (tentativo 1)
+2026-10-31 14:07:30 [cpu] FINE   xs_Isomap
+2026-10-31 14:07:30 [cpu] INIZIO commit_Isomap (tentativo 1)
