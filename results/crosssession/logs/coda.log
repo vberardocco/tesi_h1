@@ -10,3 +10,7 @@
 2026-10-31 13:39:25 [cpu] INIZIO xs_PCA (tentativo 1)
 2026-10-31 13:41:11 [cpu] FINE   xs_PCA
 2026-10-31 13:41:11 [cpu] INIZIO commit_PCA (tentativo 1)
+2026-10-31 13:41:15 [cpu] FINE   commit_PCA
+2026-10-31 13:41:15 [cpu] INIZIO xs_FA (tentativo 1)
+2026-10-31 13:47:03 [cpu] FINE   xs_FA
+2026-10-31 13:47:03 [cpu] INIZIO commit_FA (tentativo 1)
