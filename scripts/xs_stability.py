@@ -18,13 +18,13 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
-sys.path.insert(0, str(REPO / "scripts"))
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from scipy import stats  # noqa: E402
 
 from tesi_h1 import crosssession as xs  # noqa: E402
 from tesi_h1 import io  # noqa: E402
+from tesi_h1 import palette as pal  # noqa: E402
 from tesi_h1 import results as res  # noqa: E402
 from tesi_h1 import stability as st  # noqa: E402
 
@@ -238,7 +238,6 @@ def fmt(x, nd=3):
 
 
 def analysis():
-    import xs_analysis as xa
     B = pd.read_csv(OUT / "blocks.csv")
     P = pd.read_csv(OUT / "pairs.csv")
     MP = pd.read_csv(OUT / "model_pairs.csv")
@@ -336,19 +335,19 @@ def analysis():
     per = pd.DataFrame(dict(index_vs_frozen=x, angle_vs_frozen=HO[f"angle_k{K0}"], index_median_vs_heldin_blocks=med_blocks,
                             fa_zero_shot=y, fa_align_minus_recenter=gain, days_since_heldin=gday))
     per.to_csv(OUT / "heldout_sessions.csv", index_label="session")
-    figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa)
+    figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T)
     report(T, meta, B, K0)
 
 
-def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa):
+def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
-    ink, ink2 = xa.INK, xa.INK2
-    tcol = {"held-in–held-in": (xa.CAT[0], "o"), "held-in–held-out": (xa.CAT[1], "s"),
-            "held-out–held-out": (xa.CAT[2], "^")}
+    ink, ink2 = pal.INK, pal.INK2
+    tcol = {"held-in–held-in": (pal.CAT[0], "o"), "held-in–held-out": (pal.CAT[1], "s"),
+            "held-out–held-out": (pal.CAT[2], "^")}
     chance_ls = {"allbins": ("--", "chance, all-bins cov."), "cond": (":", "chance, condition-mean cov."),
                  "unif": ("-.", "chance, uniform")}
     # Figura E: indice e angolo contro i giorni di distanza, per k = 15 e k = 5
@@ -356,10 +355,10 @@ def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa):
         fig, axes = plt.subplots(1, 2, figsize=(13, 5.2), layout="constrained")
         for ax, meas, pc, lab in ((axes[0], "index", "p95", "alignment index (shared covariance)"),
                                   (axes[1], "angle", "p5", "mean principal angle (deg)")):
-            xa._style(ax)
+            pal.style_axes(ax)
             col = f"{meas}_k{k}"
             q1, q2, q3 = W[col].quantile([.25, .5, .75])
-            ax.axhspan(q1, q3, color=xa.GRID, alpha=0.9, lw=0, zorder=0)
+            ax.axhspan(q1, q3, color=pal.GRID, alpha=0.9, lw=0, zorder=0)
             ax.axhline(q2, color=ink2, lw=1.2, zorder=1)
             xmax = X.ddays.max()
             for v, (ls, _) in chance_ls.items():
@@ -380,7 +379,7 @@ def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa):
             pct = f"{pc[1:]}th perc."
             handles = [Line2D([], [], color=c, marker=mk, lw=0, ms=6, label=f"{t} (median per pair of days)")
                        for t, (c, mk) in tcol.items()]
-            handles.append(Patch(color=xa.GRID, label="same session: IQR, line = median"))
+            handles.append(Patch(color=pal.GRID, label="same session: IQR, line = median"))
             handles += [Line2D([], [], color=ink2, lw=1, ls=ls, label=f"{lab_c} ({pct}, median over pairs)")
                         for ls, lab_c in chance_ls.values()]
             ax.legend(handles=handles, frameon=False, fontsize=7.5, loc="upper right" if meas == "index" else "lower right",
@@ -400,15 +399,15 @@ def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa):
     hm = HI[f"index_k{K0}"].median()
 
     def frame(ax, xlabel, ylabel):
-        xa._style(ax)
-        ax.set_xlabel(xlabel, fontsize=9, color=xa.INK2)
-        ax.set_ylabel(ylabel, fontsize=9, color=xa.INK2)
+        pal.style_axes(ax)
+        ax.set_xlabel(xlabel, fontsize=9, color=pal.INK2)
+        ax.set_ylabel(ylabel, fontsize=9, color=pal.INK2)
 
     def ref(ax):
-        ax.axvspan(lo, hi, color=xa.GRID, alpha=0.9, lw=0, zorder=0)
-        ax.axvline(hm, color=xa.INK2, lw=1.2, zorder=1)
+        ax.axvspan(lo, hi, color=pal.GRID, alpha=0.9, lw=0, zorder=0)
+        ax.axvline(hm, color=pal.INK2, lw=1.2, zorder=1)
         c = T["frozen"]["chance_p95_median"]["allbins"]
-        ax.axvline(c, color=xa.INK2, lw=1, ls="--", zorder=1)
+        ax.axvline(c, color=pal.INK2, lw=1, ls="--", zorder=1)
 
     xl = f"alignment index with the decoder's frozen FA (k = {K0})"
     ax = axes[0, 0]
@@ -419,41 +418,41 @@ def figures(P, X, W, HO, HI, r2, x, y, gday, gain, med_blocks, K0, T, xa):
     ax.set_title(f"(a) test: Spearman ρ = {f['rho']:+.2f}, p = {f['p']:.3g} (n = 14; significant only if |ρ| ≥ "
                  f"{f['critical_rho_n14']:.2f})\nday means: ρ = {f['rho_day_means']:+.2f}, p = {f['p_day_means']:.3g} "
                  f"(n = 7; only if |ρ| ≥ {f['critical_rho_n7']:.2f})\npartial on days since held-in: "
-                 f"ρ = {f['rho_partial_days']:+.2f}, p = {f['p_partial_days']:.3g}", fontsize=8.5, color=xa.INK, loc="left")
+                 f"ρ = {f['rho_partial_days']:+.2f}, p = {f['p_partial_days']:.3g}", fontsize=8.5, color=pal.INK, loc="left")
     ax = axes[0, 1]
     frame(ax, xl, "FA R²(align) − R²(recenter)")
     ref(ax)
-    ax.axhline(0, color=xa.INK2, lw=0.8)
+    ax.axhline(0, color=pal.INK2, lw=0.8)
     ax.scatter(x, gain, s=60, c=col_days, edgecolor="white", lw=1.2, zorder=3)
     ax.set_title(f"(b) descriptive: ρ = {T['descriptive_spearman']['FA_align_minus_recenter']:+.2f}", fontsize=8.5,
-                 color=xa.INK, loc="left")
+                 color=pal.INK, loc="left")
     ax = axes[1, 0]
     frame(ax, xl, "zero-shot R²")
     ref(ax)
-    ax.axhline(0, color=xa.INK2, lw=0.8)
+    ax.axhline(0, color=pal.INK2, lw=0.8)
     hs = []
     for m in ("PCA", "GPFA", "LFADS", "ridge_channels"):
         if (m, "zero_shot") not in r2:
             continue
-        c, mk = xa.METHOD_STYLE[m]
+        c, mk = pal.METHOD_STYLE[m]
         ax.scatter(x, r2[(m, "zero_shot")].reindex(x.index), s=36, color=c, marker=mk, edgecolor="white", lw=1, zorder=3)
         hs.append(Line2D([], [], color=c, marker=mk, lw=0, ms=6,
                          label=f"{m} (ρ = {T['descriptive_spearman'][f'{m}_zero_shot']:+.2f})"))
     ax.legend(handles=hs, frameon=False, fontsize=7.5, loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2)
-    ax.set_title("(c) descriptive: same index, zero-shot of the other methods", fontsize=8.5, color=xa.INK, loc="left")
+    ax.set_title("(c) descriptive: same index, zero-shot of the other methods", fontsize=8.5, color=pal.INK, loc="left")
     ax = axes[1, 1]
     frame(ax, f"median alignment index with the 54 held-in blocks (k = {K0}, block z-score)", "FA zero-shot R²")
     ax.scatter(med_blocks, y, s=60, c=col_days, edgecolor="white", lw=1.2, zorder=3)
     ax.set_title(f"(d) descriptive: ρ = {T['descriptive_spearman']['median_vs_heldin_blocks__FA_zero_shot']:+.2f}",
-                 fontsize=8.5, color=xa.INK, loc="left")
+                 fontsize=8.5, color=pal.INK, loc="left")
     sm = matplotlib.cm.ScalarMappable(cmap=matplotlib.colors.ListedColormap(cmap(np.linspace(0.35 + 0.65 * (6 - 4) / 16, 1, 64))),
                                       norm=matplotlib.colors.Normalize(6, 20))
     cb = fig.colorbar(sm, ax=axes[:, 1], shrink=0.5, pad=0.02)
-    cb.set_label("days since last held-in session", fontsize=8.5, color=xa.INK2)
-    cb.ax.tick_params(labelsize=8, colors=xa.INK2)
+    cb.set_label("days since last held-in session", fontsize=8.5, color=pal.INK2)
+    cb.ax.tick_params(labelsize=8, colors=pal.INK2)
     fig.suptitle("14 held-out sessions, colour = days since the last held-in session. Grey band = held-in blocks vs the FA "
                  "fit without their day (IQR, line = median);\ndashed line = chance (all-bins covariance, median 95th "
-                 "percentile)", fontsize=9, color=xa.INK, x=0.01, ha="left")
+                 "percentile)", fontsize=9, color=pal.INK, x=0.01, ha="left")
     fig.savefig(OUT / "fig_F_alignment_vs_zero_shot.png", dpi=160)
     plt.close(fig)
 

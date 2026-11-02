@@ -25,6 +25,7 @@ from scipy import stats  # noqa: E402
 from statsmodels.stats.multitest import multipletests  # noqa: E402
 
 from tesi_h1 import crosssession as xs  # noqa: E402
+from tesi_h1 import palette as pal  # noqa: E402
 from tesi_h1 import results as res  # noqa: E402
 
 OUT = res.RESULTS / "crosssession"
@@ -35,12 +36,9 @@ REFS = ["ridge_channels", "rates"]
 ROWS = METHODS + REFS
 CONDS = ["zero_shot", "recenter", "align", "fa_native", "fewshot", "fewshot_gain", "scratch", "ridge_rates"]
 N_SESS = 14
-# tavolozza categoriale di riferimento (ordine fisso); testo in inchiostro neutro
-CAT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
-COND_STYLE = {"zero_shot": (CAT[0], "o"), "recenter": (CAT[1], "s"), "align": (CAT[2], "^"), "fewshot": (CAT[3], "D"),
-              "fewshot_gain": (CAT[5], "X"), "scratch": (CAT[4], "v"), "fa_native": (CAT[6], "P")}
-METHOD_STYLE = {m: (CAT[i], mk) for i, (m, mk) in enumerate(zip(METHODS + ["ridge_channels"], "osD^vPXh"))}
-INK, INK2, GRID, RATES = "#0b0b0b", "#52514e", "#e4e3df", "#7a7975"
+# colori e marcatori comuni a tutte le figure della tesi (src/tesi_h1/palette.py); testo in inchiostro neutro
+CAT, COND_STYLE, METHOD_STYLE = pal.CAT, pal.COND_STYLE, pal.METHOD_STYLE
+INK, INK2, GRID, RATES = pal.INK, pal.INK2, pal.GRID, pal.NEUTRAL
 
 
 def chain(m):
@@ -349,14 +347,7 @@ def adapt_bins():
 # --------------------------------------------------------------------------------------------
 # Figure
 # --------------------------------------------------------------------------------------------
-def _style(ax):
-    ax.grid(True, color=GRID, lw=0.6)
-    ax.set_axisbelow(True)
-    for s in ("top", "right"):
-        ax.spines[s].set_visible(False)
-    for s in ("left", "bottom"):
-        ax.spines[s].set_color(INK2)
-    ax.tick_params(colors=INK2, labelsize=8)
+_style = pal.style_axes
 
 
 def _day_curve(d):

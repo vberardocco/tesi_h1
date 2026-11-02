@@ -29,8 +29,8 @@ DANDI:001046), riadattandola al nuovo dataset.
 | §3.3 — GPFA e il prior temporale | 02_new §10 |
 | §3.5 — i metodi lineari sovrastimano la dimensionalità intrinseca | 02_new §9.6; 03 §5 |
 | Sezione 4 — metodi non lineari (Isomap, UMAP, CEBRA, LFADS) | 03, 04 |
-| §3.4 e §5.1 — jPCA, rotazioni (Churchland 2012), *tangling* (Russo 2018) | non presenti nei notebook attuali |
-| §5.5 / §6.2 — stabilità del manifold tra sessioni e drift | non presenti nei notebook attuali |
+| §3.4 e §5.1 — jPCA, rotazioni (Churchland 2012), *tangling* (Russo 2018) | non calcolati: sviluppi futuri (decisione del 2/11/2026) |
+| §5.5 / §6.2 — stabilità del manifold tra sessioni e drift | protocollo cross-sessione: `docs/crosssession_protocol.md`, `results/conclusions_crosssession.md` (§5 e §7) |
 
 ## Struttura
 
@@ -38,8 +38,18 @@ DANDI:001046), riadattandola al nuovo dataset.
 tesi_h1/
 ├── data/raw -> ~/000954         # symlink al dandiset scaricato (40 file NWB)
 ├── src/tesi_h1/io.py            # caricamento NWB, binning, segmentazione in trial e fasi
+├── src/tesi_h1/decoding.py      # ridge causale con storia, evaluator locale, decoder in streaming (05)
+├── src/tesi_h1/crosssession.py  # protocollo cross-sessione few-shot (14 held-out)
+├── src/tesi_h1/stability.py     # stabilità dei sottospazi FA (indice di allineamento, caso, test)
+├── src/tesi_h1/fa_decoder.py    # ridge sulle latenti FA in streaming (tabella B)
+├── src/tesi_h1/palette.py       # colori e marcatori dei metodi, comuni a tutte le figure degli script
+├── src/tesi_h1/results.py       # registro dei run (results/h1_runs.csv)
 ├── notebooks/                   # notebook eseguiti, con output e figure incorporate
-├── figures/                     # figure esportate in PNG
+├── figures/                     # figure esportate in PNG dai notebook
+├── rep/                         # repliche su S2 e S5 e tabelle di confronto
+├── scripts/                     # run e analisi (05_*, xs_*, figure e tabelle finali)
+├── results/                     # registro, tabelle (B, tempi), figure A-F, conclusioni
+├── docs/crosssession_protocol.md
 └── environment.yml
 ```
 
