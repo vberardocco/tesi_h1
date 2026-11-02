@@ -249,3 +249,11 @@ il 5° percentile del caso).
 - **Limiti da dichiarare**: 14 sessioni su 7 giorni; l'indice usa tutti e 3 i trial, compresi quelli su cui si valuta
   lo zero-shot (è una correlazione descrittiva, sull'indice non si stima niente); i blocchi held-out sono i primi 3
   trial del file, quelli held-in vengono da tutto il file.
+
+### Note dopo l'esecuzione della stabilità (2/11/2026)
+- Eseguita con il codice cdf90b1 (10:47-11:13; registro pulito, 2 844 righe `fa_stability`). Unica modifica rispetto al
+  piano, fatta prima dell'esecuzione: le chiavi del registro (session = file, fold = blocco), vedi sopra.
+- Prima del run, una prova completa con 10 estrazioni del caso in una cartella temporanea (fuori dal registro) per
+  verificare il codice e l'impaginazione delle figure; gli indici e gli angoli osservati non dipendono dalle estrazioni.
+- La FA congelata del decoder è riprodotta dalla ricetta (max |Δ loading| = 5.7·10⁻¹⁵); nessun canale con sd = 0 nei
+  blocchi, 543 (canale, blocco) su 11 560 con sd < sd_min.

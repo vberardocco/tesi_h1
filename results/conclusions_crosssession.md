@@ -375,3 +375,61 @@ So the "content of the 2 trials" that matters is not captured by which condition
   - Isomap and UMAP fit on at most 5,000 held-in points.
   - A single readout family (ridge with history).
   - Map hyperparameters frozen from the earlier notebooks.
+
+## 7. Stability of FA subspaces and zero-shot R² (added 2 November 2026)
+
+Plan written before any index was computed (`docs/crosssession_protocol.md`, section of 2/11; commit 26be985), run with
+code cdf90b1 (registry experiment `fa_stability`). Full numbers in `results/crosssession/stability/report.md`; figures
+`fig_E_stability_by_days_k15.png` (k = 5: `_k5`) and `fig_F_alignment_vs_zero_shot.png`.
+
+- **Setup.**
+  - FA with K = 15, as in the decoder, on blocks of 3 consecutive trials: 54 held-in blocks and the 14 held-out files.
+    Held-in and held-out subspaces are therefore estimated from the same amount of data.
+  - Primary measure: alignment index (Elsayed et al. 2016) on the shared covariance L Lᵀ, mean of both directions;
+    1 = same subspace. Secondary: mean principal angle.
+  - Chance: random subspaces drawn from a covariance (all bins, condition means, uniform), 500 draws per pair.
+- **A 3-trial FA subspace is estimable.** Two blocks of the same held-in session have a median index of 0.50
+  [IQR 0.48, 0.53]. That is far above the 95th percentile of all three chance versions (0.10–0.18). The angle is 54°,
+  against a chance 5th percentile of 73–74°. So the estimability rule passes and the tests use k = 15 (k = 5: 0.71
+  against ≤ 0.15).
+- **Same day ≈ same session.** Blocks from the two files of one day reach 0.49 (held-in) and 0.52 (held-out), the
+  same level as the same-session reference.
+- **The subspaces drift with the days between blocks.** Same-session pairs are excluded; 2,183 pairs remain.
+  - Mantel test: ρ = −0.50, p = 0.0008 (permutation of the 13 days).
+  - Slope: −0.0030 index per day (95% CI −0.0051 to −0.0017, bootstrap on days).
+  - The angle (ρ = +0.60) and k = 5 (ρ = −0.55) agree.
+  - Descriptively, most of the drop comes in the first ~10 days. The median index is 0.49 at 0 days, 0.46 at 1–5,
+    0.41 at 6–10, then 0.40–0.42 up to 20 days and 0.37 at 31–39.
+  - The index stays far above chance at every distance: the lowest median for a pair of days is 0.32. The shared
+    subspace changes in part, not completely.
+- **Held-out sessions against the decoder's frozen FA.** The comparison uses the decoder's normalization.
+  - Median index 0.295 (range 0.233–0.432), median angle 59.7°.
+  - This is below the held-in reference: held-in blocks against the FA fit without their day give a median of 0.347
+    (IQR 0.312–0.381) and 54.0°.
+  - 12 of 14 sessions exceed all three chance thresholds. The two S8 files do not exceed the all-bins one, which is
+    high on that day (0.33 and 0.30).
+- **No detectable link with zero-shot R² (the test).**
+  - Index against FA zero-shot R²: ρ = +0.19, p = 0.51 (n = 14).
+  - Day means: ρ = +0.39, p = 0.40 (n = 7).
+  - Partial on days since the held-in sessions: ρ = +0.18, p = 0.54.
+  - With n = 14 only |ρ| ≥ 0.54 is detectable (n = 7: ≥ 0.79). The result reads "not detectable with these data",
+    not "no relation".
+  - k = 5 (ρ = +0.20) and the angle (ρ = +0.02) agree.
+- **Descriptive.**
+  - The same index does not track the zero-shot of PCA, GPFA or LFADS (ρ −0.13 to −0.02) or of ridge_channels
+    (−0.37).
+  - It does not track the align − recenter gain of FA either (−0.24).
+  - The median index against the 54 held-in blocks agrees with the frozen-FA index (ρ = +0.80), and it is also
+    unrelated to FA zero-shot (+0.01).
+- **Reading.** The shared FA subspace of 3 trials is reproducible within a day and drifts gradually over days. How
+  far a held-out session has drifted from the decoder's FA does not predict how well the frozen decoder works on it,
+  within what 14 sessions can detect. This fits section 1, where FA zero-shot has no trend with days. One possible
+  reason, not tested: FA zero-shot is close to its floor (median 0.034, range 0.012–0.064), so there is little
+  between-session variance left to explain.
+- **Limitations.**
+  - 14 sessions on 7 days.
+  - The index uses all 3 trials, including the ones on which zero-shot is evaluated. It is a descriptive
+    correlation: nothing is fit on the index.
+  - The held-out blocks are the first 3 trials of each file; the held-in blocks come from the whole file.
+  - Block-versus-block pairs use each block's own z-score (correlation structure). The comparison with the frozen FA
+    uses the decoder's normalization.

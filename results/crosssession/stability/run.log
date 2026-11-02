@@ -1,0 +1,78 @@
+[10:47:10] 68 blocchi, 170 canali
+[10:47:29] FA congelata: ricetta riprodotta, max |Δ loading| = 5.72e-15
+[10:54:30] FA dei blocchi fatte; (canale, blocco) con sd = 0: 0, con sd < 0.1: 543
+[10:55:03]   coppie: blocco 1/68
+[10:55:36]   coppie: blocco 2/68
+[10:56:07]   coppie: blocco 3/68
+[10:56:36]   coppie: blocco 4/68
+[10:57:05]   coppie: blocco 5/68
+[10:57:34]   coppie: blocco 6/68
+[10:58:05]   coppie: blocco 7/68
+[10:58:35]   coppie: blocco 8/68
+[10:59:02]   coppie: blocco 9/68
+[10:59:29]   coppie: blocco 10/68
+[10:59:55]   coppie: blocco 11/68
+[11:00:21]   coppie: blocco 12/68
+[11:00:47]   coppie: blocco 13/68
+[11:01:13]   coppie: blocco 14/68
+[11:01:37]   coppie: blocco 15/68
+[11:02:01]   coppie: blocco 16/68
+[11:02:26]   coppie: blocco 17/68
+[11:02:49]   coppie: blocco 18/68
+[11:03:13]   coppie: blocco 19/68
+[11:03:35]   coppie: blocco 20/68
+[11:03:57]   coppie: blocco 21/68
+[11:04:19]   coppie: blocco 22/68
+[11:04:40]   coppie: blocco 23/68
+[11:05:00]   coppie: blocco 24/68
+[11:05:20]   coppie: blocco 25/68
+[11:05:39]   coppie: blocco 26/68
+[11:05:58]   coppie: blocco 27/68
+[11:06:16]   coppie: blocco 28/68
+[11:06:34]   coppie: blocco 29/68
+[11:06:52]   coppie: blocco 30/68
+[11:07:09]   coppie: blocco 31/68
+[11:07:25]   coppie: blocco 32/68
+[11:07:41]   coppie: blocco 33/68
+[11:07:57]   coppie: blocco 34/68
+[11:08:13]   coppie: blocco 35/68
+[11:08:28]   coppie: blocco 36/68
+[11:08:42]   coppie: blocco 37/68
+[11:08:56]   coppie: blocco 38/68
+[11:09:09]   coppie: blocco 39/68
+[11:09:22]   coppie: blocco 40/68
+[11:09:34]   coppie: blocco 41/68
+[11:09:47]   coppie: blocco 42/68
+[11:09:58]   coppie: blocco 43/68
+[11:10:09]   coppie: blocco 44/68
+[11:10:20]   coppie: blocco 45/68
+[11:10:29]   coppie: blocco 46/68
+[11:10:39]   coppie: blocco 47/68
+[11:10:48]   coppie: blocco 48/68
+[11:10:57]   coppie: blocco 49/68
+[11:11:05]   coppie: blocco 50/68
+[11:11:13]   coppie: blocco 51/68
+[11:11:20]   coppie: blocco 52/68
+[11:11:27]   coppie: blocco 53/68
+[11:11:33]   coppie: blocco 54/68
+[11:11:39]   coppie: blocco 55/68
+[11:11:44]   coppie: blocco 56/68
+[11:11:49]   coppie: blocco 57/68
+[11:11:54]   coppie: blocco 58/68
+[11:11:58]   coppie: blocco 59/68
+[11:12:02]   coppie: blocco 60/68
+[11:12:05]   coppie: blocco 61/68
+[11:12:08]   coppie: blocco 62/68
+[11:12:10]   coppie: blocco 63/68
+[11:12:12]   coppie: blocco 64/68
+[11:12:13]   coppie: blocco 65/68
+[11:12:15]   coppie: blocco 66/68
+[11:12:15]   coppie: blocco 67/68
+[11:12:15]   coppie: blocco 68/68
+[11:12:59] compute finito in 25.8 min
+[11:13:02] Mantel index_k15: ρ = -0.497, p = 0.0008; pendenza -0.00302/giorno [-0.00505, -0.00166]
+[11:13:04] Mantel angle_k15: ρ = +0.601, p = 0.0002; pendenza +0.17899/giorno [+0.11171, +0.28458]
+[11:13:06] Mantel index_k5: ρ = -0.552, p = 0.0004; pendenza -0.00433/giorno [-0.00748, -0.00257]
+[11:13:09] Mantel angle_k5: ρ = +0.517, p = 0.0001; pendenza +0.26728/giorno [+0.15686, +0.46930]
+[11:13:09] Figura F: ρ = +0.191 (p = 0.5129); medie per giorno ρ = +0.393 (p = 0.3956); parziale ρ = +0.180 (p = 0.5394)
+[11:13:11] report: /Users/valerio/tesi_h1_work/results/crosssession/stability/report.md
