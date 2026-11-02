@@ -257,3 +257,27 @@ il 5° percentile del caso).
   verificare il codice e l'impaginazione delle figure; gli indici e gli angoli osservati non dipendono dalle estrazioni.
 - La FA congelata del decoder è riprodotta dalla ricetta (max |Δ loading| = 5.7·10⁻¹⁵); nessun canale con sd = 0 nei
   blocchi, 543 (canale, blocco) su 11 560 con sd < sd_min.
+
+## Tabella B: ridge sulle latenti FA su minival (aggiunta del 2/11/2026)
+
+Scritta **prima** della valutazione. Decisione dell'utente (2/11): una sola valutazione su minival, con le scelte già
+fissate, e nessuna scelta dopo aver visto il risultato.
+- **Modello**: `FA_d15_heldin_s0` così com'è. FA con K = 15 sui 170 canali attivi, z-scorati con media e sd delle held-in;
+  latenti standardizzate con i momenti held-in; readout ridge con 1000 ms di storia, α = 10⁶ scelto leave-one-day-out
+  sulle held-in (R² 0.0709); stimato su tutti i 13 file calib held-in. È esportato in `models/fa15_ridge_h50.npz` da
+  `src/tesi_h1/fa_decoder.py`. Le prove (`tests/test_fa_decoder.py`) verificano che le latenti coincidano con
+  `FactorAnalysis.transform` (10⁻¹⁴), che le predizioni su un trial coincidano con il readout congelato e che lo
+  streaming coincida con il blocco. Lo script ricontrolla l'npz contro il modello congelato prima di valutare.
+- **Valutazione**: `scripts/05_fa_minival.py`, come `scripts/05_ridge_minival_h50.py`. Il numero riportato è
+  "Held In R2 Mean" dell'evaluator ufficiale di FALCON in streaming con batch 4. Batch 1 e il calcolo in blocco con il
+  nostro evaluator servono solo a controllare che coincidano.
+- **Differenza dichiarata prima**: il readout è stato allenato con la storia che riparte a ogni trial. L'evaluator di
+  FALCON per H1 è continuo (non chiama `on_done`), quindi la storia scorre per tutto il file, come per ridge_h50.
+  Cambiano solo i primi 49 bin di ogni trial (nelle prove su trial held-in, predizioni diverse al più di 0.004). Non si
+  corregge: sarebbe un modello diverso da quello del leave-one-day-out 0.071.
+- **Canali**: 170 attivi per la FA, 176 per ridge_h50.
+- **Registro**: esperimento `tabella_b`, decoder `ridge`, H_ms 1000, condition `calib_heldin`; split `minival` e
+  `calib_lodo`. Method `FA` (latent_dim 15) e `counts`: la ridge sui canali (ridge_h50) è importata dal log del 30/10
+  (commit b797b3e), senza una nuova valutazione.
+- **Tabella B** (`results/table_B.{csv,md,tex}`): R² su minival (media dei 6 giorni) e SD sui giorni; R² leave-one-day-out
+  sulle held-in (solo FA: per ridge_h50 storia e α sono stati scelti su 80/20 del calib); giorni e DoF.
