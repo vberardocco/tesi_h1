@@ -1,0 +1,26 @@
+====================================================================================================
+Valutazione minival della ridge sulle latenti FA   2026-11-02 11:24
+modello        : models/fa15_ridge_h50.npz  md5 c602195d572220e46e5d48d11afb91ee (= FA_d15_heldin_s0, controllato)
+                 FA K = 15 su 170 canali attivi, storia H = 50 bin = 1000 ms, α = 1e+06 (leave-one-day-out sulle held-in, R² 0.0709), 135991 bin di 13 sessioni held-in calib
+nota           : readout allenato con la storia che riparte a ogni trial; qui (evaluator H1 continuo) la storia scorre per tutto il file
+falcon_challenge: 1.0.2
+----------------------------------------------------------------------------------------------------
+[blocco, nostro evaluator] 13 file
+  R² medio sui giorni: 0.1001   (0.100056)
+  per giorno: S0 0.1146, S1 0.1014, S2 0.0836, S3 0.1067, S4 0.0843, S5 0.1096
+  per DoF (media giorni): tx 0.0204, ty 0.0058, tz 0.0414, rx 0.1659, g1 0.1128, g2 0.0648, g3 0.0996
+[streaming, evaluator ufficiale FALCON, batch 4] 1 s
+  risultato ufficiale: {'Normalized Latency': np.float64(0.0005913720987950866), 'Held In R2 Mean': np.float64(0.10005562848938898), 'Held In R2 Std.': np.float64(0.012013408470079288)}
+  R² medio ufficiale : 0.1001   (0.100056)
+  nostro evaluator sulle predizioni in streaming: 0.1001
+  streaming - blocco, differenza massima delle predizioni 4.55e-11; coincidono: SÌ
+[streaming, evaluator ufficiale FALCON, batch 1] 1 s
+  risultato ufficiale: {'Normalized Latency': np.float64(0.0012962847777124118), 'Held In R2 Mean': np.float64(0.100055628489389), 'Held In R2 Std.': np.float64(0.012013408470079265)}
+  R² medio ufficiale : 0.1001   (0.100056)
+  nostro evaluator sulle predizioni in streaming: 0.1001
+  streaming - blocco, differenza massima delle predizioni 4.55e-11; coincidono: SÌ
+ridge_h50 importata dal log del 30/10: R² 0.4483
+tabella B: /Users/valerio/tesi_h1_work/results/table_B.md
+  Ridge on channels (ridge_h50): minival 0.448 (SD giorni 0.043), LODO held-in —
+  Ridge on FA latents: minival 0.100 (SD giorni 0.012), LODO held-in 0.071
+tempo totale 14 s
