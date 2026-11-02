@@ -147,3 +147,103 @@ dove λ passa da 10^9 a 10^15 (entrambi all'asintoto) e l'R² cambia al più di 
 12. **Limite della diagnosi del moment matching per UMAP e CEBRA.** Il readout della diagnosi usa l'α held-in scalato
     per il numero di bin (punto 6); per UMAP e CEBRA quell'α è all'estremo alto della griglia (il readout held-in predice
     la media), quindi dentro la sessione partono da R² ≈ 0.01-0.02 e la diagnosi dice poco su di loro.
+
+## Stabilità dei sottospazi FA sulle held-out (aggiunta del 2/11/2026)
+
+Scritta il 2/11/2026 **prima** di calcolare qualsiasi indice o angolo sui blocchi da 3 trial (held-in o held-out).
+Già noti a chi scrive: l'R² zero-shot per sessione (`sessions_r2.csv`) e gli angoli tra S1, S2 e S5 sulle sessioni
+intere (repliche, commit 1d032e9), dove il caso alla Elsayed per la FA è risultato quasi uniforme. Codice:
+`src/tesi_h1/stability.py`, `scripts/xs_stability.py`; prove in `tests/test_stability.py`. Nessun numero di questa
+analisi entra nelle scelte del protocollo cross-sessione.
+
+### Blocchi, canali e normalizzazione
+- **Blocco = 3 trial consecutivi.** Held-out: i 3 trial di calib di ogni file (14 blocchi). Held-in: blocchi non
+  sovrapposti dall'inizio di ogni file, gli stessi della diagnosi dentro la sessione (`diag_within`, 54 blocchi; i
+  trial che avanzano restano fuori). Così held-in e held-out sono stimati con lo stesso numero di trial.
+- **Canali: gli stessi 170** attivi sulle held-in, in tutti i blocchi.
+- **FA come nel decoder**: K = 15, `svd_method="lapack"`, `random_state=0`, conteggi grezzi.
+- **Due normalizzazioni**, perché lo span delle loading cambia se si riscalano i canali:
+  a) *blocco contro blocco*: z-score dentro il blocco (media e sd del blocco), come nelle repliche;
+  b) *blocco contro la FA congelata del decoder*: la normalizzazione che il decoder applica alle held-out in
+     zero-shot, cioè media e sd delle 13 held-in del modello `FA_d15_heldin_s0` (la media non cambia le loading,
+     conta la sd). Per i blocchi held-in di riferimento si usa la FA stimata senza il loro giorno (leave-one-day-out,
+     stessa ricetta), con la sua normalizzazione.
+- **Canali silenti.** In a) la sd di un canale nel blocco non scende sotto sd_min = 0.1, cioè la sd di Poisson di un
+  canale a 0.5 Hz (la soglia dei canali attivi) in bin da 20 ms: √(0.5 · 0.02) = 0.1. Così un canale con sd nulla non
+  divide per zero e uno con 1-2 spike non diventa un valore z enorme. In b) la sd è quella held-in e un canale silente
+  nel blocco resta una colonna costante (la FA gli dà loading nulle; verificato su dati sintetici). Si riportano
+  quanti (canale, blocco) hanno sd = 0 e quanti sd < sd_min.
+
+### Misure
+- L = loading del blocco (170 × 15), S = L Lᵀ la sua covarianza condivisa.
+- **Indice di allineamento (primario)**, da Elsayed et al. 2016 applicato a S:
+  I(A→B) = tr(Q_Bᵀ S_A Q_B) / Σ_{i≤k} λ_i(S_A), con Q_B la base ortonormale dei primi k autovettori di S_B.
+  Indice della coppia = ½ [I(A→B) + I(B→A)]. Vale 1 se ciascun sottospazio cattura tutta la varianza condivisa
+  dell'altro che k direzioni possono catturare. Con k = 15, Q_B è una base di span(L_B) e il denominatore è tr(S_A).
+- **Angolo principale medio (secondario)**: media dei k angoli principali tra span(Q_A) e span(Q_B), in gradi.
+- **Sensibilità a k = 5**: i primi 5 autovettori di L Lᵀ dal fit con K = 15, senza rifare la FA con K = 5. Le
+  loading FA non hanno un ordine (sono definite a meno di una rotazione); le direzioni si ordinano per varianza
+  condivisa.
+
+### Caso alla Elsayed
+- Sottospazi casuali Q_r = orth(U Λ^½ r), r gaussiano 170 × k, da una covarianza C = U Λ Uᵀ. Per la coppia (A, B):
+  caso dell'indice = ½ [I(A→Q_r1) + I(B→Q_r2)], con Q_r1 e Q_r2 indipendenti; caso dell'angolo = angolo medio tra
+  Q_r1 e Q_r2. 500 estrazioni per coppia, seme fisso.
+- Tre C, come nelle repliche:
+  - *tutti i bin*: media delle covarianze dei dati dei due elementi della coppia, nella normalizzazione del confronto;
+  - *medie per condizione*: covarianza delle medie delle 16 condizioni (8 fasi × versione, finestre da 1 s
+    dall'inizio della fase), calcolata in ogni sessione held-in e mediata sulle 13; in a) con lo z-score della
+    sessione, in b) con la normalizzazione del decoder. È la stessa C per tutte le coppie;
+  - *uniforme*: identità.
+- Per l'indice (più alto = più allineato) conta il **95° percentile**; per l'angolo il 5°.
+
+### Confronti
+1. **Riferimento dentro la sessione**: le coppie di blocchi della stessa sessione held-in (95 coppie). È il massimo
+   di allineamento che si può misurare con 3 trial.
+2. **Stesso giorno, file diverso**: coppie di blocchi di due file dello stesso giorno, held-in e held-out.
+3. **Tra giorni**: tutte le altre coppie, in funzione di |Δ giorni| (date di `sessions.csv`, da 0 a 39).
+4. **Held-out contro la FA congelata del decoder** (normalizzazione b): è l'asse x primario della figura F, perché è
+   la FA che produce lo zero-shot. Riferimento: ogni blocco held-in contro la FA leave-one-day-out del suo giorno.
+5. **Held-out contro i 54 blocchi held-in** (normalizzazione a): mediana per held-out, descrittiva.
+
+### Regola sulla stimabilità (fissata ora)
+Si confronta la mediana dell'indice sulle 95 coppie del riferimento dentro la sessione, a k = 15, con la mediana sulle
+stesse coppie del 95° percentile del caso, per ognuna delle tre versioni. Se non le supera tutte e tre, il sottospazio
+FA a K = 15 non è stimabile da 3 trial: lo si scrive come risultato, e test e figure si leggono sulla sensibilità a
+k = 5 (calcolata in ogni caso), con la stessa regola. Lo stesso controllo, descrittivo, per l'angolo (riferimento sotto
+il 5° percentile del caso).
+
+### Test
+- **Stabilità (figura E): test di Mantel.** Statistica: ρ di Spearman tra l'indice e |Δ giorni| su tutte le coppie di
+  blocchi **tranne le 95 dentro la stessa sessione**, che sono la banda di riferimento: se restassero a distanza 0 il
+  test misurerebbe "stessa sessione o no" invece del calo con i giorni. Le coppie stesso giorno, file diverso restano
+  a distanza 0. p: permutazione delle date tra i 13 giorni (le coppie di uno stesso giorno non sono indipendenti),
+  10 000 permutazioni, seme 0, a due code. Un solo test, su tutti i blocchi; i tre tipi di coppia (held-in–held-in,
+  held-in–held-out, held-out–held-out) solo descrittivi.
+- **Pendenza per giorno**: minimi quadrati dell'indice su |Δ giorni|, sulle stesse coppie del Mantel. IC 95% con
+  bootstrap sui giorni (2 000 ricampionamenti, seme 0): si ricampionano i 13 giorni con ripetizione, si tengono le
+  coppie tra copie di giorni diversi e le coppie stesso giorno, file diverso dentro ogni copia.
+- **Figura F: ρ di Spearman** tra l'indice contro la FA congelata (k = 15) e l'R² zero-shot della FA (n = 14),
+  p per permutazione (10 000, seme 0, a due code). Ripetuto sulle medie per giorno (n = 7) e come Spearman parziale
+  rispetto ai giorni dall'ultima held-in (residui dei ranghi dopo la regressione sui ranghi dei giorni, p per
+  permutazione dei residui). È l'unico test sulla relazione.
+- **Descrittivi**: lo stesso indice contro lo zero-shot di PCA, GPFA, LFADS e ridge_channels e contro il guadagno
+  align − recenter della FA; l'indice mediano contro i blocchi held-in (confronto 5) contro lo zero-shot della FA.
+- **Potenza.** Con n = 14 è significativo (Spearman, α = 0.05 a due code) solo |ρ| ≳ 0.54; con le medie per giorno
+  (n = 7) solo |ρ| ≳ 0.79. Un risultato nullo si legge "relazione non rilevabile con questi dati", non "nessuna
+  relazione". Lo script ricalcola le soglie esatte per permutazione e le riporta.
+
+### Figure e file
+- **Figura E**: indice (k = 15) contro |Δ giorni|; punti = mediana per coppia di giorni, colore per tipo di coppia;
+  banda del riferimento dentro la sessione (IQR delle 95 coppie) e linee del 95° percentile del caso; pannello con
+  l'angolo medio. **Figura F**: indice contro la FA congelata in ascissa, R² zero-shot della FA in ordinata (14 punti,
+  colore = giorni dall'ultima held-in), con la banda del riferimento held-in (blocchi contro la FA leave-one-day-out);
+  pannello con align − recenter; pannello descrittivo con gli altri metodi.
+- **Registro** (`h1_runs.csv`): esperimento `fa_stability`, method `FA`, latent_dim 15, decoder NA, split
+  `calib3_block`, k_shot 3 (trial che stimano il sottospazio), H_ms NA, seme 0, fold NA; condition `vs_frozen_fa`
+  (held-out), `vs_lodo_fa` (blocchi held-in, sessione `S0_set_1#b0` ecc.), `vs_heldin_blocks` (mediana per held-out).
+  Metriche: indice e angolo a k = 15 e 5, percentili del caso. Le coppie in
+  `results/crosssession/stability/pairs.csv`, test e riassunti in `results/crosssession/stability/`.
+- **Limiti da dichiarare**: 14 sessioni su 7 giorni; l'indice usa tutti e 3 i trial, compresi quelli su cui si valuta
+  lo zero-shot (è una correlazione descrittiva, sull'indice non si stima niente); i blocchi held-out sono i primi 3
+  trial del file, quelli held-in vengono da tutto il file.
