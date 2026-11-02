@@ -241,7 +241,9 @@ il 5° percentile del caso).
   pannello con align − recenter; pannello descrittivo con gli altri metodi.
 - **Registro** (`h1_runs.csv`): esperimento `fa_stability`, method `FA`, latent_dim 15, decoder NA, split
   `calib3_block`, k_shot 3 (trial che stimano il sottospazio), H_ms NA, seme 0, fold NA; condition `vs_frozen_fa`
-  (held-out), `vs_lodo_fa` (blocchi held-in, sessione `S0_set_1#b0` ecc.), `vs_heldin_blocks` (mediana per held-out).
+  (held-out), `vs_lodo_fa` (blocchi held-in), `vs_heldin_blocks` (mediana per held-out); session = chiave
+  FALCON del file, fold = numero del blocco nel file (0 per le held-out; NA per `vs_heldin_blocks`). Corretto il 2/11 prima
+  dell'esecuzione: il registro accetta solo chiavi FALCON come sessione.
   Metriche: indice e angolo a k = 15 e 5, percentili del caso. Le coppie in
   `results/crosssession/stability/pairs.csv`, test e riassunti in `results/crosssession/stability/`.
 - **Limiti da dichiarare**: 14 sessioni su 7 giorni; l'indice usa tutti e 3 i trial, compresi quelli su cui si valuta
