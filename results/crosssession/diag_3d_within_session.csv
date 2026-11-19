@@ -1,0 +1,14 @@
+# Diagnostic (exploratory, not pre-registered), 2026-10-31 14:20: is the near-zero held-in readout of the 3-D maps a bug?
+# Within one held-in session: readout (H = 50 bins, ridge) trained on trials 1-12, tested on trials 13-15 (eval_mask),
+# latents from the held-in models (Isomap refit with the same settings); alpha = best on the test trials (optimistic upper bound).
+session,latents,dim,r2_within_session,alpha
+S5_set_1,PCA,25,0.262,1e4
+S5_set_1,GPFA,25,0.302,1e4
+S5_set_1,UMAP,3,0.036,1e4
+S5_set_1,Isomap,3,0.023,1e4
+S5_set_1,PCA first 3 PCs,3,0.010,1e5
+S1_set_1,PCA,25,0.219,1e4
+S1_set_1,GPFA,25,0.221,1e5
+S1_set_1,UMAP,3,0.071,1e-1
+S1_set_1,Isomap,3,0.044,1e3
+S1_set_1,PCA first 3 PCs,3,0.019,1e5

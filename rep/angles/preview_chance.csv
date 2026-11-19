@@ -1,0 +1,6 @@
+comparison,caso attuale (tutti i bin),caso dalle medie per condizione,PR medie per condizione (ref. / S2),caso dalla covarianza condivisa L Lᵀ,PR condivisa (ref. / S2)
+"PCA, K = 10",75.74744201410607,67.85010662029237,19.1 / 15.2,,
+"PCA, K = 25",67.18732735835661,59.14821953120691,19.1 / 15.2,,
+"FA, K = 10",77.26416276927657,,,34.18628117124075,6.9 / 6.9
+"FA, K = 15",74.06558699220093,,,35.56418596072044,9.5 / 9.3
+"FA, K = 25",68.96941993907208,,,36.413849337273575,14.0 / 14.0

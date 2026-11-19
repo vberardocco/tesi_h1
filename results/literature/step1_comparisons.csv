@@ -1,0 +1,70 @@
+rule,source,criterion,value_source,session,condition,measure,median,min,max,null_median,null_min,null_max,diff_median,diff_min,diff_max,verdict,in_73_4_pm_2sd,K_star
+R1,Gallego 2018,"variance of the first 12 PCs, 66 channels, square root, σ 50 ms, no z-score (%)",≥ 60 (mean 73.4 ± 6.5),S1,1a_gallego,var12,51.39586012289611,47.84855405843756,55.2325958922158,45.241985552857,40.74154382575743,48.99232099651876,6.177902875292592,4.5937487662138,7.347083213217239,below,False,
+R1,Gallego 2018,"variance of the first 12 PCs, 66 channels, square root, σ 50 ms, no z-score (%)",≥ 60 (mean 73.4 ± 6.5),S2,1a_gallego,var12,52.0489952847114,48.782972447639494,55.78804745676293,45.97904891519237,41.4537623205524,51.003124012113844,6.179097745674934,4.784923444649088,7.489425857591257,below,False,
+R1,Gallego 2018,"variance of the first 12 PCs, 66 channels, square root, σ 50 ms, no z-score (%)",≥ 60 (mean 73.4 ± 6.5),S5,1a_gallego,var12,54.44535319816991,51.1629007515599,59.55734208850596,45.165992757553504,43.592807846403346,51.961484814104274,9.035594085204433,6.193446991282073,10.383400644002819,below,False,
+R2,Silvernagel 2026,"components for 80%, 96 channels, σ 30 ms, no z-score",31-38,S1,1b_silvernagel,n80,35.0,33.0,39.0,37.0,35.0,41.0,-2.0,-2.0,-1.0,in linea,,
+R2,Silvernagel 2026,"components for 80%, 96 channels, σ 30 ms, no z-score",31-38,S2,1b_silvernagel,n80,35.0,32.0,37.0,36.5,34.0,39.0,-2.0,-2.0,-1.0,in linea,,
+R2,Silvernagel 2026,"components for 80%, 96 channels, σ 30 ms, no z-score",31-38,S5,1b_silvernagel,n80,33.5,32.0,37.0,35.5,33.0,39.0,-2.0,-3.0,-1.0,in linea,,
+R3,Oby 2019,"FA dimensions for 95% shared, 90 channels, 45 ms, K*",5-11 (mean 8.4),S1,1c_oby,dim95_Kstar,11.0,11.0,11.0,,,,,,,in linea,,12.0
+R3,Oby 2019,"FA dimensions for 95% shared, 90 channels, 45 ms, K*",5-11 (mean 8.4),S2,1c_oby,dim95_Kstar,8.0,8.0,8.0,,,,,,,in linea,,8.0
+R3,Oby 2019,"FA dimensions for 95% shared, 90 channels, 45 ms, K*",5-11 (mean 8.4),S5,1c_oby,dim95_Kstar,9.0,9.0,9.0,,,,,,,in linea,,10.0
+R3,Degenhart 2020,"FA dimensions for 95% shared, 75 channels, 45 ms, K*",4-8,S1,1c_degenhart,dim95_Kstar,9.0,9.0,10.0,,,,,,,più alta,,10.0
+R3,Degenhart 2020,"FA dimensions for 95% shared, 75 channels, 45 ms, K*",4-8,S2,1c_degenhart,dim95_Kstar,8.0,8.0,8.0,,,,,,,in linea,,8.0
+R3,Degenhart 2020,"FA dimensions for 95% shared, 75 channels, 45 ms, K*",4-8,S5,1c_degenhart,dim95_Kstar,9.0,9.0,9.0,,,,,,,più alta,,10.0
+R4,Degenhart 2020,"population shared fraction, 75 channels, 45 ms, K*, no z-score",32%,S1,1c_degenhart,share_pop,0.14289485500862292,0.10617529832365973,0.17618573888038225,,,,,,,,,10.0
+R4,Degenhart 2020,"population shared fraction, 75 channels, 45 ms, K*, no z-score",32%,S2,1c_degenhart,share_pop,0.13831068549918385,0.11583760381796057,0.20289028500444456,,,,,,,,,8.0
+R4,Degenhart 2020,"population shared fraction, 75 channels, 45 ms, K*, no z-score",32%,S5,1c_degenhart,share_pop,0.1594296278894588,0.13849389806108642,0.18200397502490945,,,,,,,,,10.0
+—,variante 1a,as R1 with z-score,—,S1,1a_gallego_z,var12,31.21931312650405,29.57282037744296,33.44410668810504,24.47549196514243,24.11016788273421,24.719682892100664,6.729418605685021,5.248434317555194,8.724423796004373,,,
+—,variante 1a,as R1 with z-score,—,S2,1a_gallego_z,var12,31.91440221929951,30.362570928751065,34.128540153441975,24.482622834069623,24.232770037715788,24.72320671421133,7.472050364635061,6.129800891035277,9.405333439230645,,,
+—,variante 1a,as R1 with z-score,—,S5,1a_gallego_z,var12,33.35620628429461,31.269503128867694,35.09080685062527,24.912766821370226,24.52446161676379,25.294364388026104,8.419141717732455,6.581465951573367,9.843686006794577,,,
+—,variante 1a,as R1 with all active channels,—,S1,1a_gallego_all,var12,35.9255564929215,35.9255564929215,35.9255564929215,25.003413465646474,24.787527467600196,25.320333710046782,10.922143027275027,10.922143027275027,10.922143027275027,,,
+—,variante 1a,as R1 with all active channels,—,S2,1a_gallego_all,var12,36.569540299218026,36.569540299218026,36.569540299218026,25.31506335257334,25.13753238300312,25.69728913811752,11.254476946644687,11.254476946644687,11.254476946644687,,,
+—,variante 1a,as R1 with all active channels,—,S5,1a_gallego_all,var12,39.879675655501586,39.879675655501586,39.879675655501586,24.040143905664095,23.871217329456215,24.502897523247423,15.83953174983749,15.83953174983749,15.83953174983749,,,
+—,variante 1a,as R1 with all active channels and z-score,—,S1,1a_gallego_all_z,var12,21.46133336908589,21.46133336908589,21.46133336908589,12.828759408174788,12.775454993472419,12.957270586965796,8.6325739609111,8.6325739609111,8.6325739609111,,,
+—,variante 1a,as R1 with all active channels and z-score,—,S2,1a_gallego_all_z,var12,21.875252085588734,21.875252085588734,21.875252085588734,12.593794547962016,12.465480173591601,12.824468042404169,9.281457537626718,9.281457537626718,9.281457537626718,,,
+—,variante 1a,as R1 with all active channels and z-score,—,S5,1a_gallego_all_z,var12,23.51635983332135,23.51635983332135,23.51635983332135,13.146771410836518,12.995282541392644,13.298927280503156,10.369588422484831,10.369588422484831,10.369588422484831,,,
+—,variante 1b,as R2 with z-score,—,S1,1b_silvernagel_z,n80,67.0,66.0,68.0,71.0,71.0,71.0,-4.0,-5.0,-3.0,,,
+—,variante 1b,as R2 with z-score,—,S2,1b_silvernagel_z,n80,67.0,66.0,67.0,71.0,71.0,71.0,-4.0,-5.0,-4.0,,,
+—,variante 1b,as R2 with z-score,—,S5,1b_silvernagel_z,n80,66.0,64.0,66.0,71.0,71.0,71.0,-5.0,-7.0,-5.0,,,
+—,variante 1b,as R2 with all active channels,—,S1,1b_silvernagel_all,n80,58.0,58.0,58.0,61.0,61.0,61.0,-3.0,-3.0,-3.0,,,
+—,variante 1b,as R2 with all active channels,—,S2,1b_silvernagel_all,n80,57.0,57.0,57.0,61.0,61.0,61.0,-4.0,-4.0,-4.0,,,
+—,variante 1b,as R2 with all active channels,—,S5,1b_silvernagel_all,n80,56.0,56.0,56.0,60.0,60.0,60.0,-4.0,-4.0,-4.0,,,
+—,variante 1b,as R2 with all active channels and z-score,—,S1,1b_silvernagel_all_z,n80,107.0,107.0,107.0,115.0,115.0,115.0,-8.0,-8.0,-8.0,,,
+—,variante 1b,as R2 with all active channels and z-score,—,S2,1b_silvernagel_all_z,n80,110.0,110.0,110.0,118.0,118.0,118.0,-8.0,-8.0,-8.0,,,
+—,variante 1b,as R2 with all active channels and z-score,—,S5,1b_silvernagel_all_z,n80,108.0,108.0,108.0,117.0,117.0,118.0,-9.0,-9.0,-9.0,,,
+—,variante 1c,Oby with K = 10,—,S1,1c_oby,dim95_K10,9.0,9.0,10.0,,,,,,,,,12.0
+—,variante 1c,Oby with K = 10,—,S2,1c_oby,dim95_K10,9.0,9.0,10.0,,,,,,,,,8.0
+—,variante 1c,Oby with K = 10,—,S5,1c_oby,dim95_K10,9.0,9.0,9.0,,,,,,,,,10.0
+—,variante 1c,Oby with K = 20,—,S1,1c_oby,dim95_K20,18.0,18.0,18.0,,,,,,,,,12.0
+—,variante 1c,Oby with K = 20,—,S2,1c_oby,dim95_K20,18.0,18.0,19.0,,,,,,,,,8.0
+—,variante 1c,Oby with K = 20,—,S5,1c_oby,dim95_K20,18.0,18.0,18.0,,,,,,,,,10.0
+—,variante 1c,"Oby with K*, no z-score",—,S1,1c_oby,dim95_Kstar_noz,10.5,10.0,11.0,,,,,,,,,12.0
+—,variante 1c,"Oby with K*, no z-score",—,S2,1c_oby,dim95_Kstar_noz,7.0,7.0,8.0,,,,,,,,,8.0
+—,variante 1c,"Oby with K*, no z-score",—,S5,1c_oby,dim95_Kstar_noz,9.0,8.0,9.0,,,,,,,,,10.0
+—,variante 1c,Degenhart with K = 10,—,S1,1c_degenhart,dim95_K10,9.0,9.0,10.0,,,,,,,,,10.0
+—,variante 1c,Degenhart with K = 10,—,S2,1c_degenhart,dim95_K10,9.0,9.0,10.0,,,,,,,,,8.0
+—,variante 1c,Degenhart with K = 10,—,S5,1c_degenhart,dim95_K10,9.0,9.0,9.0,,,,,,,,,10.0
+—,variante 1c,Degenhart with K = 20,—,S1,1c_degenhart,dim95_K20,18.0,18.0,18.0,,,,,,,,,10.0
+—,variante 1c,Degenhart with K = 20,—,S2,1c_degenhart,dim95_K20,18.0,18.0,18.0,,,,,,,,,8.0
+—,variante 1c,Degenhart with K = 20,—,S5,1c_degenhart,dim95_K20,18.0,18.0,18.0,,,,,,,,,10.0
+—,variante 1c,"Degenhart with K*, no z-score",—,S1,1c_degenhart,dim95_Kstar_noz,9.0,8.0,9.0,,,,,,,,,10.0
+—,variante 1c,"Degenhart with K*, no z-score",—,S2,1c_degenhart,dim95_Kstar_noz,7.0,7.0,7.0,,,,,,,,,8.0
+—,variante 1c,"Degenhart with K*, no z-score",—,S5,1c_degenhart,dim95_Kstar_noz,9.0,9.0,9.0,,,,,,,,,10.0
+—,variante 1c,"population shared fraction, 90 channels",—,S1,1c_oby,share_pop,0.15405147750647624,0.12790810647105558,0.17502463200820276,,,,,,,,,12.0
+—,variante 1c,"population shared fraction, 90 channels",—,S2,1c_oby,share_pop,0.13464965802262624,0.10200567635651743,0.16714330012367404,,,,,,,,,8.0
+—,variante 1c,"population shared fraction, 90 channels",—,S5,1c_oby,share_pop,0.1626117407564859,0.13810783226492335,0.1795441651075475,,,,,,,,,10.0
+—,variante 1c,"shared fraction per channel, median, 75 channels",—,S1,1c_degenhart,share_channels_median,0.04514665439865187,0.030844058725174053,0.049799887226390664,,,,,,,,,10.0
+—,variante 1c,"shared fraction per channel, median, 75 channels",—,S2,1c_degenhart,share_channels_median,0.03726507718663581,0.02067488971783924,0.04465988358117547,,,,,,,,,8.0
+—,variante 1c,"shared fraction per channel, median, 75 channels",—,S5,1c_degenhart,share_channels_median,0.04522285905712133,0.031718270507677025,0.06527499689299385,,,,,,,,,10.0
+1e*,Gallego 2018 / Silvernagel 2026,"PCs for 60%, pipeline 1a, 66 channels",m = 12 (Gallego); 16 and 13 (Silvernagel),S1,1a_gallego,n60,16.0,15.0,18.0,19.0,17.0,20.5,-2.0,-3.0,-1.0,,,
+1e*,Gallego 2018 / Silvernagel 2026,"PCs for 60%, pipeline 1a, 66 channels",m = 12 (Gallego); 16 and 13 (Silvernagel),S2,1a_gallego,n60,16.0,14.0,18.0,18.0,16.0,21.0,-2.0,-3.0,-2.0,,,
+1e*,Gallego 2018 / Silvernagel 2026,"PCs for 60%, pipeline 1a, 66 channels",m = 12 (Gallego); 16 and 13 (Silvernagel),S5,1a_gallego,n60,15.0,13.0,17.0,18.0,15.0,19.0,-3.0,-4.0,-2.0,,,
+1e*,Silvernagel 2026,"PCs for 60%, pipeline 1b, 96 channels",16 and 13,S1,1b_silvernagel,n60,19.5,18.0,23.0,22.0,21.0,25.0,-3.0,-3.0,-2.0,,,
+1e*,Silvernagel 2026,"PCs for 60%, pipeline 1b, 96 channels",16 and 13,S2,1b_silvernagel,n60,19.0,17.0,20.0,21.0,19.0,23.0,-2.0,-3.0,-2.0,,,
+1e*,Silvernagel 2026,"PCs for 60%, pipeline 1b, 96 channels",16 and 13,S5,1b_silvernagel,n60,18.0,17.0,20.0,21.5,20.0,23.0,-3.0,-4.0,-2.0,,,
+1e*,—,"PCs for 60%, pipeline 1a, all active channels",—,S1,1a_gallego_all,n60,33.0,33.0,33.0,41.0,41.0,42.0,-8.0,-8.0,-8.0,,,
+1e*,—,"PCs for 60%, pipeline 1a, all active channels",—,S2,1a_gallego_all,n60,33.0,33.0,33.0,42.0,42.0,42.0,-9.0,-9.0,-9.0,,,
+1e*,—,"PCs for 60%, pipeline 1a, all active channels",—,S5,1a_gallego_all,n60,31.0,31.0,31.0,41.0,41.0,42.0,-10.0,-10.0,-10.0,,,
+1e*,—,"PCs for 60%, pipeline 1b, all active channels",—,S1,1b_silvernagel_all,n60,31.0,31.0,31.0,36.0,36.0,36.0,-5.0,-5.0,-5.0,,,
+1e*,—,"PCs for 60%, pipeline 1b, all active channels",—,S2,1b_silvernagel_all,n60,30.0,30.0,30.0,35.0,35.0,35.0,-5.0,-5.0,-5.0,,,
+1e*,—,"PCs for 60%, pipeline 1b, all active channels",—,S5,1b_silvernagel_all,n60,28.0,28.0,28.0,36.0,35.0,36.0,-8.0,-8.0,-8.0,,,

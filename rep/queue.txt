@@ -1,0 +1,12 @@
+# Queue of the replications: name|variables|command. Add lines at the bottom; '#FINE' closes the queue.
+02_19250108T110520|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250108T110520/02_rep.ipynb 19250108T110520/02_rep.out.ipynb logs/02_19250108T110520.celle.log
+02_19250113T120811|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250113T120811/02_rep.ipynb 19250113T120811/02_rep.out.ipynb logs/02_19250113T120811.celle.log
+02_19250120T115044|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250120T115044/02_rep.ipynb 19250120T115044/02_rep.out.ipynb logs/02_19250120T115044.celle.log
+dec_19250108T110520|OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4|/opt/miniconda3/envs/tesi-manifolds/bin/python dec_rep.py 19250108T110520
+dec_19250113T120811|OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4|/opt/miniconda3/envs/tesi-manifolds/bin/python dec_rep.py 19250113T120811
+dec_19250120T115044|OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4|/opt/miniconda3/envs/tesi-manifolds/bin/python dec_rep.py 19250120T115044
+angoli|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python angles.py
+04_19250108T110520|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250108T110520/04_rep.ipynb 19250108T110520/04_rep.out.ipynb logs/04_19250108T110520.celle.log
+04_19250113T120811|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250113T120811/04_rep.ipynb 19250113T120811/04_rep.out.ipynb logs/04_19250113T120811.celle.log
+04_19250120T115044|OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1|/opt/miniconda3/envs/tesi-manifolds/bin/python run_nb.py 19250120T115044/04_rep.ipynb 19250120T115044/04_rep.out.ipynb logs/04_19250120T115044.celle.log
+#FINE

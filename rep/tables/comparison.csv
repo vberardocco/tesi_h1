@@ -1,0 +1,79 @@
+notebook,section,measure,original (io.py),ref. S1,S2,S5
+02,Data,active channels (≥ 0.5 Hz),160,160,166,165
+02,Data,mean rate (Hz),14.2,14.2,14.7,16.8
+02,"PCA (σ = 50 ms, all bins)",participation ratio,106.1,106.1,104.0,94.4
+02,"PCA (σ = 50 ms, all bins)",variance of PC1 (%),3.9,3.9,4.1,4.8
+02,"PCA (σ = 50 ms, all bins)",variance of PC1-3 (%),8.5,8.6,9.5,11.0
+02,"PCA (σ = 50 ms, all bins)",components for 80% / 90% / 95%,100 / 125 / 140,100 / 125 / 140,103 / 129 / 145,100 / 126 / 143
+02,PCA sulle condition means,participation ratio,19.7,19.7,16.1,21.6
+02,PCA sulle condition means,components for 95%,78,78,78,79
+02,PCA sulle condition means,PR with 1 / 7 repetitions averaged (aligned windows),50.1 / 20.6,50.1 / 20.6,47.6 / 16.9,48.5 / 22.6
+02,"FA (counts, K* = 15)",PR of the shared part,9.5,9.5,9.4,9.1
+02,"FA (counts, K* = 15)",shared dimensions for 95%,14,14,14,14
+02,"FA (counts, K* = 15)",first 3 directions (% of shared variance),46,46,47,48
+02,"FA (counts, K* = 15)","shared fraction per channel, median",0.038,0.039,0.034,0.032
+02,FA in windows (K* = 10),PR of the shared part,7.0,7.0,6.6,6.9
+02,GPFA (d = 25),PR of the shared part,12.2,12.2,10.5,11.6
+02,GPFA (d = 25),shared dimensions for 95%,21,21,21,21
+02,GPFA (d = 25),"shared fraction per channel, median (%)",3.2,3.2,3.8,3.9
+02,GPFA (d = 25),shortest / longest timescale (ms),48.0 / 754.0,48.0 / 754.0,61.0 / 1125.0,51.0 / 1268.0
+02,Traiettorie nelle finestre,consistency: smoothed PCA,0.1167,0.1167,0.1422,0.1533
+02,Traiettorie nelle finestre,consistency: FA (K = 25),0.0387,0.0387,0.0448,0.0577
+02,Traiettorie nelle finestre,consistency: GPFA (d = 25),0.1369,0.1369,0.1542,0.1549
+02,Traiettorie nelle finestre,roughness: GPFA (d = 25),0.0108,0.0108,0.0044,0.0049
+04,Data,evaluation points,1106,1099,1037,1137
+04,"Decoded phase (%), chance 12.5","PCA, d = 3",32.4,30.9,37.8,28.3
+04,"Decoded phase (%), chance 12.5","CEBRA-Time, 3 dimensions",37.7 (35.3-40.6),35.5 (33.0-37.3),40.5 (37.7-42.4),31.2 (29.6-33.0)
+04,"Decoded phase (%), chance 12.5","CEBRA-Time, 4 dimensions",40.4 (38.5-42.7),40.3 (38.7-41.6),44.0 (41.0-46.9),34.9 (33.3-37.0)
+04,"Decoded phase (%), chance 12.5",ceiling: 25 smoothed PCs,42.2,41.4,46.7,36.9
+04,"Decoded phase (%), chance 12.5",matched ceiling: window mean,44.9,43.6,48.0,39.7
+04,"Decoded phase (%), chance 12.5",clock (only the time since trial start),48.5,50.1,47.2,63.8
+04,"Decoded phase (%), chance 12.5",CEBRA-Time 3D on the twins,12.5 (10.7-13.9),13.1 (12.3-13.9),12.8 (11.6-14.1),14.1 (12.7-16.3)
+04,CEBRA-Time,"consistency across training runs, 3D (R², %)",63.4 (46.9-83.1),66.0 (51.3-83.0),65.3 (53.7-84.9),64.5 (51.3-81.5)
+04,CEBRA-Time,"consistency across training runs, 4D (R², %)",75.1 (66.8-83.9),75.9 (67.1-84.1),68.0 (58.4-79.3),75.2 (64.6-85.2)
+04,CEBRA-Time,"neighbors in the time chain, Δ = 10 (%)",7.9,8.2,8.1,8.4
+04,CEBRA-Time,"same-phase neighbors in other trials, Δ = 10 (%)",33.1,32.9,35.7,25.1
+04,CEBRA-Time,"roughness, 4D",0.074 (0.066-0.080),0.074 (0.065-0.082),0.072 (0.059-0.077),0.077 (0.072-0.084)
+04,CEBRA-Time,"trajectory consistency, 4D",0.106 (0.086-0.127),0.106 (0.088-0.129),0.113 (0.090-0.128),0.091 (0.086-0.097)
+04,"§6, ref. only: phase (%)","CEBRA-Behavior, 3 dimensions",25.6 (22.4-27.9),23.8 (21.5-25.8),,
+04,"§6, ref. only: phase (%)","CEBRA-Behavior, 4 dimensions",28.7 (27.3-30.1),30.3 (28.3-32.4),,
+04,"§6, ref. only: phase (%)","PLS, 2 components",27.3,26.8,,
+04,"§6, ref. only: phase (%)","PLS, 3 components",28.3,29.5,,
+04,"§6, ref. only: phase (%)","gap CEBRA-Time − CEBRA-Behavior, 3D / 4D (points)",12.1 / 11.7,11.7 / 10.0,,
+04,"§6, ref. only: phase (%)","CEBRA-Behavior 3D, labels shuffled in time",15.1 (12.9-17.3),15.1 (13.4-16.3),,
+04,"§6, ref. only: phase (%)","CEBRA-Behavior 3D, labels swapped between trials",29.8 (28.1-31.3),29.2 (27.7-30.7),,
+04,"§6, ref. only: kin_r2, velocity (R², %)","CEBRA-Time, 4 dimensions",1.5 (-1.1-3.8),5.1 (3.6-6.3),,
+04,"§6, ref. only: kin_r2, velocity (R², %)","CEBRA-Behavior, 4 dimensions",-1.1 (-5.4-1.2),-0.6 (-3.0-1.4),,
+04,"§6, ref. only: kin_r2, velocity (R², %)","PLS, 3 components",4.6,7.3,,
+04,"§6, ref. only: kin_r2, velocity (R², %)","ceiling, 25 dimensions",19.4,20.5,,
+04,"§6, ref. only: kin_r2, position (R², %)","CEBRA-Time, 4 dimensions",-27.8 (-29.3--26.4),-33.0 (-34.0--31.8),,
+04,"§6, ref. only: kin_r2, position (R², %)","CEBRA-Behavior, 4 dimensions",-23.1 (-24.8--21.9),-26.9 (-28.3--25.7),,
+04,"§6, ref. only: kin_r2, position (R², %)","PLS, 3 components",-19.3,-23.2,,
+04,"§6, ref. only: kin_r2, position (R², %)","ceiling, 25 dimensions",-16.1,-23.7,,
+04,"§12: phase, ceiling with all 25 factors (%)",FA,25.8,21.2,28.0,22.4
+04,"§12: phase, ceiling with all 25 factors (%)",GPFA as in §7b,50.7,50.2,53.2,42.6
+04,"§12: phase, ceiling with all 25 factors (%)",matched GPFA,51.4,49.9,54.4,42.6
+04,"§12: phase, ceiling with all 25 factors (%)",LFADS (5 seeds),46.5 (44.7-47.7),45.7 (44.9-46.4),52.3 (50.5-53.0),42.5 (39.7-45.2)
+04,"§12: phase, ceiling with all 25 factors (%)",25 smoothed PCs (part A),42.2,41.4,46.7,36.9
+04,"§12: phase, first 3 factors (%)",FA,17.3,19.7,22.0,19.8
+04,"§12: phase, first 3 factors (%)",matched GPFA,30.9,31.7,37.9,26.2
+04,"§12: phase, first 3 factors (%)",LFADS (5 seeds),20.9 (19.1-22.4),21.1 (17.6-27.6),25.1 (21.8-28.3),19.6 (15.8-23.9)
+04,"§12: phase, first 3 factors (%)",25 smoothed PCs (part A),32.4,30.9,37.8,28.3
+04,"§12: phase without SnapTo, ceiling (%), chance 14.3",matched GPFA,58.5,56.9,62.3,49.0
+04,"§12: phase without SnapTo, ceiling (%), chance 14.3",LFADS (5 seeds),53.1 (50.6-54.1),52.2 (50.6-53.1),59.7 (58.2-60.6),47.5 (45.3-50.8)
+04,"§12: bits/spike on the 40 hidden channels, new trials",smoothing + GLM (reference),0.0416,0.0417,0.0247,0.0563
+04,"§12: bits/spike on the 40 hidden channels, new trials",FA,0.0358,0.0357,0.0227,0.0368
+04,"§12: bits/spike on the 40 hidden channels, new trials",matched GPFA,0.0422,0.0426,0.0294,0.0602
+04,"§12: bits/spike on the 40 hidden channels, new trials",LFADS (5 seeds),"0.0388 [0.0383, 0.0393]","0.0389 [0.0386, 0.0395]","0.0292 [0.0280, 0.0305]","0.0575 [0.0572, 0.0579]"
+04,"§12: bits/spike on the 40 hidden channels, new trials",GPFA + Poisson regression,0.0474,0.0479,0.0339,0.0642
+04,"§12: bits/spike on the 40 hidden channels, new trials",LFADS above smoothing + GLM (block × seed),4 of 25,5 of 25,25 of 25,20 of 25
+04,"§13: bits/spike, new trials / seen trials",smoothing + GLM,0.4430,0.4425,0.3051,0.5301
+04,"§13: bits/spike, new trials / seen trials",matched GPFA,0.6638,0.6673,0.5831,0.7424
+04,"§13: bits/spike, new trials / seen trials",LFADS (5 seeds),"0.4021 [0.3929, 0.4136]","0.3995 [0.3921, 0.4079]","0.3557 [0.3290, 0.3707]","0.5214 [0.5167, 0.5260]"
+04,§13: bits/spike with hidden channels shifted in time (new trials),smoothing + GLM,-0.0234,-0.0236,-0.0230,-0.0229
+04,§13: bits/spike with hidden channels shifted in time (new trials),matched GPFA,-0.0122,-0.0135,-0.0145,-0.0199
+04,§13: bits/spike with hidden channels shifted in time (new trials),LFADS (3 seeds),"-0.0179 [-0.0190, -0.0162]","-0.0177 [-0.0183, -0.0173]","-0.0138 [-0.0148, -0.0132]","-0.0169 [-0.0171, -0.0166]"
+04,§13: twins,"LFADS on the twin, phase with all factors (%)",11.0 (7.8-13.9),11.9 (11.2-12.8),12.9 (11.1-14.2),13.3 (10.9-15.8)
+04,§12: stability,"LFADS across seeds, 25 factors (R², %)",88.7 (86.7-89.5),88.4 (86.1-90.0),89.7 (88.2-91.1),90.3 (89.1-91.5)
+04,§12: stability,trajectory consistency: matched GPFA,0.118,0.114,0.157,0.153
+04,§12: stability,trajectory consistency: LFADS,0.109 (0.090-0.135),0.130 (0.095-0.184),0.086 (0.051-0.122),0.091 (0.056-0.132)

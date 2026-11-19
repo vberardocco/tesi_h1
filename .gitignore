@@ -1,0 +1,12 @@
+# data: public on DANDI (DANDI:000954), not redistributed here; data/raw is a link to ~/000954
+data/
+*.nwb
+# temporary files
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+*.tmp
+*.tmp.*
+.tmp_*

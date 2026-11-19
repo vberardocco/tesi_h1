@@ -1,0 +1,12 @@
+{
+ "a_stream_vs_block": 5.6059803197131e-10,
+ "b_stream_b1_vs_block": 2.6020852139652106e-17,
+ "b_stream_b4_vs_block": 2.6020852139652106e-17,
+ "point4_session": "S1_set_1 (19250108T110520), 1691 bins",
+ "point4_max_abs_diff": 1.9949319973733282e-17,
+ "point4_ok": true,
+ "a_official": 0.4483321197267412,
+ "b_official_b1": 0.2614422623347007,
+ "b_official_b4": 0.2614422623347007,
+ "filters_seconds": 36.48155379295349
+}

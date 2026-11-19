@@ -1,0 +1,26 @@
+align: n=7 k=7 chi2=39.12 p=6.77e-07 W=0.93 | n14: chi2=68.8 p=7.1e-13
+   PCA-FA: med(b-a)=-0.069 b better 0/7 p=0.0156 holm=0.328
+   PCA-GPFA: med(b-a)=-0.044 b better 1/7 p=0.0312 holm=0.328
+   PCA-LFADS: med(b-a)=+0.004 b better 4/7 p=0.9375 holm=0.938
+   FA-LFADS: med(b-a)=+0.073 b better 7/7 p=0.0156 holm=0.328
+   GPFA-LFADS: med(b-a)=+0.050 b better 7/7 p=0.0156 holm=0.328
+fewshot: n=7 k=8 chi2=36.67 p=5.42e-06 W=0.75 | n14: chi2=68.0 p=3.7e-12
+   PCA-FA: med(b-a)=-0.069 b better 0/7 p=0.0156 holm=0.438
+   PCA-GPFA: med(b-a)=-0.044 b better 1/7 p=0.0312 holm=0.438
+   PCA-LFADS: med(b-a)=+0.004 b better 4/7 p=0.9375 holm=1.000
+   PCA-ridge_channels: med(b-a)=+0.065 b better 5/7 p=0.1562 holm=1.000
+   FA-LFADS: med(b-a)=+0.073 b better 7/7 p=0.0156 holm=0.438
+   FA-ridge_channels: med(b-a)=+0.085 b better 6/7 p=0.0781 holm=0.703
+   GPFA-LFADS: med(b-a)=+0.049 b better 7/7 p=0.0156 holm=0.438
+   GPFA-ridge_channels: med(b-a)=+0.109 b better 5/7 p=0.0781 holm=0.703
+   LFADS-ridge_channels: med(b-a)=+0.055 b better 5/7 p=0.2969 holm=1.000
+fewshot_gain: n=7 k=8 chi2=24.76 p=8.36e-04 W=0.51 | n14: chi2=42.5 p=4.2e-07
+   PCA-FA: med(b-a)=-0.059 b better 1/7 p=0.2969 holm=1.000
+   PCA-GPFA: med(b-a)=-0.009 b better 3/7 p=0.3750 holm=1.000
+   PCA-LFADS: med(b-a)=-0.017 b better 3/7 p=0.9375 holm=1.000
+   PCA-ridge_channels: med(b-a)=+0.094 b better 7/7 p=0.0156 holm=0.438
+   FA-LFADS: med(b-a)=+0.035 b better 6/7 p=0.1094 holm=1.000
+   FA-ridge_channels: med(b-a)=+0.133 b better 7/7 p=0.0156 holm=0.438
+   GPFA-LFADS: med(b-a)=+0.027 b better 5/7 p=0.0781 holm=1.000
+   GPFA-ridge_channels: med(b-a)=+0.093 b better 7/7 p=0.0156 holm=0.438
+   LFADS-ridge_channels: med(b-a)=+0.097 b better 7/7 p=0.0156 holm=0.438

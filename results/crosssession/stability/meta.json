@@ -1,0 +1,31 @@
+{
+ "n_blocks": 68,
+ "n_heldin_blocks": 54,
+ "n_pairs": 2278,
+ "n_channels": 170,
+ "K": 15,
+ "K_sens": 5,
+ "sd_min": 0.1,
+ "n_draws": 500,
+ "seed": 20261102,
+ "frozen_recipe_max_abs_diff": 5.717648576819556e-15,
+ "cond_conditions": {
+  "sub-HumanPitt-held-in-calib_ses-19250101T111740.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250101T112404.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250108T110520.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250108T111022.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250108T111455.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250113T120811.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250113T121303.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250115T110633.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250115T111328.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250119T113543.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250119T114045.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250120T115044.nwb": 16,
+  "sub-HumanPitt-held-in-calib_ses-19250120T115537.nwb": 16
+ },
+ "n_sd_zero": 0,
+ "n_sd_below_min": 543,
+ "n_silent_b": 0,
+ "minutes": 25.82390691836675
+}
